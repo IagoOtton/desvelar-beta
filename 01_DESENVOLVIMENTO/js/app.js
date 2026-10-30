@@ -606,25 +606,12 @@
     for (var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) % 360;
     return "hsl(" + h + " 72% var(--tl))";
   }
-  function chip(t) {
-    return (
-      '<span class="chip"><i style="background:' +
-      tcolor(t) +
-      '"></i>' +
-      esc(tlabel(t)) +
-      "</span>"
-    );
+    function chip(t) {
+    return Common.chip(tcolor(t), esc(tlabel(t)));
   }
+
   function tagInput(id, ph, req) {
-    return (
-      '<input id="' +
-      id +
-      '" name="tag" list="tags" maxlength="30" autocomplete="off" placeholder="' +
-      ph +
-      '"' +
-      (req ? " required" : "") +
-      ">"
-    );
+    return Common.tagInput(id, ph, req);
   }
   function groupMin(a, b) {
     var g = {};

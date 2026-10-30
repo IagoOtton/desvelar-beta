@@ -27,8 +27,32 @@
       );
     }
 
+    function chip(color, label) {
+      return (
+        '<span class="chip"><i style="background:' +
+        color +
+        '"></i>' +
+        label +
+        "</span>"
+      );
+    }
+
+    function tagInput(id, ph, req) {
+      return (
+        '<input id="' +
+        id +
+        '" name="tag" list="tags" maxlength="30" autocomplete="off" placeholder="' +
+        ph +
+        '"' +
+        (req ? " required" : "") +
+        ">"
+      );
+    }
+
     return {
       head: head,
+      chip: chip,
+      tagInput: tagInput,
     };
   })();
 })();
