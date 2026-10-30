@@ -563,11 +563,15 @@
   }
 
   /* ---------- tags livres ---------- */
-  var tkey = function (t) {
-    return String(t || "")
-      .trim()
-      .toLowerCase();
-  };
+  var T = window.DesvelarTags;
+
+  if (!T) {
+    throw new Error(
+      "As funções de etiquetas do DESVELAR não foram carregadas.",
+    );
+  }
+
+  var tkey = T.key;
   function buildTags() {
     TM = {};
     var kinds = {};
