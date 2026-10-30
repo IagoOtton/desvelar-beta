@@ -1124,28 +1124,17 @@
       "",
     ],
   ];
-  function navHtml(heads) {
-    var last = "x";
-    return TABS.map(function (t) {
-      var h = "";
-      if (heads && t[3] && t[3] !== last)
-        h = '<div class="ng">' + t[3] + "</div>";
-      if (t[3]) last = t[3];
-      else if (heads) last = "";
-      return (
-        h +
-        '<button class="nb" data-a="tab" data-tab="' +
-        t[0] +
-        '"' +
-        (tab === t[0] ? ' aria-current="page"' : "") +
-        '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' +
-        t[2] +
-        '"/></svg>' +
-        t[1] +
-        "</button>"
-      );
-    }).join("");
+
+  var N = window.DesvelarNavigation;
+
+  if (!N) {
+    throw new Error("O módulo de navegação do DESVELAR não foi carregado.");
   }
+
+  function navHtml(heads) {
+    return N.render(TABS, tab, heads);
+  }
+
   var LOGO =
     '<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs><path d="M3.5 16Q16 5 28.5 16Q16 27 3.5 16Z" fill="none" stroke="url(#lg)" stroke-width="2"/><circle cx="16" cy="16" r="4.6" fill="url(#lg)"/><circle cx="17.6" cy="14.4" r="1.2" fill="var(--bg)"/></svg>';
 
