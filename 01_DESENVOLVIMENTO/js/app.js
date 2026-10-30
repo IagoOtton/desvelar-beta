@@ -20,33 +20,18 @@
   var fmtD = U.fmtD;
   var daysBetween = U.daysBetween;
 
-  var uid = function () {
-    return Math.random().toString(36).slice(2, 9);
-  };
+  var F = window.DesvelarFormatting;
 
-  var esc = function (s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      }[c];
-    });
-  };
+  if (!F) {
+    throw new Error(
+      "As funções de formatação do DESVELAR não foram carregadas.",
+    );
+  }
 
-  var fmtM = function (m) {
-    var h = Math.floor(m / 60),
-      r = Math.round(m % 60);
-    return h + "h" + pad(r);
-  };
-
-  var sum = function (a, f) {
-    return a.reduce(function (x, y) {
-      return x + f(y);
-    }, 0);
-  };
+  var uid = F.uid;
+  var esc = F.esc;
+  var fmtM = F.fmtM;
+  var sum = F.sum;
 
   var LISTS = [
     "sessions",
