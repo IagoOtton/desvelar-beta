@@ -1138,28 +1138,23 @@
   var LOGO =
     '<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs><path d="M3.5 16Q16 5 28.5 16Q16 27 3.5 16Z" fill="none" stroke="url(#lg)" stroke-width="2"/><circle cx="16" cy="16" r="4.6" fill="url(#lg)"/><circle cx="17.6" cy="14.4" r="1.2" fill="var(--bg)"/></svg>';
 
+  var Common = window.DesvelarCommon;
+
+  if (!Common) {
+    throw new Error("Os componentes comuns do DESVELAR não foram carregados.");
+  }
+
   function head(title, sub) {
-    var since = S.lastBackup ? daysBetween(S.lastBackup, today()) : 999;
-    return (
-      "<div><h1>" +
-      title +
-      "</h1>" +
-      (sub ? '<p class="sub">' + sub + "</p>" : "") +
-      "</div>" +
-      (!saveOk
-        ? '<div class="banner bad"><span>O navegador bloqueou o salvamento automático. Use Sistema &gt; Exportar para não perder dados.</span></div>'
-        : "") +
-      (hasDemo()
-        ? '<div class="banner"><span>Há dados de exemplo na tela. Apague quando quiser começar do zero.</span><button class="btn sm" data-a="clear-demo">Apagar exemplos</button></div>'
-        : "") +
-      (realCount() > 0 && since > 7 && tab !== "sistema"
-        ? '<div class="banner"><span>' +
-          (S.lastBackup
-            ? "Último backup há " + since + " dias."
-            : "Você ainda não fez backup.") +
-          ' Exporte uma cópia dos seus dados.</span><button class="btn sm" data-a="tab" data-tab="sistema">Ir para Sistema</button></div>'
-        : "")
-    );
+    var lastBackup = S.lastBackup || "";
+
+    return Common.head(title, sub, {
+      lastBackup: lastBackup,
+      daysSinceBackup: lastBackup ? daysBetween(lastBackup, today()) : 999,
+      saveOk: saveOk,
+      hasDemo: hasDemo(),
+      realCount: realCount(),
+      activeTab: tab,
+    });
   }
 
   function vInicio() {
