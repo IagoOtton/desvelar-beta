@@ -25,7 +25,9 @@
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
       }) ||
-      !Array.isArray(dependencies.lists)
+      !Array.isArray(dependencies.lists) ||
+      !dependencies.backupController ||
+      typeof dependencies.backupController.exportBackup !== "function"
     ) {
       throw new Error("As dependências das ações não foram informadas.");
     }
@@ -233,28 +235,7 @@
         });
         message = "exemplos apagados";
       } else if (action === "export") {
-        var backup = JSON.parse(JSON.stringify(state));
-        backup.lastBackup = dependencies.today();
-
-        var blob = new Blob([JSON.stringify(backup, null, 2)], {
-          type: "application/json",
-        });
-        var link = document.createElement("a");
-        var url = URL.createObjectURL(blob);
-
-        link.href = url;
-        link.download =
-          "painel-estudos-backup-" + dependencies.today() + ".json";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        setTimeout(function () {
-          URL.revokeObjectURL(url);
-        }, 1500);
-
-        state.lastBackup = backup.lastBackup;
-        message = "backup exportado";
+        message = dependencies.backupController.exportBackup(state);
       } else if (action === "wipe") {
         if (!ui.wipeArm) {
           dependencies.setUiState({ wipeArm: 1 });

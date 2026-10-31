@@ -252,6 +252,59 @@ test("gerencia transições do Pomodoro no domínio", () => {
   assert.equal(state.pomo.cycle, 2);
 });
 
+test("preserva os dados atuais se a gravação de um backup falhar", () => {
+  const context = { window: {} };
+  const source = fs.readFileSync(
+    path.join(APP_ROOT, "js/controllers/backups.js"),
+    "utf8",
+  );
+  vm.runInNewContext(source, context);
+
+  const collections = [
+    "sessions",
+    "books",
+    "events",
+    "tasks",
+    "questions",
+    "readlog",
+    "themes",
+    "habits",
+    "txs",
+    "goals",
+    "routine",
+  ];
+  const backup = { v: 4 };
+  collections.forEach((collection) => {
+    backup[collection] = [];
+  });
+
+  const previousState = { marker: "estado anterior" };
+  const notifications = [];
+  let currentState = previousState;
+  let renderCount = 0;
+  const controller = context.window.DesvelarBackupController.create({
+    getState: () => currentState,
+    setState: (state) => {
+      currentState = state;
+    },
+    lists: collections,
+    normalize: (data) => data,
+    persist: () => false,
+    render: () => {
+      renderCount += 1;
+    },
+    toast: (message) => notifications.push(message),
+    today: () => "2026-10-31",
+  });
+
+  assert.equal(controller.importText(JSON.stringify(backup)), false);
+  assert.equal(currentState, previousState);
+  assert.equal(renderCount, 1);
+  assert.deepEqual(notifications, [
+    "Não foi possível salvar os dados importados.",
+  ]);
+});
+
 test("autentica o usuário e abre o aplicativo", async () => {
   const { context, page } = await openApp({ authenticated: false });
 

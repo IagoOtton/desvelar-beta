@@ -815,6 +815,20 @@
     toast: toast,
     groupRepository: window.DesvelarGroupRepository,
   });
+  var BackupController = window.DesvelarBackupController.create({
+    getState: function () {
+      return S;
+    },
+    setState: function (state) {
+      S = state;
+    },
+    lists: LISTS,
+    normalize: normalize,
+    persist: persist,
+    render: render,
+    toast: toast,
+    today: today,
+  });
   var ActionController = window.DesvelarActionController.create({
     getState: function () {
       return S;
@@ -864,6 +878,7 @@
     pomoComplete: pomoComplete,
     render: render,
     commit: commit,
+    backupController: BackupController,
   });
 
   async function vInicio() {
@@ -1577,112 +1592,9 @@
     commit();
   });
 
-  function isValidImportId(id) {
-    return typeof id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(id);
-  }
-
-  function isValidImportedRecord(collection, record) {
-    if (
-      !record ||
-      typeof record !== "object" ||
-      Array.isArray(record) ||
-      !isValidImportId(record.id)
-    ) {
-      return false;
-    }
-
-    if (collection === "readlog" && !isValidImportId(record.bookId)) {
-      return false;
-    }
-
-    if (
-      collection === "habits" &&
-      (!record.days ||
-        typeof record.days !== "object" ||
-        Array.isArray(record.days))
-    ) {
-      return false;
-    }
-
-    if (collection === "goals") {
-      if (!Array.isArray(record.ms)) return false;
-      return record.ms.every(function (milestone) {
-        return (
-          milestone &&
-          typeof milestone === "object" &&
-          !Array.isArray(milestone) &&
-          isValidImportId(milestone.id)
-        );
-      });
-    }
-
-    return true;
-  }
-
-  document.addEventListener("change", function (e) {
-    if (!e.target || e.target.id !== "imp" || !e.target.files[0]) return;
-    var r = new FileReader();
-    r.onload = function () {
-      try {
-        var o = JSON.parse(r.result);
-
-        if (!o || typeof o !== "object" || Array.isArray(o)) {
-          throw new Error("Formato inválido");
-        }
-
-        if (
-          o.v !== undefined &&
-          (!Number.isInteger(o.v) || o.v > 4 || o.v < 1)
-        ) {
-          throw new Error("Versão do backup não suportada");
-        }
-
-        var valid = LISTS.every(function (k) {
-          // Versão 4 ou superior exige todas as coleções.
-          if (o.v >= 4 && o[k] === undefined) {
-            return false;
-          }
-
-          // Versões antigas podem não possuir algumas coleções.
-          if (o[k] === undefined) {
-            return true;
-          }
-
-          // Quando presente, a coleção precisa ser um array.
-          if (!Array.isArray(o[k])) {
-            return false;
-          }
-
-          // Registros precisam ter IDs seguros e vínculos estruturais válidos.
-          return o[k].every(function (x) {
-            return isValidImportedRecord(k, x);
-          });
-        });
-
-        if (!valid) {
-          throw new Error("Dados incompletos ou inválidos");
-        }
-
-        var previous = S;
-        S = normalize(o);
-
-        if (!persist()) {
-          S = previous;
-          render();
-          toast("Não foi possível salvar os dados importados.");
-          return;
-        }
-
-        render();
-        toast("dados importados");
-      } catch (x) {
-        console.error("Erro ao importar backup:", x);
-        toast("arquivo inválido");
-      }
-    };
-    r.readAsText(e.target.files[0]);
+  document.addEventListener("change", function (event) {
+    BackupController.handleFileChange(event);
   });
-
   applyTheme();
 
   try {
