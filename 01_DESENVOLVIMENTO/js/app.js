@@ -725,6 +725,61 @@
     months: MES,
     weekdays: DIAS,
   });
+  var FocusViews = window.DesvelarFocusViews.create({
+    getState: function () {
+      return S;
+    },
+    getZen: function () {
+      return zen;
+    },
+    circumference: PC,
+    today: today,
+    tkey: tkey,
+    tlabel: tlabel,
+    phaseName: phaseName,
+    pomoRem: pomoRem,
+    fmtClock: fmtClock,
+    esc: esc,
+    chip: chip,
+    sum: sum,
+    minsOn: minsOn,
+    fmtM: fmtM,
+    head: head,
+  });
+  var PerformanceViews = window.DesvelarPerformanceViews.create({
+    getState: function () {
+      return S;
+    },
+    today: today,
+    wkStart: wkStart,
+    addDays: addDays,
+    fmtD: fmtD,
+    fmtM: fmtM,
+    minsRange: minsRange,
+    accByTag: accByTag,
+    groupMin: groupMin,
+    barChart: barChart,
+    heat: heat,
+    head: head,
+    chip: chip,
+    esc: esc,
+    tagInput: tagInput,
+    sum: sum,
+  });
+  var SystemViews = window.DesvelarSystemViews.create({
+    getState: function () {
+      return S;
+    },
+    getSize: function () {
+      return localData.getSize();
+    },
+    getWipeArm: function () {
+      return wipeArm;
+    },
+    head: head,
+    esc: esc,
+    fmtD: fmtD,
+  });
   var AgendaViews = window.DesvelarAgendaViews.create({
     getState: function () {
       return S;
@@ -1128,295 +1183,9 @@
   function fmtClock(sec) {
     return pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
   }
-  function recentTags() {
-    var seen = {},
-      out = [];
-    S.sessions
-      .slice()
-      .sort(function (a, b) {
-        return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
-      })
-      .forEach(function (x) {
-        var k = tkey(x.tag);
-        if (k && !seen[k] && out.length < 6) {
-          seen[k] = 1;
-          out.push(tlabel(x.tag));
-        }
-      });
-    return out;
-  }
-  function dialSvg(frac, brk, paused) {
-    var ticks = "",
-      ang,
-      kx,
-      ky;
-    for (var i = 0; i < 60; i++) {
-      var a = (i * 6 * Math.PI) / 180 - Math.PI / 2,
-        r1 = i % 5 === 0 ? 131 : 136,
-        r2 = 148,
-        on = (i + 1) / 60 <= frac + 1e-6;
-      ticks +=
-        '<line class="tickl' +
-        (on ? " on" : "") +
-        '" x1="' +
-        (160 + r1 * Math.cos(a)).toFixed(1) +
-        '" y1="' +
-        (160 + r1 * Math.sin(a)).toFixed(1) +
-        '" x2="' +
-        (160 + r2 * Math.cos(a)).toFixed(1) +
-        '" y2="' +
-        (160 + r2 * Math.sin(a)).toFixed(1) +
-        '"/>';
-    }
-    ang = ((-90 + frac * 360) * Math.PI) / 180;
-    kx = 160 + 118 * Math.cos(ang);
-    ky = 160 + 118 * Math.sin(ang);
-    var stroke = paused ? "var(--warn)" : brk ? "var(--good)" : "url(#pg)",
-      da = PC * frac + " " + PC;
-    return (
-      '<svg viewBox="0 0 320 320" aria-hidden="true"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs>' +
-      '<g id="pticks">' +
-      ticks +
-      '</g><circle cx="160" cy="160" r="118" fill="none" stroke="var(--surface2)" stroke-width="12"/>' +
-      '<circle id="pglow" class="glow" cx="160" cy="160" r="118" fill="none" stroke="' +
-      stroke +
-      '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' +
-      da +
-      '" transform="rotate(-90 160 160)"/>' +
-      '<circle id="pring" cx="160" cy="160" r="118" fill="none" stroke="' +
-      stroke +
-      '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' +
-      da +
-      '" transform="rotate(-90 160 160)"/>' +
-      '<circle id="pknob" cx="' +
-      kx.toFixed(1) +
-      '" cy="' +
-      ky.toFixed(1) +
-      '" r="7" fill="var(--ink)" stroke="' +
-      (paused ? "var(--warn)" : brk ? "var(--good)" : "var(--a1)") +
-      '" stroke-width="3"/></svg>'
-    );
-  }
   function vFoco() {
-    var P = S.pomo,
-      r = S.pomoRun,
-      t = today(),
-      blocks = S.sessions.filter(function (x) {
-        return x.date === t && x.pomo;
-      });
-    var brk = !!r && r.phase !== "focus",
-      paused = !!r && !r.end,
-      running = !!r && !!r.end;
-    var rem = r ? pomoRem(r) : P.focus * 60,
-      dur = r ? r.dur : P.focus * 60,
-      frac = Math.max(0, Math.min(1, rem / dur));
-    var pillCls = !r ? "f" : paused ? "p" : brk ? "b" : "f",
-      pillTxt =
-        (!r
-          ? "PRONTO"
-          : r.phase === "focus"
-            ? "FOCO"
-            : r.phase === "short"
-              ? "PAUSA CURTA"
-              : "PAUSA LONGA") + (paused ? " · PAUSADO" : "");
-    var done = P.cycle - 1 + (brk ? 1 : 0),
-      dots = "";
-    for (var i = 1; i <= P.every; i++)
-      dots +=
-        '<i class="' +
-        (i <= done ? "on" : "") +
-        (r && r.phase === "focus" && i === P.cycle ? " cur" : "") +
-        '"></i>';
-    var ratePend =
-      P.rateId &&
-      S.sessions.some(function (x) {
-        return x.id === P.rateId;
-      });
-    var ctrl;
-    if (!r) {
-      var presets = [
-        [25, 5, 15],
-        [50, 10, 20],
-        [15, 3, 10],
-      ];
-      ctrl =
-        '<div class="qc">' +
-        presets
-          .map(function (p) {
-            return (
-              '<button class="qb' +
-              (P.focus === p[0] && P.short === p[1] && P.long === p[2]
-                ? " on"
-                : "") +
-              '" data-a="preset" data-f="' +
-              p[0] +
-              '" data-s="' +
-              p[1] +
-              '" data-l="' +
-              p[2] +
-              '">' +
-              p[0] +
-              " · " +
-              p[1] +
-              "</button>"
-            );
-          })
-          .join("") +
-        "</div>" +
-        '<div class="pform"><label class="f">O que vai estudar? (tag)<input id="pomo-tag" list="tags" maxlength="30" autocomplete="off" value="' +
-        esc(P.lastTag) +
-        '" placeholder="ex.: Fisiologia, MedEvo, Inglês"></label>' +
-        '<div class="qc" style="justify-content:flex-start">' +
-        recentTags()
-          .map(function (x) {
-            return (
-              '<button class="qb" data-a="pick-tag" data-t="' +
-              esc(x) +
-              '">' +
-              esc(x) +
-              "</button>"
-            );
-          })
-          .join("") +
-        "</div>" +
-        '<label class="f">Intenção do bloco (opcional)<input id="pomo-intent" maxlength="80" autocomplete="off" placeholder="ex.: terminar 30 questões de cardio"></label></div>' +
-        '<button class="go" data-a="pomo-start">▶ Iniciar foco de ' +
-        esc(P.focus) +
-        " min</button>";
-    } else {
-      ctrl =
-        (r.tag || r.intent
-          ? '<div style="display:flex;flex-direction:column;gap:6px;align-items:center">' +
-            (r.tag ? chip(r.tag) : "") +
-            (r.intent ? '<span class="m">' + esc(r.intent) + "</span>" : "") +
-            "</div>"
-          : "") +
-        '<div class="rowflex" style="justify-content:center"><button class="btn pri" data-a="pomo-pause">' +
-        (paused ? "▶ Retomar" : "❚❚ Pausar") +
-        "</button>" +
-        (brk
-          ? '<button class="btn" data-a="pomo-skip">Pular pausa</button>'
-          : '<button class="btn" data-a="pomo-plus">+5 min</button><button class="btn" data-a="pomo-stop">Encerrar e salvar</button><button class="btn dng" data-a="pomo-cancel">Descartar</button>') +
-        "</div>";
-    }
-    var ratePanel = ratePend
-      ? '<div class="card rate" style="width:100%"><h2>Como foi seu foco no último bloco?</h2><div class="rowflex" style="justify-content:center">' +
-        [1, 2, 3, 4, 5]
-          .map(function (n) {
-            return (
-              '<button class="btn rb" data-a="rate" data-n="' +
-              n +
-              '">' +
-              n +
-              "</button>"
-            );
-          })
-          .join("") +
-        '<button class="btn sm" data-a="rate" data-n="0">Pular</button></div><p class="m" style="margin:8px 0 0">1 = muito disperso · 5 = foco total</p></div>'
-      : "";
-    var main =
-      '<div class="card pcard' +
-      (brk ? " brk" : "") +
-      (paused ? " pau" : "") +
-      '"><div class="ptop"><span class="pill ' +
-      pillCls +
-      '">' +
-      pillTxt +
-      '</span><div class="cdots" title="Pomodoros do ciclo atual">' +
-      dots +
-      "</div>" +
-      '<button class="btn sm" data-a="zen">' +
-      (zen ? "Sair (Esc)" : "Tela cheia") +
-      "</button></div>" +
-      '<div class="dial' +
-      (running ? " run" : "") +
-      '">' +
-      dialSvg(frac, brk, paused) +
-      '<div class="c"><b id="pclock">' +
-      fmtClock(rem) +
-      '</b><span id="pphase">' +
-      blocks.length +
-      " de " +
-      esc(P.daily) +
-      " hoje</span></div></div>" +
-      ctrl +
-      ratePanel +
-      '<div class="hint"><kbd>Espaço</kbd> inicia ou pausa</div></div>';
-    if (zen) return '<div class="zenwrap">' + main + "</div>";
-    var rated = S.sessions
-        .filter(function (x) {
-          return x.rate;
-        })
-        .slice(-20),
-      avgR = rated.length
-        ? sum(rated, function (x) {
-            return x.rate;
-          }) / rated.length
-        : 0;
-    var dpct = Math.min(100, Math.round((blocks.length / P.daily) * 100));
-    return (
-      head(
-        "Pomodoro",
-        "Método Pomodoro: blocos de foco com pausas. Cada bloco concluído é salvo automaticamente nas suas horas de estudo.",
-      ) +
-      '<div class="pomo">' +
-      main +
-      '<div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="kpis"><div class="kpi"><span class="l">Pomodoros hoje</span><span class="v">' +
-      blocks.length +
-      '<span class="m"> / ' +
-      esc(P.daily) +
-      '</span></span><div class="bar"><b style="width:' +
-      dpct +
-      '%"></b></div></div>' +
-      '<div class="kpi"><span class="l">Foco hoje</span><span class="v">' +
-      fmtM(minsOn(t)) +
-      '</span><span class="d flat">todas as sessões</span></div>' +
-      '<div class="kpi"><span class="l">Qualidade do foco</span><span class="v">' +
-      (rated.length ? avgR.toFixed(1) : "–") +
-      '<span class="m"> / 5</span></span><span class="d flat">média dos últimos blocos</span></div></div>' +
-      '<div class="card"><h2>Blocos de hoje</h2>' +
-      (blocks.length
-        ? '<ul class="list">' +
-          blocks
-            .slice()
-            .reverse()
-            .map(function (x) {
-              return (
-                '<li><span class="t">' +
-                chip(x.tag) +
-                (x.note && x.note !== "Pomodoro"
-                  ? '<div class="m">' + esc(x.note) + "</div>"
-                  : "") +
-                "</span>" +
-                (x.rate
-                  ? '<span class="m num">foco ' + esc(x.rate) + "/5</span>"
-                  : "") +
-                '<span class="num">' +
-                esc(x.min) +
-                ' min</span><button class="ico" data-a="del" data-k="sessions" data-id="' +
-                esc(x.id) +
-                '" aria-label="Apagar bloco">×</button></li>'
-              );
-            })
-            .join("") +
-          "</ul>"
-        : '<p class="empty">Nenhum bloco concluído hoje. O primeiro leva só um clique.</p>') +
-      "</div>" +
-      '<div class="card"><h2>Ajustes do ciclo</h2><form class="row" data-form="pomo"><label class="f">Foco (min)<input id="pm-f" type="number" name="focus" min="1" max="180" value="' +
-      esc(P.focus) +
-      '" required></label><label class="f">Pausa curta<input id="pm-s" type="number" name="short" min="1" max="60" value="' +
-      esc(P.short) +
-      '" required></label><label class="f">Pausa longa<input id="pm-l" type="number" name="long" min="1" max="90" value="' +
-      esc(P.long) +
-      '" required></label><label class="f">Longa a cada<input id="pm-e" type="number" name="every" min="2" max="10" value="' +
-      esc(P.every) +
-      '" required></label><label class="f">Meta diária<input id="pm-d" type="number" name="daily" min="1" max="30" value="' +
-      esc(P.daily) +
-      '" required></label><button class="btn" type="submit">Salvar</button></form></div></div></div>'
-    );
+    return FocusViews.focusPage();
   }
-
-  /* ---------- vida: temas, hábitos, finanças, metas, rotina ---------- */
   function gprog(g) {
     return g.ms.length
       ? Math.round(
@@ -1469,138 +1238,10 @@
   }
 
   function vDesempenho() {
-    var t = today(),
-      ws = wkStart(t),
-      items = [];
-    for (var i = 7; i >= 0; i--) {
-      var a = addDays(ws, -7 * i);
-      items.push({ l: fmtD(a), v: minsRange(a, addDays(a, 6)) / 60 });
-    }
-    var acc = accByTag(),
-      g30 = groupMin(addDays(t, -29), t),
-      mx = Math.max.apply(
-        null,
-        g30
-          .map(function (r) {
-            return r.m;
-          })
-          .concat([1]),
-      );
-    var rq = S.questions
-      .slice()
-      .sort(function (a, b) {
-        return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
-      })
-      .slice(0, 8);
-    return (
-      head(
-        "Desempenho",
-        "Registre aqui as questões do MedEvo e veja horas, constância e acerto por tag.",
-      ) +
-      '<div class="card"><h2>Horas por semana</h2>' +
-      barChart(items, {
-        goal: S.goalH,
-        unit: "h",
-        label: "Horas estudadas por semana nas últimas 8 semanas",
-      }) +
-      "</div>" +
-      '<div class="grid"><div class="card"><h2>Constância · 12 semanas</h2>' +
-      heat() +
-      '<p class="m" style="margin:10px 0 0">Cada quadrado é um dia (segunda a domingo). Quanto mais claro, mais estudo.</p></div>' +
-      '<div class="card"><h2>Horas por tag · 30 dias</h2>' +
-      (g30.length
-        ? g30
-            .slice(0, 8)
-            .map(function (r) {
-              return (
-                '<div class="acc"><span>' +
-                chip(r.k) +
-                '</span><div class="bar"><b style="width:' +
-                Math.round((r.m / mx) * 100) +
-                '%"></b></div><span class="m num">' +
-                fmtM(r.m) +
-                "</span></div>"
-              );
-            })
-            .join("")
-        : '<p class="empty">Sem sessões nos últimos 30 dias.</p>') +
-      "</div></div>" +
-      '<div class="grid"><div class="card"><h2>Acerto por tag</h2>' +
-      (acc.length
-        ? acc
-            .map(function (r) {
-              var p = Math.round((r.c / r.t) * 100);
-              return (
-                '<div class="acc"><span>' +
-                chip(r.k) +
-                '</span><div class="bar"><b style="width:' +
-                p +
-                '%"></b></div><span class="m num">' +
-                p +
-                "% · " +
-                esc(r.t) +
-                "</span></div>"
-              );
-            })
-            .join("")
-        : '<p class="empty">Registre questões para ver o acerto por tag.</p>') +
-      "</div>" +
-      '<div class="card"><h2>Registrar questões</h2><form class="row" data-form="question"><label class="f grow">Tag' +
-      tagInput("q-tag", "ex.: Fisiologia") +
-      "</label>" +
-      '<label class="f">Feitas<input id="q-total" type="number" name="total" min="1" max="500" required></label><label class="f">Acertos<input id="q-correct" type="number" name="correct" min="0" max="500" required></label>' +
-      '<label class="f">Data<input id="q-date" type="date" name="date" value="' +
-      t +
-      '" required></label><button class="btn pri" type="submit">Registrar</button></form>' +
-      (rq.length
-        ? '<ul class="list" style="margin-top:12px">' +
-          rq
-            .map(function (q) {
-              return (
-                '<li><span class="m num">' +
-                fmtD(q.date) +
-                '</span><span class="t">' +
-                chip(q.tag) +
-                '</span><span class="num">' +
-                esc(q.correct) +
-                "/" +
-                esc(q.total) +
-                '</span><button class="ico" data-a="del" data-k="questions" data-id="' +
-                esc(q.id) +
-                '" aria-label="Apagar registro">×</button></li>'
-              );
-            })
-            .join("") +
-          "</ul>"
-        : "") +
-      "</div></div>"
-    );
+    return PerformanceViews.performancePage();
   }
-
   function vSistema() {
-    var size = localData.getSize();
-    return (
-      head(
-        "Sistema",
-        "Seus dados ficam salvos neste navegador. Faça backup de vez em quando.",
-      ) +
-      '<div class="grid"><div class="card"><h2>Perfil</h2><form class="row" data-form="profile"><label class="f grow">Seu nome<input id="p-name" class="grow" name="name" maxlength="30" value="' +
-      esc(S.name) +
-      '" required></label>' +
-      '<label class="f">Meta semanal (h)<input id="p-goal" type="number" name="h" min="1" max="100" value="' +
-      esc(S.goalH) +
-      '" required></label><button class="btn pri" type="submit">Salvar</button></form>' +
-      '<div class="rowflex" style="margin-top:14px"><span class="m">Aparência</span><button class="btn sm" data-a="theme">Alternar claro/escuro</button></div></div>' +
-      '<div class="card"><h2>Backup</h2><p class="m" style="margin-top:0">Último backup: ' +
-      (S.lastBackup ? fmtD(S.lastBackup) : "nunca") +
-      ". Seus dados ocupam cerca de " +
-      Math.max(1, Math.round(size / 1024)) +
-      " KB.</p>" +
-      '<div class="rowflex"><button class="btn pri" data-a="export">Exportar dados</button><label class="btn" for="imp" style="cursor:pointer">Importar arquivo</label><input id="imp" type="file" accept=".json,application/json" hidden></div></div></div>' +
-      '<div class="card"><h2>Limpeza</h2><div class="rowflex"><button class="btn" data-a="clear-demo">Apagar só os exemplos</button><button class="btn dng" data-a="wipe">' +
-      (wipeArm ? "Clique de novo para apagar TUDO" : "Apagar tudo") +
-      "</button></div></div>"
-    );
+    return SystemViews.systemPage();
   }
   function vGrupos() {
     return GroupViews.groupsPage(window.desvelarUser.id);

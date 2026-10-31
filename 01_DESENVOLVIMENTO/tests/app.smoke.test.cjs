@@ -472,6 +472,50 @@ test("atualiza dados pelas telas da área Vida extraídas", async () => {
   }
 });
 
+test("interage com Pomodoro e registra questões em Desempenho", async () => {
+  const { context, page } = await openApp();
+
+  try {
+    await waitForApp(page);
+    await page.locator('#sidenav [data-tab="foco"]').click();
+    await page.locator("#pomo-tag").fill("Teste do módulo Pomodoro");
+    await page.locator("#pomo-intent").fill("Validar a tela extraída");
+    await page.locator('[data-a="pomo-start"]').click();
+    await page.locator('[data-a="pomo-pause"]').waitFor({ state: "visible" });
+    await page.locator('[data-a="pomo-pause"]').click();
+    await page
+      .getByRole("button", { name: "▶ Retomar", exact: true })
+      .waitFor({ state: "visible" });
+
+    const paused = await page.evaluate((storageKey) => {
+      const data = JSON.parse(localStorage.getItem(storageKey));
+      return data.pomoRun && data.pomoRun.phase === "focus" && !data.pomoRun.end;
+    }, STORAGE_KEY);
+    assert.equal(paused, true);
+
+    await page.locator('#sidenav [data-tab="desempenho"]').click();
+    await page.locator("#q-tag").fill("Farmacologia");
+    await page.locator("#q-total").fill("10");
+    await page.locator("#q-correct").fill("8");
+    await page.locator('form[data-form="question"] button[type="submit"]').click();
+    await page
+      .locator('#view form[data-form="question"] ~ ul.list li > .t')
+      .filter({ hasText: "Farmacologia" })
+      .last()
+      .waitFor({ state: "visible" });
+
+    const saved = await page.evaluate((storageKey) => {
+      const data = JSON.parse(localStorage.getItem(storageKey));
+      return data.questions.some(
+        (item) => item.tag === "Farmacologia" && item.total === 10 && item.correct === 8,
+      );
+    }, STORAGE_KEY);
+    assert.equal(saved, true);
+  } finally {
+    await context.close();
+  }
+});
+
 test("migra dados legados para a conta e mantém a cópia original", async () => {
   const legacyData = {
     v: 3,
