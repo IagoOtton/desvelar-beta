@@ -30,6 +30,27 @@
         </div>
       </form>
 
+      <button id="auth-forgot" class="btn sm" type="button" hidden>Esqueci minha senha</button>
+
+      <form id="reset-request-form" hidden>
+        <label for="reset-email">E-mail da sua conta</label>
+        <input id="reset-email" type="email" required autocomplete="email">
+        <div class="auth-actions">
+          <button class="btn pri" type="submit">Enviar link de redefinição</button>
+          <button id="reset-back" class="btn sm" type="button">Voltar</button>
+        </div>
+      </form>
+
+      <form id="password-recovery-form" hidden>
+        <label for="new-password">Nova senha</label>
+        <input id="new-password" type="password" required minlength="6"
+          autocomplete="new-password">
+        <label for="confirm-password">Confirme a nova senha</label>
+        <input id="confirm-password" type="password" required minlength="6"
+          autocomplete="new-password">
+        <button id="password-recovery-submit" class="btn pri" type="submit">Salvar nova senha</button>
+      </form>
+
       <p id="auth-message" role="status"></p>
       <p class="auth-note">Cada pessoa deve usar sua própria conta. Estudos, tarefas, hábitos, metas e finanças ficam associados à conta e sincronizam entre navegadores e dispositivos. Faça backups periódicos e evite registrar dados pessoais ou financeiros sensíveis.</p>
     </section>
@@ -41,14 +62,59 @@
   var title = document.getElementById("auth-title");
   var submit = document.getElementById("auth-submit");
   var toggle = document.getElementById("auth-toggle");
+  var forgot = document.getElementById("auth-forgot");
+  var resetRequestForm = document.getElementById("reset-request-form");
+  var resetBack = document.getElementById("reset-back");
+  var passwordRecoveryForm = document.getElementById("password-recovery-form");
+  var passwordRecoverySubmit = document.getElementById("password-recovery-submit");
   var appStarted = false;
+  var recoveryFlow = isRecoveryRedirect();
+  var recoveryVerified = false;
 
   form.hidden = true;
   toggle.hidden = true;
-  message.textContent = "Verificando sessão…";
+  message.textContent = recoveryFlow
+    ? "Validando o link de redefinição…"
+    : "Verificando sessão…";
+
+  function isRecoveryRedirect() {
+    var hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    var query = new URLSearchParams(window.location.search);
+    return hash.get("type") === "recovery" || query.get("type") === "recovery";
+  }
+
+  function hasRecoverySession(session) {
+    if (!session || !session.user) return false;
+    if (recoveryVerified) return true;
+
+    var hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    var recoveryAccessToken = hash.get("access_token");
+    return Boolean(recoveryAccessToken && session.access_token === recoveryAccessToken);
+  }
+
+  function setAuthMode(mode, text) {
+    form.hidden = mode !== "login" && mode !== "signup";
+    resetRequestForm.hidden = mode !== "reset";
+    passwordRecoveryForm.hidden = mode !== "recovery";
+    toggle.hidden = mode !== "login" && mode !== "signup";
+    forgot.hidden = mode !== "login";
+    title.textContent =
+      mode === "signup"
+        ? "Criar conta"
+        : mode === "reset"
+          ? "Recuperar senha"
+          : mode === "recovery"
+            ? "Definir nova senha"
+            : "Entrar";
+    message.textContent = text || "";
+  }
+
+  function cleanRecoveryUrl() {
+    window.history.replaceState(null, document.title, window.location.pathname);
+  }
 
   function startApp(user) {
-    if (!user || appStarted) return;
+    if (!user || appStarted || recoveryFlow) return;
     appStarted = true;
     window.desvelarUser = user;
     message.textContent = "Carregando seus dados…";
@@ -107,17 +173,92 @@
   }
 
   function showLogin(errorMessage) {
-    form.hidden = false;
-    toggle.hidden = false;
-    message.textContent = errorMessage || "";
+    recoveryFlow = false;
+    isSignUp = false;
+    submit.textContent = "Entrar";
+    toggle.textContent = "Criar uma conta";
+    setAuthMode("login", errorMessage);
   }
 
   toggle.addEventListener("click", function () {
     isSignUp = !isSignUp;
-    title.textContent = isSignUp ? "Criar conta" : "Entrar";
     submit.textContent = isSignUp ? "Cadastrar" : "Entrar";
     toggle.textContent = isSignUp ? "Já tenho uma conta" : "Criar uma conta";
-    message.textContent = "";
+    setAuthMode(isSignUp ? "signup" : "login");
+  });
+
+  forgot.addEventListener("click", function () {
+    var loginEmail = document.getElementById("auth-email").value.trim();
+    document.getElementById("reset-email").value = loginEmail;
+    setAuthMode("reset", "Informe o e-mail da sua conta para receber o link.");
+  });
+
+  resetBack.addEventListener("click", function () {
+    showLogin();
+  });
+
+  resetRequestForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    var resetSubmit = resetRequestForm.querySelector('button[type="submit"]');
+    var email = document.getElementById("reset-email").value.trim();
+
+    resetSubmit.disabled = true;
+    message.textContent = "Enviando…";
+
+    try {
+      var result = await window.desvelarSupabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname,
+      });
+
+      if (result.error) {
+        message.textContent = result.error.message;
+      } else {
+        message.textContent =
+          "Se houver uma conta com esse e-mail, enviaremos um link. Confira sua caixa de entrada e spam.";
+      }
+    } catch (error) {
+      message.textContent =
+        error && error.message
+          ? error.message
+          : "Não foi possível enviar o link. Tente novamente.";
+    } finally {
+      resetSubmit.disabled = false;
+    }
+  });
+
+  passwordRecoveryForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    var newPassword = document.getElementById("new-password").value;
+    var confirmPassword = document.getElementById("confirm-password").value;
+
+    if (newPassword !== confirmPassword) {
+      message.textContent = "As senhas não coincidem.";
+      return;
+    }
+
+    passwordRecoverySubmit.disabled = true;
+    message.textContent = "Atualizando sua senha…";
+
+    try {
+      var result = await window.desvelarSupabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (result.error) {
+        message.textContent = result.error.message;
+      } else {
+        recoveryFlow = false;
+        cleanRecoveryUrl();
+        startApp(result.data.user);
+      }
+    } catch (error) {
+      message.textContent =
+        error && error.message
+          ? error.message
+          : "Não foi possível atualizar a senha. Tente novamente.";
+    } finally {
+      passwordRecoverySubmit.disabled = false;
+    }
   });
 
   form.addEventListener("submit", async function (event) {
@@ -164,18 +305,43 @@
     }
   });
 
+  window.desvelarSupabase.auth.onAuthStateChange(function (event, session) {
+    if (event === "PASSWORD_RECOVERY") {
+      recoveryFlow = true;
+      recoveryVerified = Boolean(session && session.user);
+      if (session && session.user) {
+        setAuthMode("recovery", "Link validado. Defina uma nova senha para sua conta.");
+      } else {
+        setAuthMode("reset", "Não foi possível validar o link. Solicite um novo.");
+      }
+    }
+  });
+
   window.desvelarSupabase.auth
     .getSession()
     .then(function (result) {
       if (result.error) throw result.error;
 
       var session = result.data && result.data.session;
-      if (session && session.user) startApp(session.user);
-      else showLogin();
+      if (recoveryFlow) {
+        if (hasRecoverySession(session)) {
+          setAuthMode("recovery", "Link validado. Defina uma nova senha para sua conta.");
+        } else {
+          setAuthMode("reset", "O link expirou ou não é válido. Solicite um novo para continuar.");
+        }
+      } else if (session && session.user) {
+        startApp(session.user);
+      } else {
+        showLogin();
+      }
     })
     .catch(function (error) {
       console.error("Erro ao recuperar sessão:", error);
-      showLogin("Não foi possível recuperar a sessão. Entre novamente.");
+      if (recoveryFlow) {
+        setAuthMode("reset", "Não foi possível validar o link. Solicite um novo para continuar.");
+      } else {
+        showLogin("Não foi possível recuperar a sessão. Entre novamente.");
+      }
     });
 })();
 
