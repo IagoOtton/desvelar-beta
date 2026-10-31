@@ -815,6 +815,56 @@
     toast: toast,
     groupRepository: window.DesvelarGroupRepository,
   });
+  var ActionController = window.DesvelarActionController.create({
+    getState: function () {
+      return S;
+    },
+    setState: function (state) {
+      S = state;
+    },
+    getUiState: function () {
+      return {
+        tab: tab,
+        zen: zen,
+        finM: finM,
+        calM: calM,
+        selDay: selDay,
+        wipeArm: wipeArm,
+      };
+    },
+    setUiState: function (updates) {
+      if (Object.prototype.hasOwnProperty.call(updates, "tab")) {
+        tab = updates.tab;
+      }
+      if (Object.prototype.hasOwnProperty.call(updates, "zen")) {
+        zen = updates.zen;
+      }
+      if (Object.prototype.hasOwnProperty.call(updates, "finM")) {
+        finM = updates.finM;
+      }
+      if (Object.prototype.hasOwnProperty.call(updates, "calM")) {
+        calM = updates.calM;
+      }
+      if (Object.prototype.hasOwnProperty.call(updates, "selDay")) {
+        selDay = updates.selDay;
+      }
+      if (Object.prototype.hasOwnProperty.call(updates, "wipeArm")) {
+        wipeArm = updates.wipeArm;
+      }
+    },
+    lists: LISTS,
+    uid: uid,
+    today: today,
+    dateKey: ds,
+    parseDate: pd,
+    normalize: normalize,
+    pomoRem: pomoRem,
+    pomoStart: pomoStart,
+    pomoPause: pomoPause,
+    pomoComplete: pomoComplete,
+    render: render,
+    commit: commit,
+  });
 
   async function vInicio() {
     var groupGoalsHtml = await GroupViews.homeGroupGoals(
@@ -1490,212 +1540,8 @@
   setInterval(tick, 1000);
 
   /* ---------- ações ---------- */
-  document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-a]");
-    if (!b) return;
-    var a = b.dataset.a,
-      msg = "";
-    if (a !== "wipe") wipeArm = 0;
-    if (a === "tab") {
-      tab = b.dataset.tab;
-      zen = false;
-      render();
-      window.scrollTo(0, 0);
-      return;
-    }
-    if (a === "retry") {
-      render();
-      return;
-    }
-    if (a === "theme") {
-      var cur =
-          document.documentElement.getAttribute("data-theme") ||
-          (window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: light)").matches
-            ? "light"
-            : "dark"),
-        nx = cur === "light" ? "dark" : "light";
-      document.documentElement.setAttribute("data-theme", nx);
-      try {
-        localStorage.setItem("painel-tema", nx);
-      } catch (x) {}
-      return;
-    }
-    if (a === "pomo-start") {
-      pomoStart(
-        (document.getElementById("pomo-tag").value || "").trim(),
-        ((document.getElementById("pomo-intent") || {}).value || "").trim(),
-      );
-    } else if (a === "pomo-pause") {
-      pomoPause();
-    } else if (a === "pomo-plus") {
-      var r2 = S.pomoRun;
-      r2.dur += 300;
-      if (r2.end) r2.end += 300000;
-      else r2.left += 300;
-      msg = "+5 minutos";
-    } else if (a === "pomo-skip") {
-      pomoComplete(Date.now());
-      msg = "pausa pulada";
-    } else if (a === "pomo-stop") {
-      var r1 = S.pomoRun,
-        mins = Math.round((r1.dur - pomoRem(r1)) / 60);
-      if (mins >= 1) {
-        S.sessions.push({
-          id: uid(),
-          date: ds(new Date(r1.startedAt)),
-          min: mins,
-          tag: r1.tag,
-          note: r1.intent || "Pomodoro interrompido",
-        });
-        msg = "salvo: " + mins + " min";
-      } else msg = "menos de 1 min, nada salvo";
-      S.pomoRun = null;
-    } else if (a === "pomo-cancel") {
-      S.pomoRun = null;
-      msg = "foco descartado";
-    } else if (a === "preset") {
-      var P2 = S.pomo;
-      P2.focus = Number(b.dataset.f);
-      P2.short = Number(b.dataset.s);
-      P2.long = Number(b.dataset.l);
-      var tg2 = document.getElementById("pomo-tag");
-      if (tg2) P2.lastTag = tg2.value.trim();
-    } else if (a === "pick-tag") {
-      var ti = document.getElementById("pomo-tag");
-      if (ti) {
-        ti.value = b.dataset.t;
-        ti.focus();
-      }
-      return;
-    } else if (a === "rate") {
-      var n = Number(b.dataset.n);
-      S.sessions.forEach(function (x) {
-        if (x.id === S.pomo.rateId && n > 0) x.rate = n;
-      });
-      S.pomo.rateId = "";
-      if (n > 0) msg = "foco " + n + "/5 anotado";
-    } else if (a === "zen") {
-      zen = !zen;
-      render();
-      return;
-    } else if (a === "del") {
-      var k = b.dataset.k;
-      S[k] = S[k].filter(function (x) {
-        return x.id !== b.dataset.id;
-      });
-      if (k === "books")
-        S.readlog = S.readlog.filter(function (r) {
-          return r.bookId !== b.dataset.id;
-        });
-    } else if (a === "del-read") {
-      var en = S.readlog.find(function (r) {
-        return r.id === b.dataset.id;
-      });
-      if (en) {
-        S.books.forEach(function (bk) {
-          if (bk.id === en.bookId && bk.read === en.to) bk.read = en.from;
-        });
-        S.readlog = S.readlog.filter(function (r) {
-          return r.id !== en.id;
-        });
-        msg = "leitura desfeita";
-      }
-    } else if (a === "toggle") {
-      S.tasks.forEach(function (x) {
-        if (x.id === b.dataset.id) {
-          x.done = !x.done;
-          x.doneOn = x.done ? today() : "";
-        }
-      });
-    } else if (a === "hab-toggle") {
-      S.habits.forEach(function (h) {
-        if (h.id === b.dataset.id) {
-          if (h.days[b.dataset.d]) delete h.days[b.dataset.d];
-          else h.days[b.dataset.d] = 1;
-        }
-      });
-    } else if (a === "th-rev") {
-      S.themes.forEach(function (x) {
-        if (x.id === b.dataset.id) x.reviewed = true;
-      });
-      msg = "tema revisado";
-    } else if (a === "ms-toggle") {
-      S.goals.forEach(function (g) {
-        if (g.id === b.dataset.g)
-          g.ms.forEach(function (x) {
-            if (x.id === b.dataset.id) x.done = !x.done;
-          });
-      });
-    } else if (a === "ms-del") {
-      S.goals.forEach(function (g) {
-        if (g.id === b.dataset.g)
-          g.ms = g.ms.filter(function (x) {
-            return x.id !== b.dataset.id;
-          });
-      });
-    } else if (a === "fin-prev") {
-      finM = new Date(finM.getFullYear(), finM.getMonth() - 1, 1);
-    } else if (a === "fin-next") {
-      finM = new Date(finM.getFullYear(), finM.getMonth() + 1, 1);
-    } else if (a === "sel") {
-      selDay = b.dataset.d;
-      var d = pd(selDay);
-      if (d.getMonth() !== calM.getMonth())
-        calM = new Date(d.getFullYear(), d.getMonth(), 1);
-    } else if (a === "cal-prev") {
-      calM = new Date(calM.getFullYear(), calM.getMonth() - 1, 1);
-    } else if (a === "cal-next") {
-      calM = new Date(calM.getFullYear(), calM.getMonth() + 1, 1);
-    } else if (a === "clear-demo") {
-      LISTS.forEach(function (k) {
-        S[k] = S[k].filter(function (x) {
-          return !x.ex;
-        });
-      });
-      msg = "exemplos apagados";
-    } else if (a === "export") {
-      var backup = JSON.parse(JSON.stringify(S));
-      backup.lastBackup = today();
-
-      var blob = new Blob([JSON.stringify(backup, null, 2)], {
-        type: "application/json",
-      });
-      var l = document.createElement("a");
-      var url = URL.createObjectURL(blob);
-
-      l.href = url;
-      l.download = "painel-estudos-backup-" + today() + ".json";
-
-      document.body.appendChild(l);
-      l.click();
-      l.remove();
-
-      setTimeout(function () {
-        URL.revokeObjectURL(url);
-      }, 1500);
-
-      S.lastBackup = backup.lastBackup;
-      msg = "backup exportado";
-    } else if (a === "wipe") {
-      if (!wipeArm) {
-        wipeArm = 1;
-        render();
-        setTimeout(function () {
-          if (wipeArm) {
-            wipeArm = 0;
-            if (tab === "sistema") render();
-          }
-        }, 4000);
-        return;
-      }
-      wipeArm = 0;
-      var keep = S.name,
-        g = S.goalH;
-      S = normalize({ name: keep, goalH: g });
-      msg = "tudo apagado";
-    } else return;
-    commit(msg);
+  document.addEventListener("click", function (event) {
+    ActionController.handleClick(event);
   });
   document.addEventListener("submit", function (event) {
     FormController.submit(event).catch(function (error) {

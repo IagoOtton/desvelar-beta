@@ -1,0 +1,291 @@
+(function () {
+  "use strict";
+
+  function create(dependencies) {
+    var required = [
+      "getState",
+      "setState",
+      "getUiState",
+      "setUiState",
+      "uid",
+      "today",
+      "dateKey",
+      "parseDate",
+      "normalize",
+      "pomoRem",
+      "pomoStart",
+      "pomoPause",
+      "pomoComplete",
+      "render",
+      "commit",
+    ];
+
+    if (
+      !dependencies ||
+      required.some(function (key) {
+        return typeof dependencies[key] !== "function";
+      }) ||
+      !Array.isArray(dependencies.lists)
+    ) {
+      throw new Error("As dependências das ações não foram informadas.");
+    }
+
+    function handleClick(event) {
+      var button = event.target.closest("[data-a]");
+      if (!button) return;
+
+      var action = button.dataset.a;
+      var state = dependencies.getState();
+      var ui = dependencies.getUiState();
+      var message = "";
+
+      if (action !== "wipe") dependencies.setUiState({ wipeArm: 0 });
+
+      if (action === "tab") {
+        dependencies.setUiState({ tab: button.dataset.tab, zen: false });
+        dependencies.render();
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (action === "retry") {
+        dependencies.render();
+        return;
+      }
+      if (action === "theme") {
+        var currentTheme =
+            document.documentElement.getAttribute("data-theme") ||
+            (window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark"),
+          nextTheme = currentTheme === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", nextTheme);
+        try {
+          localStorage.setItem("painel-tema", nextTheme);
+        } catch (error) {}
+        return;
+      }
+
+      if (action === "pomo-start") {
+        dependencies.pomoStart(
+          (document.getElementById("pomo-tag").value || "").trim(),
+          ((document.getElementById("pomo-intent") || {}).value || "").trim(),
+        );
+      } else if (action === "pomo-pause") {
+        dependencies.pomoPause();
+      } else if (action === "pomo-plus") {
+        var activeRun = state.pomoRun;
+        activeRun.dur += 300;
+        if (activeRun.end) activeRun.end += 300000;
+        else activeRun.left += 300;
+        message = "+5 minutos";
+      } else if (action === "pomo-skip") {
+        dependencies.pomoComplete(Date.now());
+        message = "pausa pulada";
+      } else if (action === "pomo-stop") {
+        var stoppedRun = state.pomoRun;
+        var minutes = Math.round(
+          (stoppedRun.dur - dependencies.pomoRem(stoppedRun)) / 60,
+        );
+        if (minutes >= 1) {
+          state.sessions.push({
+            id: dependencies.uid(),
+            date: dependencies.dateKey(new Date(stoppedRun.startedAt)),
+            min: minutes,
+            tag: stoppedRun.tag,
+            note: stoppedRun.intent || "Pomodoro interrompido",
+          });
+          message = "salvo: " + minutes + " min";
+        } else {
+          message = "menos de 1 min, nada salvo";
+        }
+        state.pomoRun = null;
+      } else if (action === "pomo-cancel") {
+        state.pomoRun = null;
+        message = "foco descartado";
+      } else if (action === "preset") {
+        var settings = state.pomo;
+        settings.focus = Number(button.dataset.f);
+        settings.short = Number(button.dataset.s);
+        settings.long = Number(button.dataset.l);
+        var tagInput = document.getElementById("pomo-tag");
+        if (tagInput) settings.lastTag = tagInput.value.trim();
+      } else if (action === "pick-tag") {
+        var selectedTagInput = document.getElementById("pomo-tag");
+        if (selectedTagInput) {
+          selectedTagInput.value = button.dataset.t;
+          selectedTagInput.focus();
+        }
+        return;
+      } else if (action === "rate") {
+        var rating = Number(button.dataset.n);
+        state.sessions.forEach(function (session) {
+          if (session.id === state.pomo.rateId && rating > 0) {
+            session.rate = rating;
+          }
+        });
+        state.pomo.rateId = "";
+        if (rating > 0) message = "foco " + rating + "/5 anotado";
+      } else if (action === "zen") {
+        dependencies.setUiState({ zen: !ui.zen });
+        dependencies.render();
+        return;
+      } else if (action === "del") {
+        var collection = button.dataset.k;
+        state[collection] = state[collection].filter(function (item) {
+          return item.id !== button.dataset.id;
+        });
+        if (collection === "books") {
+          state.readlog = state.readlog.filter(function (record) {
+            return record.bookId !== button.dataset.id;
+          });
+        }
+      } else if (action === "del-read") {
+        var entry = state.readlog.find(function (record) {
+          return record.id === button.dataset.id;
+        });
+        if (entry) {
+          state.books.forEach(function (book) {
+            if (book.id === entry.bookId && book.read === entry.to) {
+              book.read = entry.from;
+            }
+          });
+          state.readlog = state.readlog.filter(function (record) {
+            return record.id !== entry.id;
+          });
+          message = "leitura desfeita";
+        }
+      } else if (action === "toggle") {
+        state.tasks.forEach(function (task) {
+          if (task.id === button.dataset.id) {
+            task.done = !task.done;
+            task.doneOn = task.done ? dependencies.today() : "";
+          }
+        });
+      } else if (action === "hab-toggle") {
+        state.habits.forEach(function (habit) {
+          if (habit.id === button.dataset.id) {
+            if (habit.days[button.dataset.d]) {
+              delete habit.days[button.dataset.d];
+            } else {
+              habit.days[button.dataset.d] = 1;
+            }
+          }
+        });
+      } else if (action === "th-rev") {
+        state.themes.forEach(function (theme) {
+          if (theme.id === button.dataset.id) theme.reviewed = true;
+        });
+        message = "tema revisado";
+      } else if (action === "ms-toggle") {
+        state.goals.forEach(function (goal) {
+          if (goal.id === button.dataset.g) {
+            goal.ms.forEach(function (milestone) {
+              if (milestone.id === button.dataset.id) {
+                milestone.done = !milestone.done;
+              }
+            });
+          }
+        });
+      } else if (action === "ms-del") {
+        state.goals.forEach(function (goal) {
+          if (goal.id === button.dataset.g) {
+            goal.ms = goal.ms.filter(function (milestone) {
+              return milestone.id !== button.dataset.id;
+            });
+          }
+        });
+      } else if (action === "fin-prev" || action === "fin-next") {
+        var monthOffset = action === "fin-prev" ? -1 : 1;
+        dependencies.setUiState({
+          finM: new Date(
+            ui.finM.getFullYear(),
+            ui.finM.getMonth() + monthOffset,
+            1,
+          ),
+        });
+      } else if (action === "sel") {
+        var selectedDay = button.dataset.d;
+        var selectedDate = dependencies.parseDate(selectedDay);
+        var updates = { selDay: selectedDay };
+        if (selectedDate.getMonth() !== ui.calM.getMonth()) {
+          updates.calM = new Date(
+            selectedDate.getFullYear(),
+            selectedDate.getMonth(),
+            1,
+          );
+        }
+        dependencies.setUiState(updates);
+      } else if (action === "cal-prev" || action === "cal-next") {
+        var calendarOffset = action === "cal-prev" ? -1 : 1;
+        dependencies.setUiState({
+          calM: new Date(
+            ui.calM.getFullYear(),
+            ui.calM.getMonth() + calendarOffset,
+            1,
+          ),
+        });
+      } else if (action === "clear-demo") {
+        dependencies.lists.forEach(function (key) {
+          state[key] = state[key].filter(function (item) {
+            return !item.ex;
+          });
+        });
+        message = "exemplos apagados";
+      } else if (action === "export") {
+        var backup = JSON.parse(JSON.stringify(state));
+        backup.lastBackup = dependencies.today();
+
+        var blob = new Blob([JSON.stringify(backup, null, 2)], {
+          type: "application/json",
+        });
+        var link = document.createElement("a");
+        var url = URL.createObjectURL(blob);
+
+        link.href = url;
+        link.download =
+          "painel-estudos-backup-" + dependencies.today() + ".json";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(function () {
+          URL.revokeObjectURL(url);
+        }, 1500);
+
+        state.lastBackup = backup.lastBackup;
+        message = "backup exportado";
+      } else if (action === "wipe") {
+        if (!ui.wipeArm) {
+          dependencies.setUiState({ wipeArm: 1 });
+          dependencies.render();
+          setTimeout(function () {
+            var currentUi = dependencies.getUiState();
+            if (currentUi.wipeArm) {
+              dependencies.setUiState({ wipeArm: 0 });
+              if (dependencies.getUiState().tab === "sistema") {
+                dependencies.render();
+              }
+            }
+          }, 4000);
+          return;
+        }
+        dependencies.setUiState({ wipeArm: 0 });
+        var name = state.name;
+        var weeklyGoal = state.goalH;
+        dependencies.setState(
+          dependencies.normalize({ name: name, goalH: weeklyGoal }),
+        );
+        message = "tudo apagado";
+      } else {
+        return;
+      }
+
+      dependencies.commit(message);
+    }
+
+    return Object.freeze({ handleClick: handleClick });
+  }
+
+  window.DesvelarActionController = Object.freeze({ create: create });
+})();
