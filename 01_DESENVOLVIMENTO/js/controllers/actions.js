@@ -7,6 +7,7 @@
       "setUiState",
       "setTheme",
       "verifyPassword",
+      "signOut",
       "toast",
       "uid",
       "today",
@@ -52,6 +53,25 @@
       if (action === "wipe-cancel") {
         dependencies.setUiState({ wipeArm: 0 });
         dependencies.render();
+        return;
+      }
+
+      if (action === "signout") {
+        var originalLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = "Salvando progresso…";
+        try {
+          var signedOut = await dependencies.signOut();
+          if (!signedOut) {
+            button.disabled = false;
+            button.textContent = originalLabel;
+          }
+        } catch (error) {
+          console.error("Erro ao sair da conta:", error);
+          button.disabled = false;
+          button.textContent = originalLabel;
+          dependencies.toast("Não foi possível sair da conta. Tente novamente.");
+        }
         return;
       }
 

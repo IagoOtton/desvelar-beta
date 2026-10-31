@@ -27,6 +27,7 @@
         '<div class="card"><h2>Sincronização</h2><p id="cloud-sync-status" role="status">' +
         dependencies.esc(dependencies.getCloudSyncStatus()) +
         '</p><p class="m">Use a mesma conta em cada dispositivo. Sem conexão, as alterações ficam guardadas neste navegador e tentam sincronizar quando a conexão voltar.</p></div>' +
+        '<div class="card"><h2>Conta</h2><p class="m">Sair encerra sua sessão sem apagar o progresso. O app tenta sincronizar antes de sair; se não conseguir, seus dados permanecem neste navegador.</p><button class="btn" data-a="signout">Sair da conta</button></div>' +
         '<div class="card"><h2>Perfil</h2><form class="row" data-form="profile"><label class="f grow">Seu nome<input id="p-name" class="grow" name="name" maxlength="30" value="' +
         dependencies.esc(state.name) +
         '" required></label>' +

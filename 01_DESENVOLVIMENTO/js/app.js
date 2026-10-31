@@ -58,6 +58,8 @@
   var cloudRepository = window.desvelarCloudData || null;
   var cloudSyncState = cloudBootstrap.error ? "error" : "syncing";
   var cloudSaveRequest = 0;
+  var cloudSyncPromise = Promise.resolve(false);
+  var cloudRetryPromise = Promise.resolve(false);
   var cloudErrorNotified = false;
   var cloudRetryTimer = 0;
   var cloudRetryDelay = 1000;
@@ -95,24 +97,24 @@
     if (!cloudRepository) {
       cloudSyncState = "error";
       updateCloudSyncStatus();
-      return;
+      return Promise.resolve(false);
     }
 
     if (cloudBootstrap.error) {
       cloudSyncState = "error";
       updateCloudSyncStatus();
       scheduleCloudRetry();
-      return;
+      return Promise.resolve(false);
     }
 
     var requestId = ++cloudSaveRequest;
     cloudSyncState = "syncing";
     updateCloudSyncStatus();
 
-    cloudRepository
+    return cloudRepository
       .save(state)
       .then(function (result) {
-        if (requestId !== cloudSaveRequest) return;
+        if (requestId !== cloudSaveRequest) return false;
 
         if (!result || !result.ok) {
           cloudSyncState = "error";
@@ -125,14 +127,14 @@
               "Os dados ficaram salvos neste dispositivo, mas não sincronizaram. Confira sua conexão e a tela Sistema.",
             );
           }
-          return;
+          return false;
         }
 
         if (!localData.finalizeCloudSync(result.data || state)) {
           cloudSyncState = "syncing";
           updateCloudSyncStatus();
           scheduleCloudRetry();
-          return;
+          return false;
         }
 
         cloudSyncState = "synced";
@@ -144,9 +146,10 @@
           cloudRetryTimer = 0;
         }
         updateCloudSyncStatus();
+        return true;
       })
       .catch(function (error) {
-        if (requestId !== cloudSaveRequest) return;
+        if (requestId !== cloudSaveRequest) return false;
         cloudSyncState = "error";
         updateCloudSyncStatus();
         console.error("Erro ao sincronizar os dados:", error);
@@ -157,6 +160,7 @@
             "Os dados ficaram salvos neste dispositivo, mas não sincronizaram. Confira sua conexão e a tela Sistema.",
           );
         }
+        return false;
       });
   }
 
@@ -193,7 +197,7 @@
     },
     save: function (state) {
       saveOk = localData.save(state);
-      if (saveOk) syncCloud(state);
+      if (saveOk) cloudSyncPromise = syncCloud(state);
       return saveOk;
     },
     normalize: normalize,
@@ -203,10 +207,11 @@
   });
 
   function retryCloudSync() {
-    if (cloudRetrying || !cloudRepository || !stateStore.getState()) return;
+    if (cloudRetrying) return cloudRetryPromise;
+    if (!cloudRepository || !stateStore.getState()) return Promise.resolve(false);
     if (navigator.onLine === false) {
       scheduleCloudRetry();
-      return;
+      return Promise.resolve(false);
     }
 
     cloudRetrying = true;
@@ -220,7 +225,7 @@
         ? cloudRepository.refresh()
         : cloudRepository.load();
 
-    refresh
+    var attempt = refresh
       .then(function (snapshot) {
         if (!snapshot || snapshot.error) {
           throw (snapshot && snapshot.error) || new Error("Falha ao reler os dados da conta.");
@@ -254,6 +259,10 @@
         if (!stateStore.replaceState(nextState)) {
           throw new Error("Não foi possível guardar o estado recuperado neste dispositivo.");
         }
+        return cloudSyncPromise;
+      })
+      .then(function (synced) {
+        return synced === true && !localData.hasPendingCloudSync();
       })
       .catch(function (error) {
         cloudBootstrap = {
@@ -266,11 +275,32 @@
         cloudSyncState = "error";
         updateCloudSyncStatus();
         console.error("Erro ao retomar a sincronização:", error);
+        return false;
       })
       .finally(function () {
         cloudRetrying = false;
         if (cloudSyncState === "error") scheduleCloudRetry();
       });
+    cloudRetryPromise = attempt;
+    return attempt;
+  }
+
+  async function flushCloudSync() {
+    if (!stateStore.persist()) return { saved: false, synced: false };
+
+    if (await cloudSyncPromise && !localData.hasPendingCloudSync()) {
+      return { saved: true, synced: true };
+    }
+
+    if (navigator.onLine === false) {
+      return { saved: true, synced: false };
+    }
+
+    var synced = await retryCloudSync();
+    return {
+      saved: true,
+      synced: synced === true && !localData.hasPendingCloudSync(),
+    };
   }
 
   function persist() {
@@ -1023,6 +1053,7 @@
     stateStore: stateStore,
     setTheme: applyTheme,
     verifyPassword: verifyAccountPassword,
+    signOut: signOutAccount,
     toast: toast,
     getUiState: function () {
       return {
@@ -1673,6 +1704,38 @@
         result.data.user &&
         result.data.user.id === window.desvelarUser.id,
     );
+  }
+
+  var signingOut = false;
+
+  async function signOutAccount() {
+    if (signingOut) return false;
+    signingOut = true;
+
+    try {
+      var saveResult = await flushCloudSync();
+      if (!saveResult.saved) {
+        toast("Não foi possível salvar neste navegador. Você continua conectado.");
+        return false;
+      }
+
+      if (
+        !saveResult.synced &&
+        !window.confirm(
+          "Não foi possível sincronizar agora. Seu progresso está salvo neste navegador e tentará sincronizar na próxima entrada. Sair mesmo assim?",
+        )
+      ) {
+        return false;
+      }
+
+      var result = await window.desvelarSupabase.auth.signOut();
+      if (result.error) throw result.error;
+
+      window.location.reload();
+      return true;
+    } finally {
+      signingOut = false;
+    }
   }
 
   /* ---------- pomodoro ---------- */
