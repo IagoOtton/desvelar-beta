@@ -1,0 +1,22 @@
+# DESVELAR — beta
+
+Uma versão de teste do DESVELAR para receber feedback de um pequeno grupo de pessoas.
+
+## Como testar
+
+1. Abra o link de beta compartilhado pelo responsável.
+2. Crie sua própria conta e confirme o e-mail.
+3. Explore as telas e use **Sistema → Enviar feedback** para relatar um problema ou sugerir uma melhoria.
+
+## Como os dados são tratados
+
+- Estudos, tarefas, hábitos, metas pessoais, rotina, agenda, leitura e finanças ficam no armazenamento local do navegador. Eles não sincronizam entre dispositivos e não são compartilhados com outras contas.
+- Use **Sistema → Exportar dados** para guardar uma cópia e evite registrar informações pessoais, médicas ou financeiras sensíveis durante o beta.
+- Contas e dados dos grupos são tratados pelo Supabase. O texto enviado pelo formulário de feedback também é salvo no Supabase e associado à conta que o enviou.
+- O código do aplicativo usa uma chave pública do Supabase. Ela não é uma senha; o acesso depende das políticas RLS do banco. Nunca coloque chaves `service_role` ou secret keys no frontend.
+
+## Configuração para publicar
+
+Veja [PUBLICAR_BETA.md](03_DOCUMENTACAO/PUBLICAR_BETA.md) para preparar o Supabase e publicar a versão em GitHub Pages.
+
+O workflow publica somente o aplicativo corrigido e seus arquivos `css/` e `js/` como site estático.

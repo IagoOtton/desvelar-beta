@@ -46,6 +46,23 @@
         dependencies.setUiState({ tab: button.dataset.tab, zen: false });
         dependencies.render();
         window.scrollTo(0, 0);
+        if (button.dataset.focus) {
+          var focusId = button.dataset.focus;
+          window.setTimeout(function () {
+            var target = document.getElementById(focusId);
+            if (!target) return;
+
+            target.focus({ preventScroll: true });
+            target.scrollIntoView({
+              behavior:
+                window.matchMedia &&
+                window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                  ? "auto"
+                  : "smooth",
+              block: "center",
+            });
+          }, 0);
+        }
         return;
       }
       if (action === "retry") {
@@ -178,6 +195,7 @@
               habit.days[button.dataset.d] = 1;
             }
           }
+
         });
       } else if (action === "th-rev") {
         state.themes.forEach(function (theme) {

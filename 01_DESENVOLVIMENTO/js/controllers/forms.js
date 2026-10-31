@@ -21,7 +21,9 @@
       !dependencies.groupRepository ||
       typeof dependencies.groupRepository.createGroup !== "function" ||
       typeof dependencies.groupRepository.joinGroup !== "function" ||
-      typeof dependencies.groupRepository.createSharedGoal !== "function"
+      typeof dependencies.groupRepository.createSharedGoal !== "function" ||
+      !dependencies.feedbackRepository ||
+      typeof dependencies.feedbackRepository.submit !== "function"
     ) {
       throw new Error("As dependências dos formulários não foram informadas.");
     }
@@ -31,9 +33,26 @@
       if (!form) return;
 
       event.preventDefault();
-      var state = dependencies.stateStore.createDraft();
       var kind = form.dataset.form;
       var values = Object.fromEntries(new FormData(form).entries());
+
+      if (kind === "feedback") {
+        var feedbackResult = await dependencies.feedbackRepository.submit({
+          category: values.category,
+          message: values.message,
+        });
+        if (feedbackResult.error) {
+          console.error("Erro ao enviar feedback:", feedbackResult.error);
+          dependencies.toast("Não foi possível enviar o feedback. Tente novamente.");
+          return;
+        }
+
+        form.reset();
+        dependencies.toast("Feedback enviado. Obrigado por ajudar no beta!");
+        return;
+      }
+
+      var state = dependencies.stateStore.createDraft();
       var message = "registrado";
       var tag = (values.tag || "").trim();
 

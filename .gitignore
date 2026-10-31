@@ -16,3 +16,6 @@ Thumbs.db
 
 # Backups locais
 02_BACKUPS/
+
+# Saída gerada para publicar o beta
+/dist-beta/

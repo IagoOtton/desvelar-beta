@@ -10,25 +10,28 @@
   if (bottom) bottom.style.display = "none";
 
   root.innerHTML = `
-    <section style="max-width:420px;margin:40px auto;padding:24px;font-family:Arial,sans-serif">
+    <section class="auth-panel">
+      <p class="auth-kicker">Beta entre amigos</p>
       <h1>DESVELAR</h1>
+      <p class="auth-lead">Estudos, hábitos e metas em um só lugar.</p>
       <h2 id="auth-title">Entrar</h2>
 
       <form id="auth-form">
         <label for="auth-email">E-mail</label>
-        <input id="auth-email" type="email" required autocomplete="email"
-          style="display:block;width:100%;box-sizing:border-box;margin:8px 0 16px;padding:12px">
+        <input id="auth-email" type="email" required autocomplete="email">
 
         <label for="auth-password">Senha</label>
         <input id="auth-password" type="password" required minlength="6"
-          autocomplete="current-password"
-          style="display:block;width:100%;box-sizing:border-box;margin:8px 0 16px;padding:12px">
+          autocomplete="current-password">
 
-        <button id="auth-submit" type="submit">Entrar</button>
+        <div class="auth-actions">
+          <button id="auth-submit" class="btn pri" type="submit">Entrar</button>
+          <button id="auth-toggle" class="btn sm" type="button">Criar uma conta</button>
+        </div>
       </form>
 
       <p id="auth-message" role="status"></p>
-      <button id="auth-toggle" type="button">Criar uma conta</button>
+      <p class="auth-note">Cada pessoa deve criar sua própria conta. Estudos, tarefas, hábitos, metas e finanças ficam salvos neste navegador e não sincronizam entre dispositivos. Grupos e feedback usam a nuvem. Evite registrar dados pessoais ou financeiros sensíveis.</p>
     </section>
   `;
 

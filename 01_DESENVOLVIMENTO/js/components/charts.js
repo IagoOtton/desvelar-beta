@@ -309,8 +309,12 @@
     }
 
     function kpi(label, value, d, series, note) {
+      var compact = String(value).length > 9;
+
       return (
-        '<div class="kpi"><span class="l">' +
+        '<div class="kpi' +
+        (compact ? ' compact' : '') +
+        '"><span class="l">' +
         F.esc(label) +
         '</span><span class="v">' +
         F.esc(value) +

@@ -37,7 +37,11 @@
         '<div class="rowflex"><button class="btn pri" data-a="export">Exportar dados</button><label class="btn" for="imp" style="cursor:pointer">Importar arquivo</label><input id="imp" type="file" accept=".json,application/json" hidden></div></div></div>' +
         '<div class="card"><h2>Limpeza</h2><div class="rowflex"><button class="btn" data-a="clear-demo">Apagar só os exemplos</button><button class="btn dng" data-a="wipe">' +
         (dependencies.getWipeArm() ? "Clique de novo para apagar TUDO" : "Apagar tudo") +
-        "</button></div></div>"
+        "</button></div></div>" +
+        '<div class="card"><h2>Enviar feedback</h2><p class="m">Conte o que ficou confuso, relate um erro ou sugira uma ideia. O feedback fica associado à sua conta e poderá ser lido pelo responsável do beta.</p>' +
+        '<form class="row" data-form="feedback"><label class="f">Tipo<select name="category" required><option value="usability">Uso e clareza</option><option value="bug">Erro</option><option value="idea">Ideia</option><option value="other">Outro</option></select></label>' +
+        '<label class="f grow">Mensagem<textarea id="feedback-message" class="grow" name="message" rows="4" minlength="10" maxlength="1500" required placeholder="O que você tentou fazer? O que aconteceu? O que esperava?"></textarea></label>' +
+        '<button class="btn pri" type="submit">Enviar feedback</button></form><p class="m">Não inclua senhas nem informações pessoais ou financeiras.</p></div>'
       );
     }
 

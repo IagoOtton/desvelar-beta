@@ -375,7 +375,9 @@
       })
       .slice(0, 7);
     if (!arr.length)
-      return '<p class="empty">Registre sessões e temas com tags para formar o seu mapa de conhecimento.</p>';
+      return (
+        '<div class="home-empty"><p class="empty">Registre uma sessão com tag para começar seu mapa de conhecimento.</p><button class="btn sm" data-a="tab" data-tab="estudo" data-focus="s-tag">Registrar sessão</button></div>'
+      );
     var rx = W * 0.3,
       ry = H * 0.29,
       n = arr.length,
@@ -810,6 +812,7 @@
     commit: commit,
     toast: toast,
     groupRepository: window.DesvelarGroupRepository,
+    feedbackRepository: window.DesvelarFeedbackRepository,
   });
   var BackupController = window.DesvelarBackupController.create({
     stateStore: stateStore,
@@ -868,6 +871,19 @@
     var groupGoalsHtml = await GroupViews.homeGroupGoals(
       window.desvelarUser.id,
     );
+    var emptyAction = function (message, label, targetTab, focusId) {
+      return (
+        '<div class="home-empty"><p class="empty">' +
+        esc(message) +
+        '</p><button class="btn sm" data-a="tab" data-tab="' +
+        esc(targetTab) +
+        '" data-focus="' +
+        esc(focusId) +
+        '">' +
+        esc(label) +
+        "</button></div>"
+      );
+    };
     var t = today(),
       ws = wkStart(t),
       we = addDays(ws, 6),
@@ -1027,7 +1043,12 @@
           })
           .join("") +
         "</div>"
-      : '<p class="empty">Registre uma sessão para ver a divisão por tag.</p>';
+      : emptyAction(
+          "Registre uma sessão para ver a divisão por tag.",
+          "Registrar sessão",
+          "estudo",
+          "s-tag",
+        );
     var evh = ev.length
       ? '<ul class="list">' +
         ev
@@ -1045,7 +1066,12 @@
           })
           .join("") +
         "</ul>"
-      : '<p class="empty">Nenhum compromisso à frente.</p>';
+      : emptyAction(
+          "Nenhum compromisso à frente.",
+          "Adicionar compromisso",
+          "agenda",
+          "e-title",
+        );
     var tkh = tk.length
       ? '<ul class="list">' +
         tk
@@ -1072,7 +1098,12 @@
           })
           .join("") +
         "</ul>"
-      : '<p class="empty">Nenhuma atividade pendente.</p>';
+      : emptyAction(
+          "Nenhuma atividade pendente.",
+          "Criar atividade",
+          "tarefas",
+          "k-title",
+        );
     var att = [],
       weak = accByTag().filter(function (r) {
         return r.t >= 10 && r.c / r.t < 0.7;
@@ -1102,6 +1133,15 @@
     }).length;
     if (nrev)
       att.push("<b>" + nrev + "</b> tema(s) difícil(is) esperando revisão.");
+    var attention = att.length
+      ? '<div class="card"><h2>Pontos de atenção</h2><div style="display:flex;flex-direction:column;gap:8px">' +
+        att
+          .map(function (a) {
+            return '<div class="note">' + a + "</div>";
+          })
+          .join("") +
+        "</div></div>"
+      : "";
     var dow = (new Date().getDay() + 6) % 7,
       nowHM = pad(h) + ":" + pad(new Date().getMinutes());
     var rt = S.routine
@@ -1130,7 +1170,12 @@
           })
           .join("") +
         "</ul>"
-      : '<p class="empty">Nada fixo na rotina de hoje.</p>';
+      : emptyAction(
+          "Nada fixo na rotina de hoje.",
+          "Montar rotina",
+          "rotina",
+          "ro-title",
+        );
     var hbh = S.habits.length
       ? '<ul class="list">' +
         S.habits
@@ -1154,7 +1199,12 @@
           })
           .join("") +
         "</ul>"
-      : '<p class="empty">Cadastre hábitos na aba Hábitos.</p>';
+      : emptyAction(
+          "Nenhum hábito cadastrado.",
+          "Criar hábito",
+          "habitos",
+          "h-name",
+        );
     var gl = S.goals
       .filter(function (g) {
         return gprog(g) < 100;
@@ -1177,7 +1227,12 @@
             );
           })
           .join("")
-      : '<p class="empty">Nenhuma meta em andamento.</p>';
+      : emptyAction(
+          "Nenhuma meta em andamento.",
+          "Criar meta",
+          "metas",
+          "go-title",
+        );
     return (
       head(
         hi + ", " + S.name,
@@ -1188,6 +1243,21 @@
           fmtD(ws),
       ) +
       kpis +
+      '<div class="today-grid"><div class="card"><h2>Atividades pendentes</h2>' +
+      tkh +
+      '</div><div class="card"><h2>Próximos compromissos</h2>' +
+      evh +
+      "</div>" +
+      timer +
+      attention +
+      '</div><div class="grid"><div class="card"><h2>Rotina de hoje</h2>' +
+      rth +
+      '</div><div class="card"><h2>Hábitos de hoje</h2>' +
+      hbh +
+      '</div><div class="card"><h2>Metas em andamento</h2>' +
+      glh +
+      "</div></div>" +
+      groupGoalsHtml +
       '<div class="grid2"><div class="card"><h2>Horas por dia · 30 dias</h2>' +
       areaChart(d30, l30, {
         H: 300,
@@ -1202,37 +1272,13 @@
       ' <span class="m">de ' +
       esc(S.goalH) +
       'h</span></div><div class="m">estudado nesta semana</div></div></div>' +
-      timer +
       "</div></div>" +
       '<div class="grid"><div class="card"><h2>Horas por tag · semana</h2><div class="donut">' +
       donut(segs, fmtM(tot), "na semana") +
       leg +
       '</div></div><div class="card"><h2>Mapa de conhecimento</h2>' +
       brainGraph(280) +
-      "</div></div>" +
-      '<div class="grid"><div class="card"><h2>Rotina de hoje</h2>' +
-      rth +
-      '</div><div class="card"><h2>Hábitos de hoje</h2>' +
-      hbh +
-      '</div><div class="card"><h2>Metas em andamento</h2>' +
-      glh +
-      "</div></div>" +
-      groupGoalsHtml +
-      '<div class="grid"><div class="card"><h2>Próximos compromissos</h2>' +
-      evh +
-      '</div><div class="card"><h2>Atividades pendentes</h2>' +
-      tkh +
-      "</div>" +
-      (att.length
-        ? '<div class="card"><h2>Pontos de atenção</h2><div style="display:flex;flex-direction:column;gap:8px">' +
-          att
-            .map(function (a) {
-              return '<div class="note">' + a + "</div>";
-            })
-            .join("") +
-          "</div></div>"
-        : "") +
-      "</div>"
+      "</div></div>"
     );
   }
   function phaseName(r) {

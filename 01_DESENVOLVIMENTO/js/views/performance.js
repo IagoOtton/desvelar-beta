@@ -24,6 +24,19 @@
     })) {
       throw new Error("As dependências da tela Desempenho não foram informadas.");
     }
+    function emptyAction(message, label, targetTab, focusId) {
+      return (
+        '<div class="home-empty"><p class="empty">' +
+        dependencies.esc(message) +
+        '</p><button class="btn sm" data-a="tab" data-tab="' +
+        dependencies.esc(targetTab) +
+        '" data-focus="' +
+        dependencies.esc(focusId) +
+        '">' +
+        dependencies.esc(label) +
+        "</button></div>"
+      );
+    }
     function performancePage() {
       var state = dependencies.getState();
       var t = dependencies.today(),
@@ -80,7 +93,12 @@
                 );
               })
               .join("")
-          : '<p class="empty">Sem sessões nos últimos 30 dias.</p>') +
+          : emptyAction(
+              "Sem sessões nos últimos 30 dias.",
+              "Registrar sessão",
+              "estudo",
+              "s-tag",
+            )) +
         "</div></div>" +
         '<div class="grid"><div class="card"><h2>Acerto por tag</h2>' +
         (acc.length
@@ -100,7 +118,12 @@
                 );
               })
               .join("")
-          : '<p class="empty">Registre questões para ver o acerto por tag.</p>') +
+          : emptyAction(
+              "Registre questões para ver o acerto por tag.",
+              "Registrar questões",
+              "desempenho",
+              "q-tag",
+            )) +
         "</div>" +
         '<div class="card"><h2>Registrar questões</h2><form class="row" data-form="question"><label class="f grow">Tag' +
         dependencies.tagInput("q-tag", "ex.: Fisiologia") +
