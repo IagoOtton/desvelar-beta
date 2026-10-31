@@ -21,8 +21,12 @@
         <input id="auth-email" type="email" required autocomplete="email">
 
         <label for="auth-password">Senha</label>
-        <input id="auth-password" type="password" required minlength="6"
-          autocomplete="current-password">
+        <div class="password-field">
+          <input id="auth-password" type="password" required minlength="6"
+            autocomplete="current-password" aria-describedby="auth-message">
+          <button class="password-toggle" type="button" data-password-toggle="auth-password"
+            aria-label="Mostrar senha" aria-controls="auth-password" aria-pressed="false">Mostrar</button>
+        </div>
 
         <div class="auth-actions">
           <button id="auth-submit" class="btn pri" type="submit">Entrar</button>
@@ -43,11 +47,19 @@
 
       <form id="password-recovery-form" hidden>
         <label for="new-password">Nova senha</label>
-        <input id="new-password" type="password" required minlength="6"
-          autocomplete="new-password">
+        <div class="password-field">
+          <input id="new-password" type="password" required minlength="6"
+            autocomplete="new-password">
+          <button class="password-toggle" type="button" data-password-toggle="new-password"
+            aria-label="Mostrar senha" aria-controls="new-password" aria-pressed="false">Mostrar</button>
+        </div>
         <label for="confirm-password">Confirme a nova senha</label>
-        <input id="confirm-password" type="password" required minlength="6"
-          autocomplete="new-password">
+        <div class="password-field">
+          <input id="confirm-password" type="password" required minlength="6"
+            autocomplete="new-password">
+          <button class="password-toggle" type="button" data-password-toggle="confirm-password"
+            aria-label="Mostrar senha" aria-controls="confirm-password" aria-pressed="false">Mostrar</button>
+        </div>
         <button id="password-recovery-submit" class="btn pri" type="submit">Salvar nova senha</button>
       </form>
 
@@ -59,6 +71,7 @@
   var isSignUp = false;
   var form = document.getElementById("auth-form");
   var message = document.getElementById("auth-message");
+  var loginPassword = document.getElementById("auth-password");
   var title = document.getElementById("auth-title");
   var submit = document.getElementById("auth-submit");
   var toggle = document.getElementById("auth-toggle");
@@ -106,7 +119,24 @@
           : mode === "recovery"
             ? "Definir nova senha"
             : "Entrar";
-    message.textContent = text || "";
+    form.classList.remove("auth-form--error");
+    loginPassword.removeAttribute("aria-invalid");
+    setAuthMessage(text || "", "info");
+  }
+
+  function setAuthMessage(text, type) {
+    message.textContent = text;
+    message.classList.toggle("auth-message--error", type === "error");
+    message.setAttribute("role", type === "error" ? "alert" : "status");
+    message.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+  }
+
+  function isInvalidCredentials(error) {
+    if (!error) return false;
+    return (
+      error.code === "invalid_credentials" ||
+      /invalid login credentials/i.test(error.message || "")
+    );
   }
 
   function cleanRecoveryUrl() {
@@ -185,6 +215,31 @@
     submit.textContent = isSignUp ? "Cadastrar" : "Entrar";
     toggle.textContent = isSignUp ? "Já tenho uma conta" : "Criar uma conta";
     setAuthMode(isSignUp ? "signup" : "login");
+  });
+
+  form.addEventListener("input", function (event) {
+    if (event.target.id !== "auth-email" && event.target.id !== "auth-password") {
+      return;
+    }
+    if (!form.classList.contains("auth-form--error")) return;
+
+    form.classList.remove("auth-form--error");
+    loginPassword.removeAttribute("aria-invalid");
+    setAuthMessage("", "info");
+  });
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-password-toggle]");
+    if (!button) return;
+
+    var input = document.getElementById(button.dataset.passwordToggle);
+    if (!input) return;
+
+    var visible = input.type === "password";
+    input.type = visible ? "text" : "password";
+    button.textContent = visible ? "Ocultar" : "Mostrar";
+    button.setAttribute("aria-label", visible ? "Ocultar senha" : "Mostrar senha");
+    button.setAttribute("aria-pressed", String(visible));
   });
 
   forgot.addEventListener("click", function () {
@@ -267,7 +322,9 @@
 
     submit.disabled = true;
     toggle.disabled = true;
-    message.textContent = "Aguarde…";
+    form.classList.remove("auth-form--error");
+    loginPassword.removeAttribute("aria-invalid");
+    setAuthMessage("Aguarde…", "info");
 
     var email = document.getElementById("auth-email").value.trim();
     var password = document.getElementById("auth-password").value;
@@ -287,7 +344,18 @@
           });
 
       if (result.error) {
-        message.textContent = result.error.message;
+        if (!isSignUp && isInvalidCredentials(result.error)) {
+          loginPassword.value = "";
+          loginPassword.setAttribute("aria-invalid", "true");
+          form.classList.add("auth-form--error");
+          setAuthMessage(
+            "E-mail ou senha incorretos. Confira os dados e tente novamente.",
+            "error",
+          );
+          loginPassword.focus();
+        } else {
+          setAuthMessage(result.error.message, "error");
+        }
       } else if (isSignUp) {
         message.textContent =
           "Cadastro enviado. Confira seu e-mail para confirmar a conta.";
@@ -295,10 +363,12 @@
         startApp(result.data.user);
       }
     } catch (error) {
-      message.textContent =
+      setAuthMessage(
         error && error.message
           ? error.message
-          : "Não foi possível autenticar. Tente novamente.";
+          : "Não foi possível autenticar. Tente novamente.",
+        "error",
+      );
     } finally {
       submit.disabled = false;
       toggle.disabled = false;

@@ -37,7 +37,7 @@
         '<div class="rowflex" style="margin-top:14px"><span class="m">Aparência</span><button class="btn sm" data-a="theme">Alternar claro/escuro</button></div></div>' +
         '<div class="card"><h2>Limpeza</h2><p class="m">Apagar tudo remove seu progresso da conta e dos outros dispositivos.</p>' +
         (dependencies.getWipeArm()
-          ? '<div class="rowflex"><label class="f">Confirme sua senha<input id="wipe-password" type="password" autocomplete="current-password" required></label><button class="btn dng" data-a="wipe-confirm">Confirmar e apagar tudo</button><button class="btn sm" data-a="wipe-cancel">Cancelar</button></div>'
+          ? '<div class="rowflex"><label class="f">Confirme sua senha<div class="password-field"><input id="wipe-password" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle="wipe-password" aria-label="Mostrar senha" aria-controls="wipe-password" aria-pressed="false">Mostrar</button></div></label><button class="btn dng" data-a="wipe-confirm">Confirmar e apagar tudo</button><button class="btn sm" data-a="wipe-cancel">Cancelar</button></div>'
           : '<div class="rowflex"><button class="btn" data-a="clear-demo">Apagar só os exemplos</button><button class="btn dng" data-a="wipe">Apagar tudo</button></div>') +
         "</div>" +
         '<div class="card"><h2>Enviar feedback</h2><p class="m">Conte o que ficou confuso, relate um erro ou sugira uma ideia. O feedback fica associado à sua conta e poderá ser lido pelo responsável do beta.</p>' +
