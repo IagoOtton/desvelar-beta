@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
+const vm = require("node:vm");
 const { after, before, test } = require("node:test");
 const { chromium } = require("playwright");
 
@@ -198,6 +199,58 @@ async function waitForApp(page) {
   await page.locator(".shell").waitFor({ state: "visible", timeout: 10_000 });
   await page.locator("#view h1").waitFor({ state: "visible", timeout: 10_000 });
 }
+
+test("gerencia transições do Pomodoro no domínio", () => {
+  const context = { window: {} };
+  const source = fs.readFileSync(
+    path.join(APP_ROOT, "js/domain/pomodoro.js"),
+    "utf8",
+  );
+  vm.runInNewContext(source, context);
+
+  const domain = context.window.DesvelarPomodoroDomain.create({
+    uid: () => "session-1",
+    dateKey: () => "1970-01-01",
+  });
+  const state = {
+    pomo: {
+      focus: 25,
+      short: 5,
+      long: 15,
+      cycle: 1,
+      every: 4,
+      rateId: "",
+      lastTag: "",
+    },
+    pomoRun: null,
+    sessions: [],
+  };
+
+  domain.start(state, "Biologia", "Revisar células", 1_000);
+  assert.equal(state.pomoRun.end, 1_501_000);
+  domain.pause(state, 6_000);
+  assert.equal(state.pomoRun.left, 1_495);
+  domain.pause(state, 8_000);
+  assert.equal(state.pomoRun.end, 1_503_000);
+
+  domain.complete(state, 1_503_000);
+  assert.equal(domain.phaseName(state.pomoRun), "Pausa curta");
+  assert.deepEqual(JSON.parse(JSON.stringify(state.sessions)), [
+    {
+      id: "session-1",
+      date: "1970-01-01",
+      min: 25,
+      tag: "Biologia",
+      note: "Revisar células",
+      pomo: 1,
+    },
+  ]);
+  assert.equal(state.pomo.rateId, "session-1");
+
+  domain.complete(state, state.pomoRun.end);
+  assert.equal(state.pomoRun, null);
+  assert.equal(state.pomo.cycle, 2);
+});
 
 test("autentica o usuário e abre o aplicativo", async () => {
   const { context, page } = await openApp({ authenticated: false });

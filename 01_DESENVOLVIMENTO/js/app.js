@@ -38,6 +38,10 @@
   var TAGGED = DataModel.TAGGED;
   var normalize = DataModel.normalize;
   var mergeLegacyData = DataModel.mergeLegacyData;
+  var PomodoroDomain = window.DesvelarPomodoroDomain.create({
+    uid: uid,
+    dateKey: ds,
+  });
   var PC = 2 * Math.PI * 118,
     zen = false;
   var finM = new Date();
@@ -1169,16 +1173,10 @@
     );
   }
   function phaseName(r) {
-    return !r
-      ? "Pronto para focar"
-      : r.phase === "focus"
-        ? "Foco"
-        : r.phase === "short"
-          ? "Pausa curta"
-          : "Pausa longa";
+    return PomodoroDomain.phaseName(r);
   }
   function pomoRem(r) {
-    return r.end ? Math.max(0, Math.ceil((r.end - Date.now()) / 1000)) : r.left;
+    return PomodoroDomain.remaining(r, Date.now());
   }
   function fmtClock(sec) {
     return pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
@@ -1332,60 +1330,17 @@
 
   /* ---------- pomodoro ---------- */
   function pomoComplete(atMs) {
-    var r = S.pomoRun,
-      P = S.pomo;
-    if (r.phase === "focus") {
-      var sid = uid();
-      S.sessions.push({
-        id: sid,
-        date: ds(new Date(r.startedAt)),
-        min: Math.round(r.dur / 60),
-        tag: r.tag,
-        note: r.intent || "Pomodoro",
-        pomo: 1,
-      });
-      P.rateId = sid;
-      var lg = P.cycle >= P.every,
-        d = (lg ? P.long : P.short) * 60;
-      S.pomoRun = {
-        phase: lg ? "long" : "short",
-        tag: r.tag,
-        intent: r.intent || "",
-        dur: d,
-        end: atMs + d * 1000,
-        startedAt: atMs,
-      };
-    } else {
-      P.cycle = r.phase === "long" ? 1 : P.cycle + 1;
-      S.pomoRun = null;
-    }
+    PomodoroDomain.complete(S, atMs);
   }
   function pomoStart(tag, intent) {
-    var P = S.pomo,
-      n = Date.now();
-    P.lastTag = tag;
-    S.pomoRun = {
-      phase: "focus",
-      tag: tag,
-      intent: intent,
-      dur: P.focus * 60,
-      end: n + P.focus * 60000,
-      startedAt: n,
-    };
+    PomodoroDomain.start(S, tag, intent, Date.now());
     try {
       if (window.Notification && Notification.permission === "default")
         Notification.requestPermission();
     } catch (x) {}
   }
   function pomoPause() {
-    var r = S.pomoRun;
-    if (r.end) {
-      r.left = pomoRem(r);
-      r.end = null;
-    } else {
-      r.end = Date.now() + r.left * 1000;
-      r.left = null;
-    }
+    PomodoroDomain.pause(S, Date.now());
   }
   function beep() {
     try {
