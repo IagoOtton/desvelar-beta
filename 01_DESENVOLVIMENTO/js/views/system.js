@@ -12,13 +12,50 @@
       !dependencies ||
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
-      })
+      }) ||
+      !Array.isArray(dependencies.modules)
     ) {
       throw new Error("As dependências da tela Sistema não foram informadas.");
     }
 
     function systemPage() {
       var state = dependencies.getState();
+      var moduleGroups = {};
+      dependencies.modules.forEach(function (module) {
+        var group = module.group || "Outros";
+        moduleGroups[group] = moduleGroups[group] || [];
+        moduleGroups[group].push(module);
+      });
+
+      var moduleSettingsHtml = Object.keys(moduleGroups)
+        .map(function (group) {
+          return (
+            '<section class="module-group"><h3>' +
+            dependencies.esc(group) +
+            '</h3><div class="module-options">' +
+            moduleGroups[group]
+              .map(function (module) {
+                var enabled = state.enabledTabs[module.id] !== false;
+                return (
+                  '<label class="module-option"><span class="module-option-copy"><strong>' +
+                  dependencies.esc(module.name) +
+                  "</strong><small>" +
+                  dependencies.esc(module.description || "") +
+                  '</small></span><input type="checkbox" data-a="module-toggle" data-module="' +
+                  dependencies.esc(module.id) +
+                  '" aria-label="Ativar ' +
+                  dependencies.esc(module.name) +
+                  '"' +
+                  (enabled ? " checked" : "") +
+                  "></label>"
+                );
+              })
+              .join("") +
+            "</div></section>"
+          );
+        })
+        .join("");
+
       return (
         dependencies.head(
           "Sistema",
@@ -35,6 +72,10 @@
         dependencies.esc(state.goalH) +
         '" required></label><button class="btn pri" type="submit">Salvar</button></form>' +
         '<div class="rowflex" style="margin-top:14px"><span class="m">Aparência</span><button class="btn sm" data-a="theme">Alternar claro/escuro</button></div></div>' +
+        '<div class="card"><h2>Personalizar abas</h2><p class="m">Ative as áreas que você quer ver na navegação. Desativar uma aba não apaga seus dados; você pode reativá-la aqui. Início e Sistema permanecem disponíveis.</p>' +
+        '<div class="module-groups">' +
+        moduleSettingsHtml +
+        "</div></div>" +
         '<div class="card"><h2>Limpeza</h2><p class="m">Apagar tudo remove seu progresso da conta e dos outros dispositivos.</p>' +
         (dependencies.getWipeArm()
           ? '<div class="rowflex"><label class="f">Confirme sua senha<div class="password-field"><input id="wipe-password" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle="wipe-password" aria-label="Mostrar senha" aria-controls="wipe-password" aria-pressed="false">Mostrar</button></div></label><button class="btn dng" data-a="wipe-confirm">Confirmar e apagar tudo</button><button class="btn sm" data-a="wipe-cancel">Cancelar</button></div>'
@@ -53,3 +94,4 @@
   }
   window.DesvelarSystemViews = Object.freeze({ create: create });
 })();
+

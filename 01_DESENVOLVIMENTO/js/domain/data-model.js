@@ -21,6 +21,20 @@
     "goals",
     "routine",
   ];
+  var MODULE_IDS = [
+    "foco",
+    "estudo",
+    "temas",
+    "leitura",
+    "desempenho",
+    "agenda",
+    "tarefas",
+    "rotina",
+    "habitos",
+    "metas",
+    "financas",
+    "grupos",
+  ];
   var TAGGED = [
     "sessions",
     "books",
@@ -412,6 +426,19 @@
       : fallback;
   }
 
+  function normalizeEnabledTabs(value) {
+    var source =
+      value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    var enabledTabs = {};
+
+    MODULE_IDS.forEach(function (id) {
+      enabledTabs[id] =
+        typeof source[id] === "boolean" ? source[id] : true;
+    });
+
+    return enabledTabs;
+  }
+
   function normalize(o) {
     // Primeiro acesso: inicializa com os dados demonstrativos.
     if (o === null) o = demo();
@@ -480,6 +507,8 @@
       delete o.theme;
     }
 
+    o.enabledTabs = normalizeEnabledTabs(o.enabledTabs);
+
     // Valida e prepara as configurações do Pomodoro.
     if (o.pomo === undefined || o.pomo === null) {
       o.pomo = {};
@@ -517,7 +546,7 @@
     if (!o.name) o.name = "Iago";
     delete o.lastBackup;
 
-    o.v = 4;
+    o.v = 5;
 
     return o;
   }
@@ -571,6 +600,18 @@
     if (current.pomoRun == null && legacy.pomoRun != null) {
       merged.pomoRun = legacy.pomoRun;
     }
+
+    var currentEnabledTabs = current.enabledTabs || {};
+    var legacyEnabledTabs = legacy.enabledTabs || {};
+    merged.enabledTabs = Object.assign({}, currentEnabledTabs);
+    MODULE_IDS.forEach(function (id) {
+      if (
+        currentEnabledTabs[id] === true &&
+        legacyEnabledTabs[id] === false
+      ) {
+        merged.enabledTabs[id] = false;
+      }
+    });
 
     return merged;
   }
@@ -696,6 +737,7 @@
 
   window.DesvelarDataModel = Object.freeze({
     LISTS: Object.freeze(LISTS.slice()),
+    MODULE_IDS: Object.freeze(MODULE_IDS.slice()),
     TAGGED: Object.freeze(TAGGED.slice()),
     OLD: Object.freeze(Object.assign({}, OLD)),
     demo: demo,
@@ -704,3 +746,4 @@
     mergeForSync: mergeForSync,
   });
 })();
+

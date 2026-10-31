@@ -19,6 +19,7 @@
       "pomoComplete",
       "render",
       "commit",
+      "isTabEnabled",
     ];
 
     if (
@@ -29,7 +30,8 @@
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
       }) ||
-      !Array.isArray(dependencies.lists)
+      !Array.isArray(dependencies.lists) ||
+      !Array.isArray(dependencies.moduleIds)
     ) {
       throw new Error("As dependências das ações não foram informadas.");
     }
@@ -76,6 +78,12 @@
       }
 
       if (action === "tab") {
+        if (!dependencies.isTabEnabled(button.dataset.tab)) {
+          dependencies.toast(
+            "Essa aba está desativada. Você pode reativá-la em Sistema.",
+          );
+          return;
+        }
         dependencies.setUiState({ tab: button.dataset.tab, zen: false });
         dependencies.render();
         window.scrollTo(0, 0);
@@ -125,6 +133,26 @@
 
         dependencies.setTheme(nextTheme);
         dependencies.commit("", true);
+        return;
+      }
+
+      if (action === "module-toggle") {
+        var moduleId = button.dataset.module;
+        if (dependencies.moduleIds.indexOf(moduleId) === -1) return;
+
+        var moduleState = dependencies.stateStore.createDraft();
+        moduleState.enabledTabs = moduleState.enabledTabs || {};
+        moduleState.enabledTabs[moduleId] = button.checked === true;
+        var moduleSaved = dependencies.stateStore.saveDraft(moduleState);
+        if (!moduleSaved) {
+          dependencies.commit("", false);
+          return;
+        }
+
+        dependencies.commit(
+          button.checked ? "Aba ativada" : "Aba desativada",
+          true,
+        );
         return;
       }
 
@@ -335,7 +363,13 @@
         var name = state.name;
         var weeklyGoal = state.goalH;
         var theme = state.theme;
-        state = { name: name, goalH: weeklyGoal, theme: theme };
+        var enabledTabs = state.enabledTabs;
+        state = {
+          name: name,
+          goalH: weeklyGoal,
+          theme: theme,
+          enabledTabs: enabledTabs,
+        };
         message = "tudo apagado";
       } else {
         return;
@@ -350,3 +384,4 @@
 
   window.DesvelarActionController = Object.freeze({ create: create });
 })();
+

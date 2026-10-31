@@ -591,8 +591,41 @@
   }
 
   function navHtml(heads) {
-    return N.render(TABS, tab, heads);
+    var state = stateStore.getState();
+    var enabledTabs = state ? state.enabledTabs || {} : {};
+    var visibleTabs = TABS.filter(function (item) {
+      return (
+        DataModel.MODULE_IDS.indexOf(item[0]) === -1 ||
+        enabledTabs[item[0]] !== false
+      );
+    });
+    return N.render(visibleTabs, tab, heads);
   }
+
+  var MODULE_DESCRIPTIONS = {
+    foco: "Pomodoro, pausas e sessões de foco.",
+    estudo: "Registros de estudo e resolução de questões.",
+    temas: "Conteúdos estudados e revisões de temas difíceis.",
+    leitura: "Livros, páginas lidas e histórico de leitura.",
+    desempenho: "Gráficos e indicadores do seu progresso.",
+    agenda: "Compromissos e calendário.",
+    tarefas: "Atividades pendentes e prazos.",
+    rotina: "Horários recorrentes da sua semana.",
+    habitos: "Acompanhamento dos hábitos diários.",
+    metas: "Objetivos e etapas para avançar.",
+    financas: "Lançamentos, categorias e saldo.",
+    grupos: "Metas compartilhadas com outras pessoas.",
+  };
+  var SYSTEM_MODULES = TABS.filter(function (item) {
+    return DataModel.MODULE_IDS.indexOf(item[0]) !== -1;
+  }).map(function (item) {
+    return {
+      id: item[0],
+      name: item[1],
+      group: item[3],
+      description: MODULE_DESCRIPTIONS[item[0]] || "",
+    };
+  });
 
   var LOGO =
     '<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs><path d="M3.5 16Q16 5 28.5 16Q16 27 3.5 16Z" fill="none" stroke="url(#lg)" stroke-width="2"/><circle cx="16" cy="16" r="4.6" fill="url(#lg)"/><circle cx="17.6" cy="14.4" r="1.2" fill="var(--bg)"/></svg>';
@@ -724,6 +757,7 @@
     },
     head: head,
     esc: esc,
+    modules: SYSTEM_MODULES,
   });
   var AgendaViews = window.DesvelarAgendaViews.create({
     getState: stateStore.getState,
@@ -800,6 +834,13 @@
     pomoComplete: pomoComplete,
     render: render,
     commit: commit,
+    moduleIds: DataModel.MODULE_IDS,
+    isTabEnabled: function (tabId) {
+      if (tabId === "inicio" || tabId === "sistema") return true;
+      if (DataModel.MODULE_IDS.indexOf(tabId) === -1) return false;
+      var state = stateStore.getState();
+      return !state || !state.enabledTabs || state.enabledTabs[tabId] !== false;
+    },
   });
 
   async function vInicio() {
