@@ -690,7 +690,7 @@
     return "hsl(" + h + " 72% var(--tl))";
   }
   function chip(t) {
-    return Common.chip(tcolor(t), esc(tlabel(t)));
+    return Common.chip(tcolor(t), tlabel(t));
   }
 
   function tagInput(id, ph, req) {
@@ -895,13 +895,13 @@
       .map(function (i) {
         return (
           '<span class="tkp"><b>' +
-          i[0] +
+          esc(i[0]) +
           "</b>" +
-          i[1] +
+          esc(i[1]) +
           ' <span class="' +
-          i[2].c +
+          esc(i[2].c) +
           '">' +
-          i[2].t +
+          esc(i[2].t) +
           "</span></span>"
         );
       })
@@ -1014,7 +1014,7 @@
           '"><title>' +
           esc(x.title) +
           " · dificuldade " +
-          x.diff +
+          esc(x.diff) +
           "/5" +
           (x.reviewed ? " · revisado" : "") +
           "</title></circle>";
@@ -1111,9 +1111,9 @@
       '"><svg viewBox="0 0 150 150" aria-hidden="true">' +
       s +
       '</svg><div class="c"><b>' +
-      center +
+      esc(center) +
       "</b><span>" +
-      sub +
+      esc(sub) +
       "</span></div></div>"
     );
   }
@@ -1485,7 +1485,7 @@
             var lt = x.due && x.due < t;
             return (
               '<li><button class="check" data-a="toggle" data-id="' +
-              x.id +
+              esc(x.id) +
               '" aria-label="Concluir"></button><span class="t">' +
               esc(x.title) +
               '<div class="m">' +
@@ -1549,13 +1549,13 @@
             var on = x.start <= nowHM && nowHM < x.end;
             return (
               '<li><span class="m num">' +
-              x.start +
+              esc(x.start) +
               '</span><span class="t">' +
               esc(x.title) +
               (on ? ' <span class="badge">agora</span>' : "") +
               (x.tag ? '<div class="m">' + chip(x.tag) + "</div>" : "") +
               '</span><span class="m num">' +
-              x.end +
+              esc(x.end) +
               "</span></li>"
             );
           })
@@ -1573,7 +1573,7 @@
               '"><button class="check' +
               (d ? " on" : "") +
               '" data-a="hab-toggle" data-id="' +
-              x.id +
+              esc(x.id) +
               '" data-d="' +
               t +
               '" aria-label="Marcar hábito">' +
@@ -1611,7 +1611,7 @@
       : '<p class="empty">Nenhuma meta em andamento.</p>';
     return (
       head(
-        hi + ", " + esc(S.name),
+        hi + ", " + S.name,
         pd(t).getDate() +
           " de " +
           MES[pd(t).getMonth()] +
@@ -1631,7 +1631,7 @@
       '<div><div class="big num">' +
       fmtM(wk) +
       ' <span class="m">de ' +
-      S.goalH +
+      esc(S.goalH) +
       'h</span></div><div class="m">estudado nesta semana</div></div></div>' +
       timer +
       "</div></div>" +
@@ -1834,7 +1834,7 @@
         "</div>" +
         '<label class="f">Intenção do bloco (opcional)<input id="pomo-intent" maxlength="80" autocomplete="off" placeholder="ex.: terminar 30 questões de cardio"></label></div>' +
         '<button class="go" data-a="pomo-start">▶ Iniciar foco de ' +
-        P.focus +
+        esc(P.focus) +
         " min</button>";
     } else {
       ctrl =
@@ -1890,7 +1890,7 @@
       '</b><span id="pphase">' +
       blocks.length +
       " de " +
-      P.daily +
+      esc(P.daily) +
       " hoje</span></div></div>" +
       ctrl +
       ratePanel +
@@ -1917,7 +1917,7 @@
       '<div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="kpis"><div class="kpi"><span class="l">Pomodoros hoje</span><span class="v">' +
       blocks.length +
       '<span class="m"> / ' +
-      P.daily +
+      esc(P.daily) +
       '</span></span><div class="bar"><b style="width:' +
       dpct +
       '%"></b></div></div>' +
@@ -1942,12 +1942,12 @@
                   : "") +
                 "</span>" +
                 (x.rate
-                  ? '<span class="m num">foco ' + x.rate + "/5</span>"
+                  ? '<span class="m num">foco ' + esc(x.rate) + "/5</span>"
                   : "") +
                 '<span class="num">' +
-                x.min +
+                esc(x.min) +
                 ' min</span><button class="ico" data-a="del" data-k="sessions" data-id="' +
-                x.id +
+                esc(x.id) +
                 '" aria-label="Apagar bloco">×</button></li>'
               );
             })
@@ -1956,15 +1956,15 @@
         : '<p class="empty">Nenhum bloco concluído hoje. O primeiro leva só um clique.</p>') +
       "</div>" +
       '<div class="card"><h2>Ajustes do ciclo</h2><form class="row" data-form="pomo"><label class="f">Foco (min)<input id="pm-f" type="number" name="focus" min="1" max="180" value="' +
-      P.focus +
+      esc(P.focus) +
       '" required></label><label class="f">Pausa curta<input id="pm-s" type="number" name="short" min="1" max="60" value="' +
-      P.short +
+      esc(P.short) +
       '" required></label><label class="f">Pausa longa<input id="pm-l" type="number" name="long" min="1" max="90" value="' +
-      P.long +
+      esc(P.long) +
       '" required></label><label class="f">Longa a cada<input id="pm-e" type="number" name="every" min="2" max="10" value="' +
-      P.every +
+      esc(P.every) +
       '" required></label><label class="f">Meta diária<input id="pm-d" type="number" name="daily" min="1" max="30" value="' +
-      P.daily +
+      esc(P.daily) +
       '" required></label><button class="btn" type="submit">Salvar</button></form></div></div></div>'
     );
   }
@@ -2005,7 +2005,8 @@
       : Math.max(0, Math.min(100, g.manual || 0));
   }
   function diffPill(n) {
-    return '<span class="dif d' + n + '">' + n + "/5</span>";
+    var safeValue = esc(n);
+    return '<span class="dif d' + safeValue + '">' + safeValue + "/5</span>";
   }
   function vTemas() {
     var t = today(),
@@ -2060,11 +2061,11 @@
         diffPill(x.diff) +
         (rv
           ? '<button class="btn sm" data-a="th-rev" data-id="' +
-            x.id +
+            esc(x.id) +
             '">Revisado</button>'
           : "") +
         '<button class="ico" data-a="del" data-k="themes" data-id="' +
-        x.id +
+        esc(x.id) +
         '" aria-label="Apagar tema">×</button></li>'
       );
     };
@@ -2135,7 +2136,7 @@
                 '%"></b></div><span class="m num">' +
                 r.a.toFixed(1) +
                 " · " +
-                r.n +
+                esc(r.n) +
                 "</span></div>"
               );
             })
@@ -2197,7 +2198,7 @@
                 (h.days[d] ? " on" : "") +
                 (d === t ? " td" : "") +
                 '" data-a="hab-toggle" data-id="' +
-                h.id +
+                esc(h.id) +
                 '" data-d="' +
                 d +
                 '" aria-label="' +
@@ -2211,7 +2212,7 @@
           '<span class="m num">' +
           habStreak(h) +
           ' d</span><button class="ico" data-a="del" data-k="habits" data-id="' +
-          h.id +
+          esc(h.id) +
           '" aria-label="Apagar hábito">×</button></div>'
         );
       })
@@ -2317,7 +2318,7 @@
               '"></i><span>' +
               esc(x.label) +
               "</span><em>" +
-              BRL(x.m) +
+              esc(BRL(x.m)) +
               "</em></div>"
             );
           })
@@ -2335,15 +2336,15 @@
       y +
       '</h2><button class="btn sm" data-a="fin-next" aria-label="Próximo mês">›</button></div>' +
       '<div class="tiles"><div class="tile"><div class="l">Entradas</div><div class="v num" style="font-size:21px;color:var(--good)">' +
-      BRL(inn) +
+      esc(BRL(inn)) +
       "</div></div>" +
       '<div class="tile"><div class="l">Saídas</div><div class="v num" style="font-size:21px">' +
-      BRL(out) +
+      esc(BRL(out)) +
       "</div></div>" +
       '<div class="tile"><div class="l">Saldo</div><div class="v num" style="font-size:21px;color:var(--' +
       (sd >= 0 ? "good" : "bad") +
       ')">' +
-      BRL(sd) +
+      esc(BRL(sd)) +
       "</div></div></div>" +
       '<div class="grid"><div class="card"><h2>Saídas por categoria</h2><div class="donut">' +
       donut(segs, BRL(out), "em saídas", true) +
@@ -2381,9 +2382,9 @@
                 (x.type === "in" ? "good" : "ink") +
                 ')">' +
                 (x.type === "in" ? "+" : "−") +
-                BRL(x.amount) +
+                esc(BRL(x.amount)) +
                 '</span><button class="ico" data-a="del" data-k="txs" data-id="' +
-                x.id +
+                esc(x.id) +
                 '" aria-label="Apagar lançamento">×</button></li>'
               );
             })
@@ -2424,17 +2425,17 @@
               '"><button class="check' +
               (x.done ? " on" : "") +
               '" data-a="ms-toggle" data-g="' +
-              g.id +
+              esc(g.id) +
               '" data-id="' +
-              x.id +
+              esc(x.id) +
               '" aria-label="Alternar marco">' +
               (x.done ? "✓" : "") +
               '</button><span class="t">' +
               esc(x.text) +
               '</span><button class="ico" data-a="ms-del" data-g="' +
-              g.id +
+              esc(g.id) +
               '" data-id="' +
-              x.id +
+              esc(x.id) +
               '" aria-label="Apagar marco">×</button></li>'
             );
           })
@@ -2447,7 +2448,7 @@
           '<span class="m">' +
           due +
           '</span></div><button class="ico" data-a="del" data-k="goals" data-id="' +
-          g.id +
+          esc(g.id) +
           '" aria-label="Apagar meta">×</button></div>' +
           '<div class="rowflex" style="justify-content:space-between;margin-top:10px"><span class="m">progresso</span><b class="num">' +
           p +
@@ -2458,16 +2459,16 @@
             ? '<ul class="list" style="margin-top:8px">' + ms + "</ul>"
             : "") +
           '<form class="row" data-form="ms" style="margin-top:10px"><input type="hidden" name="g" value="' +
-          g.id +
+          esc(g.id) +
           '"><label class="f grow">Novo marco<input id="m-' +
-          g.id +
+          esc(g.id) +
           '" class="grow" name="text" maxlength="100" required placeholder="ex.: Terminar o módulo de cardio"></label><button class="btn sm" type="submit">Adicionar marco</button></form>' +
           (g.ms.length
             ? ""
             : '<form class="row" data-form="gman" style="margin-top:10px"><input type="hidden" name="g" value="' +
-              g.id +
+              esc(g.id) +
               '"><label class="f">Ou informe o progresso (%)<input id="gp-' +
-              g.id +
+              esc(g.id) +
               '" type="number" name="pct" min="0" max="100" value="' +
               (g.manual || 0) +
               '" required></label><button class="btn sm" type="submit">Atualizar</button></form>') +
@@ -2515,14 +2516,14 @@
                 .map(function (x) {
                   return (
                     '<li><span class="t"><b class="num">' +
-                    x.start +
+                    esc(x.start) +
                     "–" +
-                    x.end +
+                    esc(x.end) +
                     "</b><br>" +
                     esc(x.title) +
                     (x.tag ? '<div class="m">' + chip(x.tag) + "</div>" : "") +
                     '</span><button class="ico" data-a="del" data-k="routine" data-id="' +
-                    x.id +
+                    esc(x.id) +
                     '" aria-label="Apagar bloco">×</button></li>'
                   );
                 })
@@ -2630,7 +2631,7 @@
                 '</span><span class="num">' +
                 fmtM(x.min) +
                 '</span><button class="ico" data-a="del" data-k="sessions" data-id="' +
-                x.id +
+                esc(x.id) +
                 '" aria-label="Apagar sessão">×</button></li>'
               );
             })
@@ -2697,17 +2698,17 @@
               '<li><span class="m num">' +
               fmtD(r.date) +
               '</span><span class="t">p.' +
-              r.from +
+              esc(r.from) +
               " → p." +
-              r.to +
+              esc(r.to) +
               ' <span class="m">· +' +
-              r.pages +
+              esc(r.pages) +
               " págs" +
-              (r.min ? " · " + r.min + " min" : "") +
+              (r.min ? " · " + esc(r.min) + " min" : "") +
               "</span></span>" +
               (last && r.id === last.id
                 ? '<button class="ico" data-a="del-read" data-id="' +
-                  r.id +
+                  esc(r.id) +
                   '" aria-label="Desfazer esta leitura">×</button>'
                 : "") +
               "</li>"
@@ -2721,15 +2722,15 @@
           chip(b.tag) +
           (fin ? ' <span class="badge">concluído</span>' : "") +
           '</div><button class="ico" data-a="del" data-k="books" data-id="' +
-          b.id +
+          esc(b.id) +
           '" aria-label="Remover leitura">×</button></div>' +
           '<div class="bar"><b style="width:' +
           p +
           '%"></b></div>' +
           '<div class="stats"><div><b class="num">p.' +
-          b.read +
+          esc(b.read) +
           " / " +
-          b.total +
+          esc(b.total) +
           "</b>" +
           p +
           "%</div><div><b>" +
@@ -2742,19 +2743,19 @@
           (fin
             ? ""
             : '<form class="row" data-form="read"><input type="hidden" name="id" value="' +
-              b.id +
+              esc(b.id) +
               '"><label class="f">Parei na página<input id="r-' +
-              b.id +
+              esc(b.id) +
               '" type="number" name="to" min="' +
-              (b.read + 1) +
+              esc(Number(b.read) + 1) +
               '" max="' +
-              b.total +
+              esc(b.total) +
               '" placeholder="' +
-              (b.read + 1) +
+              esc(Number(b.read) + 1) +
               '+" required></label><label class="f">Minutos (opcional)<input id="rm-' +
-              b.id +
+              esc(b.id) +
               '" type="number" name="min" min="1" max="720"></label><label class="f">Data<input id="rd-' +
-              b.id +
+              esc(b.id) +
               '" type="date" name="date" value="' +
               t +
               '" required></label><button class="btn pri" type="submit">Registrar leitura</button></form>') +
@@ -2884,7 +2885,7 @@
                 esc(e.title) +
                 (e.kind ? '<div class="m">' + esc(e.kind) + "</div>" : "") +
                 '</span><button class="ico" data-a="del" data-k="events" data-id="' +
-                e.id +
+                esc(e.id) +
                 '" aria-label="Apagar compromisso">×</button></li>'
               );
             })
@@ -2932,7 +2933,7 @@
         '"><button class="check' +
         (x.done ? " on" : "") +
         '" data-a="toggle" data-id="' +
-        x.id +
+        esc(x.id) +
         '" aria-label="Alternar conclusão">' +
         (x.done ? "✓" : "") +
         '</button><span class="t">' +
@@ -2948,7 +2949,7 @@
             "</span>"
           : "") +
         '</div></span><button class="ico" data-a="del" data-k="tasks" data-id="' +
-        x.id +
+        esc(x.id) +
         '" aria-label="Apagar atividade">×</button></li>'
       );
     };
@@ -3046,7 +3047,7 @@
                 '%"></b></div><span class="m num">' +
                 p +
                 "% · " +
-                r.t +
+                esc(r.t) +
                 "</span></div>"
               );
             })
@@ -3070,11 +3071,11 @@
                 '</span><span class="t">' +
                 chip(q.tag) +
                 '</span><span class="num">' +
-                q.correct +
+                esc(q.correct) +
                 "/" +
-                q.total +
+                esc(q.total) +
                 '</span><button class="ico" data-a="del" data-k="questions" data-id="' +
-                q.id +
+                esc(q.id) +
                 '" aria-label="Apagar registro">×</button></li>'
               );
             })
@@ -3099,7 +3100,7 @@
       esc(S.name) +
       '" required></label>' +
       '<label class="f">Meta semanal (h)<input id="p-goal" type="number" name="h" min="1" max="100" value="' +
-      S.goalH +
+      esc(S.goalH) +
       '" required></label><button class="btn pri" type="submit">Salvar</button></form>' +
       '<div class="rowflex" style="margin-top:14px"><span class="m">Aparência</span><button class="btn sm" data-a="theme">Alternar claro/escuro</button></div></div>' +
       '<div class="card"><h2>Backup</h2><p class="m" style="margin-top:0">Último backup: ' +
@@ -3134,6 +3135,34 @@
       .from("shared_goals")
       .select("id, group_id, title, description, created_at, completed")
       .order("created_at", { ascending: false });
+    var goalsHtml = "";
+
+    if (goalsResult.error) {
+      console.error("Erro ao carregar objetivos dos grupos:", goalsResult.error);
+      goalsHtml =
+        '<p class="m">Não foi possível carregar os objetivos compartilhados agora.</p>';
+    } else if ((goalsResult.data || []).length) {
+      goalsHtml = goalsResult.data
+        .map(function (goal) {
+          var group = groups.find(function (item) {
+            return item.id === goal.group_id;
+          });
+
+          return (
+            '<div class="rowflex"><div><p><strong>' +
+            esc(goal.title) +
+            "</strong></p><p>" +
+            esc(goal.description || "") +
+            '</p><p class="m">Grupo: ' +
+            esc(group ? group.name : "Grupo") +
+            "</p></div></div>"
+          );
+        })
+        .join("");
+    } else {
+      goalsHtml = '<p class="m">Nenhum objetivo compartilhado ainda.</p>';
+    }
+
     return (
       head("Grupos", "Área para compartilhar objetivos com outras pessoas.") +
       '<div class="card"><h2>Criar grupo</h2><form data-form="group"><label class="f">Nome do grupo<input class="grow" name="name" maxlength="60" required></label><button class="btn pri" type="submit">Criar grupo</button></form></div>' +
@@ -3152,25 +3181,7 @@
         .join("") +
       '</select></label><label class="f">Objetivo<input class="grow" name="title" maxlength="100" required></label><label class="f">Descrição<textarea name="description" maxlength="500"></textarea></label><button class="btn pri" type="submit">Criar objetivo</button></form></div>' +
       '<div class="card"><h2>Objetivos cadastrados</h2>' +
-      ((goalsResult.data || []).length
-        ? goalsResult.data
-            .map(function (goal) {
-              var group = groups.find(function (item) {
-                return item.id === goal.group_id;
-              });
-
-              return (
-                '<div class="rowflex"><div><p><strong>' +
-                esc(goal.title) +
-                "</strong></p><p>" +
-                esc(goal.description || "") +
-                '</p><p class="m">Grupo: ' +
-                esc(group ? group.name : "Grupo") +
-                "</p></div></div>"
-              );
-            })
-            .join("")
-        : '<p class="m">Nenhum objetivo compartilhado ainda.</p>') +
+      goalsHtml +
       "</div>" +
       '<div class="card"><h2>Seus grupos</h2>' +
       (groups.length
@@ -3225,13 +3236,25 @@
       (zen ? "" : tickerHtml()) +
       '<div class="card"><p class="m">Carregando...</p></div>';
 
-    Promise.resolve(VIEWS[currentTab]()).then(function (html) {
-      if (tab === currentTab) {
+    Promise.resolve()
+      .then(function () {
+        return VIEWS[currentTab]();
+      })
+      .then(function (html) {
+        if (tab === currentTab) {
+          document.getElementById("view").innerHTML =
+            (zen ? "" : tickerHtml()) + html;
+          tick();
+        }
+      })
+      .catch(function (error) {
+        console.error("Erro ao carregar a tela " + currentTab + ":", error);
+        if (tab !== currentTab) return;
+
         document.getElementById("view").innerHTML =
-          (zen ? "" : tickerHtml()) + html;
-        tick();
-      }
-    });
+          (zen ? "" : tickerHtml()) +
+          '<div class="card"><h2>Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
+      });
   }
   function toast(msg) {
     var el = document.createElement("div");
@@ -3464,6 +3487,10 @@
       window.scrollTo(0, 0);
       return;
     }
+    if (a === "retry") {
+      render();
+      return;
+    }
     if (a === "theme") {
       var cur =
           document.documentElement.getAttribute("data-theme") ||
@@ -3654,7 +3681,14 @@
     } else return;
     commit(msg);
   });
-  document.addEventListener("submit", async function (e) {
+  document.addEventListener("submit", function (e) {
+    submitForm(e).catch(function (error) {
+      console.error("Erro ao processar formulário:", error);
+      toast("Não foi possível concluir esta ação. Tente novamente.");
+    });
+  });
+
+  async function submitForm(e) {
     var f = e.target.closest("form[data-form]");
     if (!f) return;
     e.preventDefault();
@@ -3859,7 +3893,7 @@
       msg = "perfil salvo";
     }
     commit(msg);
-  });
+  }
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && zen) {
       zen = false;
@@ -3887,6 +3921,49 @@
     } else pomoPause();
     commit();
   });
+
+  function isValidImportId(id) {
+    return typeof id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(id);
+  }
+
+  function isValidImportedRecord(collection, record) {
+    if (
+      !record ||
+      typeof record !== "object" ||
+      Array.isArray(record) ||
+      !isValidImportId(record.id)
+    ) {
+      return false;
+    }
+
+    if (collection === "readlog" && !isValidImportId(record.bookId)) {
+      return false;
+    }
+
+    if (
+      collection === "habits" &&
+      (!record.days ||
+        typeof record.days !== "object" ||
+        Array.isArray(record.days))
+    ) {
+      return false;
+    }
+
+    if (collection === "goals") {
+      if (!Array.isArray(record.ms)) return false;
+      return record.ms.every(function (milestone) {
+        return (
+          milestone &&
+          typeof milestone === "object" &&
+          !Array.isArray(milestone) &&
+          isValidImportId(milestone.id)
+        );
+      });
+    }
+
+    return true;
+  }
+
   document.addEventListener("change", function (e) {
     if (!e.target || e.target.id !== "imp" || !e.target.files[0]) return;
     var r = new FileReader();
@@ -3896,6 +3973,13 @@
 
         if (!o || typeof o !== "object" || Array.isArray(o)) {
           throw new Error("Formato inválido");
+        }
+
+        if (
+          o.v !== undefined &&
+          (!Number.isInteger(o.v) || o.v > 4 || o.v < 1)
+        ) {
+          throw new Error("Versão do backup não suportada");
         }
 
         var valid = LISTS.every(function (k) {
@@ -3914,9 +3998,9 @@
             return false;
           }
 
-          // Todos os registros precisam ser objetos válidos.
+          // Registros precisam ter IDs seguros e vínculos estruturais válidos.
           return o[k].every(function (x) {
-            return x && typeof x === "object" && !Array.isArray(x);
+            return isValidImportedRecord(k, x);
           });
         });
 

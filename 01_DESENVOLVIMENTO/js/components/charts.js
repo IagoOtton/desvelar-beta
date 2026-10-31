@@ -75,7 +75,7 @@
           (y(v) + 4) +
           '" text-anchor="end">' +
           Math.round(v * 10) / 10 +
-          (o.unit || "") +
+          F.esc(o.unit || "") +
           "</text>";
       }
 
@@ -120,7 +120,7 @@
             '" y="' +
             (H - 8) +
             '" text-anchor="middle">' +
-            it.l +
+            F.esc(it.l) +
             "</text>";
       });
 
@@ -216,7 +216,7 @@
           (y(v) + 4) +
           '" text-anchor="end">' +
           Math.round(v * 10) / 10 +
-          (o.unit || "") +
+          F.esc(o.unit || "") +
           "</text>";
       }
 
@@ -253,7 +253,7 @@
             '" y="' +
             (H - 8) +
             '" text-anchor="middle">' +
-            l +
+            F.esc(l) +
             "</text>";
       });
 
@@ -295,7 +295,7 @@
 
       return (
         '<svg class="sp ' +
-        cls +
+        F.esc(cls) +
         '" viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' +
         id +
         '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".3"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs><polygon points="0,34 ' +
@@ -311,14 +311,14 @@
     function kpi(label, value, d, series, note) {
       return (
         '<div class="kpi"><span class="l">' +
-        label +
+        F.esc(label) +
         '</span><span class="v">' +
-        value +
+        F.esc(value) +
         '</span><span class="d ' +
-        d.c +
+        F.esc(d.c) +
         '">' +
-        d.t +
-        (note ? ' <span class="m">' + note + "</span>" : "") +
+        F.esc(d.t) +
+        (note ? ' <span class="m">' + F.esc(note) + "</span>" : "") +
         "</span>" +
         (series ? spark(series, d.c) : "") +
         "</div>"
@@ -348,9 +348,9 @@
         C +
         '" transform="rotate(-90 66 66)"/></svg>' +
         '<div class="c"><b>' +
-        center +
+        F.esc(center) +
         "</b><span>" +
-        sub +
+        F.esc(sub) +
         "</span></div></div>"
       );
     }

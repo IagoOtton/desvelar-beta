@@ -1,15 +1,22 @@
 (function () {
   "use strict";
 
+  var F = window.DesvelarFormatting;
+
+  if (!F) {
+    throw new Error("As funções de formatação do DESVELAR não foram carregadas.");
+  }
+
   window.DesvelarCommon = (function () {
     function head(title, sub, options) {
+      options = options || {};
       var since = options.lastBackup ? options.daysSinceBackup : 999;
 
       return (
         "<div><h1>" +
-        title +
+        F.esc(title) +
         "</h1>" +
-        (sub ? '<p class="sub">' + sub + "</p>" : "") +
+        (sub ? '<p class="sub">' + F.esc(sub) + "</p>" : "") +
         "</div>" +
         (!options.saveOk
           ? '<div class="banner bad"><span>O navegador bloqueou o salvamento automático. Use Sistema &gt; Exportar para não perder dados.</span></div>'
@@ -30,9 +37,9 @@
     function chip(color, label) {
       return (
         '<span class="chip"><i style="background:' +
-        color +
+        F.esc(color) +
         '"></i>' +
-        label +
+        F.esc(label) +
         "</span>"
       );
     }
@@ -40,9 +47,9 @@
     function tagInput(id, ph, req) {
       return (
         '<input id="' +
-        id +
+        F.esc(id) +
         '" name="tag" list="tags" maxlength="30" autocomplete="off" placeholder="' +
-        ph +
+        F.esc(ph) +
         '"' +
         (req ? " required" : "") +
         ">"

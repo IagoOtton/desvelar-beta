@@ -10,6 +10,7 @@ const { chromium } = require("playwright");
 const APP_ROOT = path.resolve(__dirname, "..");
 const ENTRY = "/desvelar-v1-corrigido.html";
 const STORAGE_KEY = "painel-estudos-v2:11111111-1111-4111-8111-111111111111";
+const XSS_PAYLOAD = '"><img src="/missing-image" onerror="window.__testXss = true">';
 const USER = {
   id: "11111111-1111-4111-8111-111111111111",
   email: "teste@desvelar.local",
@@ -73,6 +74,15 @@ const MOCK_SDK = `
         },
         then(resolve, reject) {
           window.__mockCalls.push({ type: "select", table, query });
+          if (table === "shared_goals" && window.__testFailSharedGoals) {
+            return Promise.reject(new Error("Erro de rede simulado")).then(resolve, reject);
+          }
+          if (table === "shared_goals" && window.__testSharedGoalsResponseError) {
+            return Promise.resolve({
+              data: null,
+              error: { message: "Erro de consulta simulado" },
+            }).then(resolve, reject);
+          }
           const rows =
             table === "group_members"
               ? groups
@@ -87,6 +97,7 @@ const MOCK_SDK = `
     },
     async rpc(name, args) {
       window.__mockCalls.push({ type: "rpc", name, args });
+      if (window.__testFailRpc) throw new Error("Erro de RPC simulado");
       return { data: ${JSON.stringify(GROUP_ID)}, error: null };
     },
   };
@@ -147,14 +158,23 @@ after(async () => {
   if (server) await new Promise((resolve) => server.close(resolve));
 });
 
-async function openApp({ authenticated = true } = {}) {
+async function openApp({
+  authenticated = true,
+  failRpc = false,
+  failSharedGoals = false,
+  sharedGoalsResponseError = false,
+} = {}) {
   const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
   page.setDefaultTimeout(8_000);
+  page.setDefaultNavigationTimeout(20_000);
   page.on("pageerror", (error) => console.error("Browser page error:", error.message));
-  await page.addInitScript((initialAuth) => {
-    window.__testAuthenticated = initialAuth;
-  }, authenticated);
+  await page.addInitScript((options) => {
+    window.__testAuthenticated = options.authenticated;
+    window.__testFailRpc = options.failRpc;
+    window.__testFailSharedGoals = options.failSharedGoals;
+    window.__testSharedGoalsResponseError = options.sharedGoalsResponseError;
+  }, { authenticated, failRpc, failSharedGoals, sharedGoalsResponseError });
   await page.route(
     "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
     (route) =>
@@ -297,6 +317,7 @@ test("importa um backup válido e exporta um arquivo JSON", async () => {
     collections.forEach((collection) => {
       backup[collection] = [];
     });
+    const unsafeAttribute = XSS_PAYLOAD;
     backup.tasks.push({
       id: "imported-task",
       title: "Atividade do backup",
@@ -304,6 +325,14 @@ test("importa um backup válido e exporta um arquivo JSON", async () => {
       tag: "",
       done: false,
       doneOn: "",
+    });
+    backup.routine.push({
+      id: "routine-1",
+      day: 0,
+      start: unsafeAttribute,
+      end: "09:00",
+      title: "Rotina do backup",
+      tag: "",
     });
 
     await page.locator('#sidenav [data-tab="sistema"]').click();
@@ -324,6 +353,13 @@ test("importa um backup válido e exporta um arquivo JSON", async () => {
       .locator("#view .list .t")
       .filter({ hasText: "Atividade do backup" })
       .waitFor({ state: "visible" });
+    await page.waitForTimeout(100);
+    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
+
+    await page.locator('#sidenav [data-tab="rotina"]').click();
+    await page.getByText("Rotina semanal", { exact: true }).waitFor({ state: "visible" });
+    await page.waitForFunction(() => window.__testXss === true, null, { timeout: 2_000 }).catch(() => {});
+    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
 
     await page.locator('#sidenav [data-tab="sistema"]').click();
     const downloadPromise = page.waitForEvent("download");
@@ -333,6 +369,110 @@ test("importa um backup válido e exporta um arquivo JSON", async () => {
       download.suggestedFilename(),
       /^painel-estudos-backup-\d{4}-\d{2}-\d{2}\.json$/,
     );
+  } finally {
+    await context.close();
+  }
+});
+
+test("rejeita IDs perigosos em backups importados sem executar HTML", async () => {
+  const { context, page } = await openApp();
+
+  try {
+    await waitForApp(page);
+    const before = await page.evaluate(
+      (storageKey) => localStorage.getItem(storageKey),
+      STORAGE_KEY,
+    );
+    const backup = JSON.parse(before);
+    backup.tasks.push({
+      id: XSS_PAYLOAD,
+      title: "Registro malicioso",
+      due: "",
+      tag: "",
+      done: false,
+      doneOn: "",
+    });
+
+    await page.locator('#sidenav [data-tab="sistema"]').click();
+    await page.locator("#imp").setInputFiles({
+      name: "backup-malicioso.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(backup)),
+    });
+    await page
+      .getByText("arquivo inválido", { exact: true })
+      .waitFor({ state: "visible" });
+    await page.waitForTimeout(100);
+
+    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
+    assert.equal(
+      await page.evaluate(
+        (storageKey) => localStorage.getItem(storageKey),
+        STORAGE_KEY,
+      ),
+      before,
+    );
+  } finally {
+    await context.close();
+  }
+});
+
+test("exibe erro de consulta de objetivos sem esconder o restante da aba Grupos", async () => {
+  const { context, page } = await openApp({ sharedGoalsResponseError: true });
+
+  try {
+    await waitForApp(page);
+    await page.locator('#sidenav [data-tab="grupos"]').click();
+    await page
+      .getByText("Não foi possível carregar os objetivos compartilhados agora.", { exact: true })
+      .waitFor({ state: "visible" });
+    await page
+      .locator("#view p")
+      .filter({ hasText: "Grupo de teste" })
+      .first()
+      .waitFor({ state: "visible" });
+    await page.locator('form[data-form="group"] input[name="name"]').waitFor({ state: "visible" });
+  } finally {
+    await context.close();
+  }
+});
+
+test("mostra estado de erro e permite repetir uma tela após falha de rede", async () => {
+  const { context, page } = await openApp({ failSharedGoals: true });
+
+  try {
+    await waitForApp(page);
+    await page.locator('#sidenav [data-tab="grupos"]').click();
+    await page
+      .getByText("Não foi possível abrir esta tela", { exact: true })
+      .waitFor({ state: "visible" });
+
+    await page.evaluate(() => {
+      window.__testFailSharedGoals = false;
+    });
+    await page.locator('[data-a="retry"]').click();
+    await page.locator('form[data-form="group"] input[name="name"]').waitFor({ state: "visible" });
+    await page
+      .locator("#view p")
+      .filter({ hasText: "Grupo de teste" })
+      .first()
+      .waitFor({ state: "visible" });
+  } finally {
+    await context.close();
+  }
+});
+
+test("mostra um erro amigável quando uma ação do Supabase rejeita", async () => {
+  const { context, page } = await openApp({ failRpc: true });
+
+  try {
+    await waitForApp(page);
+    await page.locator('#sidenav [data-tab="grupos"]').click();
+    await page.locator('form[data-form="group"] input[name="name"]').fill("Grupo indisponível");
+    await page.locator('form[data-form="group"] button[type="submit"]').click();
+    await page
+      .getByText("Não foi possível concluir esta ação. Tente novamente.", { exact: true })
+      .waitFor({ state: "visible" });
   } finally {
     await context.close();
   }
