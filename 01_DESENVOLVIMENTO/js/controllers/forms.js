@@ -3,7 +3,6 @@
 
   function create(dependencies) {
     var required = [
-      "getState",
       "getSelectedDay",
       "getUserId",
       "uid",
@@ -16,6 +15,9 @@
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
       }) ||
+      !dependencies.stateStore ||
+      typeof dependencies.stateStore.createDraft !== "function" ||
+      typeof dependencies.stateStore.saveDraft !== "function" ||
       !dependencies.groupRepository ||
       typeof dependencies.groupRepository.createGroup !== "function" ||
       typeof dependencies.groupRepository.joinGroup !== "function" ||
@@ -29,7 +31,7 @@
       if (!form) return;
 
       event.preventDefault();
-      var state = dependencies.getState();
+      var state = dependencies.stateStore.createDraft();
       var kind = form.dataset.form;
       var values = Object.fromEntries(new FormData(form).entries());
       var message = "registrado";
@@ -203,6 +205,7 @@
           dependencies.toast("Erro ao criar grupo: " + groupResult.error.message);
           return;
         }
+        state = dependencies.stateStore.createDraft();
         message = "grupo criado";
       } else if (kind === "join-group") {
         var joinResult = await dependencies.groupRepository.joinGroup(
@@ -213,6 +216,7 @@
           dependencies.toast("Não foi possível entrar: " + joinResult.error.message);
           return;
         }
+        state = dependencies.stateStore.createDraft();
         message = "Você entrou no grupo";
       } else if (kind === "shared-goal") {
         var goalResult = await dependencies.groupRepository.createSharedGoal({
@@ -231,6 +235,7 @@
           );
           return;
         }
+        state = dependencies.stateStore.createDraft();
         message = "objetivo compartilhado criado";
       } else if (kind === "profile") {
         state.name = values.name.trim() || state.name;
@@ -238,7 +243,8 @@
         message = "perfil salvo";
       }
 
-      dependencies.commit(message);
+      var saved = dependencies.stateStore.saveDraft(state);
+      dependencies.commit(message, saved);
     }
 
     return Object.freeze({ submit: submit });

@@ -3,15 +3,12 @@
 
   function create(dependencies) {
     var required = [
-      "getState",
-      "setState",
       "getUiState",
       "setUiState",
       "uid",
       "today",
       "dateKey",
       "parseDate",
-      "normalize",
       "pomoRem",
       "pomoStart",
       "pomoPause",
@@ -22,6 +19,9 @@
 
     if (
       !dependencies ||
+      !dependencies.stateStore ||
+      typeof dependencies.stateStore.createDraft !== "function" ||
+      typeof dependencies.stateStore.saveDraft !== "function" ||
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
       }) ||
@@ -37,7 +37,6 @@
       if (!button) return;
 
       var action = button.dataset.a;
-      var state = dependencies.getState();
       var ui = dependencies.getUiState();
       var message = "";
 
@@ -68,13 +67,30 @@
         return;
       }
 
+      if (action === "pick-tag") {
+        var selectedTagInput = document.getElementById("pomo-tag");
+        if (selectedTagInput) {
+          selectedTagInput.value = button.dataset.t;
+          selectedTagInput.focus();
+        }
+        return;
+      }
+      if (action === "zen") {
+        dependencies.setUiState({ zen: !ui.zen });
+        dependencies.render();
+        return;
+      }
+
+      var state = dependencies.stateStore.createDraft();
+
       if (action === "pomo-start") {
         dependencies.pomoStart(
           (document.getElementById("pomo-tag").value || "").trim(),
           ((document.getElementById("pomo-intent") || {}).value || "").trim(),
+          state,
         );
       } else if (action === "pomo-pause") {
-        dependencies.pomoPause();
+        dependencies.pomoPause(state);
       } else if (action === "pomo-plus") {
         var activeRun = state.pomoRun;
         activeRun.dur += 300;
@@ -82,7 +98,7 @@
         else activeRun.left += 300;
         message = "+5 minutos";
       } else if (action === "pomo-skip") {
-        dependencies.pomoComplete(Date.now());
+        dependencies.pomoComplete(Date.now(), state);
         message = "pausa pulada";
       } else if (action === "pomo-stop") {
         var stoppedRun = state.pomoRun;
@@ -112,13 +128,6 @@
         settings.long = Number(button.dataset.l);
         var tagInput = document.getElementById("pomo-tag");
         if (tagInput) settings.lastTag = tagInput.value.trim();
-      } else if (action === "pick-tag") {
-        var selectedTagInput = document.getElementById("pomo-tag");
-        if (selectedTagInput) {
-          selectedTagInput.value = button.dataset.t;
-          selectedTagInput.focus();
-        }
-        return;
       } else if (action === "rate") {
         var rating = Number(button.dataset.n);
         state.sessions.forEach(function (session) {
@@ -128,10 +137,6 @@
         });
         state.pomo.rateId = "";
         if (rating > 0) message = "foco " + rating + "/5 anotado";
-      } else if (action === "zen") {
-        dependencies.setUiState({ zen: !ui.zen });
-        dependencies.render();
-        return;
       } else if (action === "del") {
         var collection = button.dataset.k;
         state[collection] = state[collection].filter(function (item) {
@@ -254,15 +259,14 @@
         dependencies.setUiState({ wipeArm: 0 });
         var name = state.name;
         var weeklyGoal = state.goalH;
-        dependencies.setState(
-          dependencies.normalize({ name: name, goalH: weeklyGoal }),
-        );
+        state = { name: name, goalH: weeklyGoal };
         message = "tudo apagado";
       } else {
         return;
       }
 
-      dependencies.commit(message);
+      var saved = dependencies.stateStore.saveDraft(state);
+      dependencies.commit(message, saved);
     }
 
     return Object.freeze({ handleClick: handleClick });

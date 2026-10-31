@@ -254,10 +254,15 @@ test("gerencia transições do Pomodoro no domínio", () => {
 
 test("preserva os dados atuais se a gravação de um backup falhar", () => {
   const context = { window: {} };
+  const storeSource = fs.readFileSync(
+    path.join(APP_ROOT, "js/state/store.js"),
+    "utf8",
+  );
   const source = fs.readFileSync(
     path.join(APP_ROOT, "js/controllers/backups.js"),
     "utf8",
   );
+  vm.runInNewContext(storeSource, context);
   vm.runInNewContext(source, context);
 
   const collections = [
@@ -278,18 +283,31 @@ test("preserva os dados atuais se a gravação de um backup falhar", () => {
     backup[collection] = [];
   });
 
-  const previousState = { marker: "estado anterior" };
   const notifications = [];
-  let currentState = previousState;
+  let failSave = false;
+  let currentState = null;
+  let attemptedState = null;
   let renderCount = 0;
-  const controller = context.window.DesvelarBackupController.create({
-    getState: () => currentState,
-    setState: (state) => {
+  const stateStore = context.window.DesvelarStateStore.create({
+    load: () => ({ marker: "estado anterior" }),
+    save: () => !failSave,
+    normalize: (state) => state,
+    onStateChange: (state) => {
       currentState = state;
     },
+  });
+  stateStore.load();
+  const previousState = currentState;
+  failSave = true;
+
+  const controller = context.window.DesvelarBackupController.create({
+    stateStore: {
+      replaceState: (state) => {
+        attemptedState = state;
+        return stateStore.replaceState(state);
+      },
+    },
     lists: collections,
-    normalize: (data) => data,
-    persist: () => false,
     render: () => {
       renderCount += 1;
     },
@@ -298,11 +316,59 @@ test("preserva os dados atuais se a gravação de um backup falhar", () => {
   });
 
   assert.equal(controller.importText(JSON.stringify(backup)), false);
+  assert.equal(attemptedState.v, 4);
   assert.equal(currentState, previousState);
   assert.equal(renderCount, 1);
   assert.deepEqual(notifications, [
     "Não foi possível salvar os dados importados.",
   ]);
+});
+
+test("centraliza rascunhos, persistência e rollback no store", () => {
+  const context = { window: {} };
+  const source = fs.readFileSync(
+    path.join(APP_ROOT, "js/state/store.js"),
+    "utf8",
+  );
+  vm.runInNewContext(source, context);
+
+  let failSave = false;
+  let observedState = null;
+  let storedState = null;
+  const store = context.window.DesvelarStateStore.create({
+    load: () => ({ value: 1 }),
+    save: (state) => {
+      if (failSave) return false;
+      storedState = JSON.parse(JSON.stringify(state));
+      return true;
+    },
+    normalize: (state) => state,
+    onStateChange: (state) => {
+      observedState = state;
+    },
+  });
+
+  store.load();
+  const failedDraft = store.createDraft();
+  failedDraft.value = 2;
+  failSave = true;
+  assert.equal(store.saveDraft(failedDraft), false);
+  assert.equal(store.getState().value, 1);
+
+  failSave = false;
+  const successfulDraft = store.createDraft();
+  successfulDraft.value = 3;
+  assert.equal(store.saveDraft(successfulDraft), true);
+  assert.equal(store.getState().value, 3);
+  assert.deepEqual(storedState, { value: 3 });
+
+  store.getState().value = 4;
+  failSave = true;
+  assert.equal(store.persist(), false);
+  assert.equal(store.getState().value, 3);
+  assert.equal(observedState.value, 3);
+  assert.equal(store.replaceState({ value: 5 }), false);
+  assert.equal(store.getState().value, 3);
 });
 
 test("autentica o usuário e abre o aplicativo", async () => {

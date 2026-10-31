@@ -3,10 +3,6 @@
 
   function create(dependencies) {
     var required = [
-      "getState",
-      "setState",
-      "normalize",
-      "persist",
       "render",
       "toast",
       "today",
@@ -16,7 +12,9 @@
       !Array.isArray(dependencies.lists) ||
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
-      })
+      }) ||
+      !dependencies.stateStore ||
+      typeof dependencies.stateStore.replaceState !== "function"
     ) {
       throw new Error("As dependências de backup não foram informadas.");
     }
@@ -105,12 +103,7 @@
     function importText(text) {
       try {
         var backup = validateBackup(JSON.parse(text));
-        var previous = dependencies.getState();
-        var restored = dependencies.normalize(backup);
-        dependencies.setState(restored);
-
-        if (!dependencies.persist()) {
-          dependencies.setState(previous);
+        if (!dependencies.stateStore.replaceState(backup)) {
           dependencies.render();
           dependencies.toast("Não foi possível salvar os dados importados.");
           return false;

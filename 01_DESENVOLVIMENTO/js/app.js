@@ -59,14 +59,26 @@
     normalize: normalize,
     mergeLegacyData: mergeLegacyData,
   });
+  var stateStore = window.DesvelarStateStore.create({
+    load: function () {
+      return localData.load();
+    },
+    save: function (state) {
+      saveOk = localData.save(state);
+      return saveOk;
+    },
+    normalize: normalize,
+    onStateChange: function (state) {
+      S = state;
+    },
+  });
 
   function persist() {
-    saveOk = localData.save(S);
-    return saveOk;
+    return stateStore.persist();
   }
 
   function load() {
-    return localData.load();
+    return stateStore.load();
   }
   /* ---------- tags livres ---------- */
   var T = window.DesvelarTags;
@@ -662,9 +674,7 @@
     repository: window.DesvelarGroupRepository,
   });
   var TaskViews = window.DesvelarTaskViews.create({
-    getState: function () {
-      return S;
-    },
+    getState: stateStore.getState,
     today: today,
     esc: esc,
     chip: chip,
@@ -673,9 +683,7 @@
     tagInput: tagInput,
   });
   var LearningViews = window.DesvelarLearningViews.create({
-    getState: function () {
-      return S;
-    },
+    getState: stateStore.getState,
     today: today,
     wkStart: wkStart,
     addDays: addDays,
@@ -701,9 +709,7 @@
     });
   };
   var LifeViews = window.DesvelarLifeViews.create({
-    getState: function () {
-      return S;
-    },
+    getState: stateStore.getState,
     getFinanceMonth: function () {
       return finM;
     },
@@ -730,9 +736,7 @@
     weekdays: DIAS,
   });
   var FocusViews = window.DesvelarFocusViews.create({
-    getState: function () {
-      return S;
-    },
+    getState: stateStore.getState,
     getZen: function () {
       return zen;
     },
@@ -751,9 +755,7 @@
     head: head,
   });
   var PerformanceViews = window.DesvelarPerformanceViews.create({
-    getState: function () {
-      return S;
-    },
+    getState: stateStore.getState,
     today: today,
     wkStart: wkStart,
     addDays: addDays,
@@ -771,9 +773,7 @@
     sum: sum,
   });
   var SystemViews = window.DesvelarSystemViews.create({
-    getState: function () {
-      return S;
-    },
+    getState: stateStore.getState,
     getSize: function () {
       return localData.getSize();
     },
@@ -785,9 +785,7 @@
     fmtD: fmtD,
   });
   var AgendaViews = window.DesvelarAgendaViews.create({
-    getState: function () {
-      return S;
-    },
+    getState: stateStore.getState,
     getCalendar: function () {
       return { month: calM, selectedDay: selDay };
     },
@@ -801,9 +799,7 @@
     weekdays: DIAS,
   });
   var FormController = window.DesvelarFormController.create({
-    getState: function () {
-      return S;
-    },
+    stateStore: stateStore,
     getSelectedDay: function () {
       return selDay;
     },
@@ -816,26 +812,14 @@
     groupRepository: window.DesvelarGroupRepository,
   });
   var BackupController = window.DesvelarBackupController.create({
-    getState: function () {
-      return S;
-    },
-    setState: function (state) {
-      S = state;
-    },
+    stateStore: stateStore,
     lists: LISTS,
-    normalize: normalize,
-    persist: persist,
     render: render,
     toast: toast,
     today: today,
   });
   var ActionController = window.DesvelarActionController.create({
-    getState: function () {
-      return S;
-    },
-    setState: function (state) {
-      S = state;
-    },
+    stateStore: stateStore,
     getUiState: function () {
       return {
         tab: tab,
@@ -871,7 +855,6 @@
     today: today,
     dateKey: ds,
     parseDate: pd,
-    normalize: normalize,
     pomoRem: pomoRem,
     pomoStart: pomoStart,
     pomoPause: pomoPause,
@@ -1389,8 +1372,10 @@
       el.remove();
     }, 2400);
   }
-  function commit(msg) {
-    var saved = persist();
+  function commit(msg, savedResult) {
+    var saved =
+      typeof savedResult === "boolean" ? savedResult : persist();
+    saveOk = saved;
     render();
 
     if (!saved) {
@@ -1409,18 +1394,18 @@
   }
 
   /* ---------- pomodoro ---------- */
-  function pomoComplete(atMs) {
-    PomodoroDomain.complete(S, atMs);
+  function pomoComplete(atMs, targetState) {
+    PomodoroDomain.complete(targetState || S, atMs);
   }
-  function pomoStart(tag, intent) {
-    PomodoroDomain.start(S, tag, intent, Date.now());
+  function pomoStart(tag, intent, targetState) {
+    PomodoroDomain.start(targetState || S, tag, intent, Date.now());
     try {
       if (window.Notification && Notification.permission === "default")
         Notification.requestPermission();
     } catch (x) {}
   }
-  function pomoPause() {
-    PomodoroDomain.pause(S, Date.now());
+  function pomoPause(targetState) {
+    PomodoroDomain.pause(targetState || S, Date.now());
   }
   function beep() {
     try {
@@ -1598,7 +1583,7 @@
   applyTheme();
 
   try {
-    S = normalize(load());
+    load();
   } catch (e) {
     console.error("Erro ao carregar os dados do DESVELAR:", e);
 
