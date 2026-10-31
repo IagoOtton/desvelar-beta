@@ -54,150 +54,41 @@
     TM = {};
 
   /* ---------- dados ---------- */
-  var cloudBootstrap = window.desvelarCloudBootstrap || {};
-  var cloudRepository = window.desvelarCloudData || null;
-  var cloudSyncState = cloudBootstrap.error ? "error" : "syncing";
-  var cloudSaveRequest = 0;
-  var cloudSyncPromise = Promise.resolve(false);
-  var cloudRetryPromise = Promise.resolve(false);
-  var cloudErrorNotified = false;
-  var cloudRetryTimer = 0;
-  var cloudRetryDelay = 1000;
-  var cloudRetrying = false;
   var localData = window.DesvelarLocalDataRepository.create({
     userId: window.desvelarUser.id,
     normalize: normalize,
     mergeLegacyData: mergeLegacyData,
   });
-  var hadLocalDataAtStartup = localData.hasStoredData();
-
-  function cloudSyncLabel() {
-    if (cloudSyncState === "synced") return "Sincronizado com sua conta";
-    if (cloudSyncState === "error") return "Sem sincronização com a nuvem";
-    return "Sincronizando com sua conta…";
-  }
-
-  function updateCloudSyncStatus() {
-    var status = document.getElementById("cloud-sync-status");
-    if (status) status.textContent = cloudSyncLabel();
-  }
-
-  function scheduleCloudRetry() {
-    if (cloudRetryTimer || cloudRetrying || !cloudRepository) return;
-
-    var delay = cloudRetryDelay;
-    cloudRetryDelay = Math.min(cloudRetryDelay * 2, 60000);
-    cloudRetryTimer = window.setTimeout(function () {
-      cloudRetryTimer = 0;
-      retryCloudSync();
-    }, delay);
-  }
-
-  function syncCloud(state) {
-    if (!cloudRepository) {
-      cloudSyncState = "error";
-      updateCloudSyncStatus();
-      return Promise.resolve(false);
-    }
-
-    if (cloudBootstrap.error) {
-      cloudSyncState = "error";
-      updateCloudSyncStatus();
-      scheduleCloudRetry();
-      return Promise.resolve(false);
-    }
-
-    var requestId = ++cloudSaveRequest;
-    cloudSyncState = "syncing";
-    updateCloudSyncStatus();
-
-    return cloudRepository
-      .save(state)
-      .then(function (result) {
-        if (requestId !== cloudSaveRequest) return false;
-
-        if (!result || !result.ok) {
-          cloudSyncState = "error";
-          updateCloudSyncStatus();
-          console.error("Erro ao sincronizar os dados:", result && result.error);
-          scheduleCloudRetry();
-          if (!cloudErrorNotified) {
-            cloudErrorNotified = true;
-            toast(
-              "Os dados ficaram salvos neste dispositivo, mas não sincronizaram. Confira sua conexão e a tela Sistema.",
-            );
-          }
-          return false;
-        }
-
-        if (!localData.finalizeCloudSync(result.data || state)) {
-          cloudSyncState = "syncing";
-          updateCloudSyncStatus();
-          scheduleCloudRetry();
-          return false;
-        }
-
-        cloudSyncState = "synced";
-        localData.finalizeCloudMigration(true);
-        cloudRetryDelay = 1000;
-        cloudErrorNotified = false;
-        if (cloudRetryTimer) {
-          window.clearTimeout(cloudRetryTimer);
-          cloudRetryTimer = 0;
-        }
-        updateCloudSyncStatus();
-        return true;
-      })
-      .catch(function (error) {
-        if (requestId !== cloudSaveRequest) return false;
-        cloudSyncState = "error";
-        updateCloudSyncStatus();
-        console.error("Erro ao sincronizar os dados:", error);
-        scheduleCloudRetry();
-        if (!cloudErrorNotified) {
-          cloudErrorNotified = true;
-          toast(
-            "Os dados ficaram salvos neste dispositivo, mas não sincronizaram. Confira sua conexão e a tela Sistema.",
-          );
-        }
-        return false;
-      });
-  }
-
-  function loadAccountData() {
-    var hasLocalData = localData.hasStoredData();
-    var localState = hasLocalData ? localData.load() : null;
-
-    if (cloudBootstrap.error) return localState;
-
-    if (cloudBootstrap.data) {
-      var remoteState = normalize(JSON.parse(JSON.stringify(cloudBootstrap.data)));
-      if (hasLocalData && localData.hasPendingCloudSync()) {
-        var cloudBase = localData.loadCloudBase();
-        return cloudBase
-          ? DataModel.mergeForSync(
-              normalize(cloudBase),
-              normalize(localState),
-              remoteState,
-            )
-          : mergeLegacyData(remoteState, normalize(localState));
-      }
-
-      return hasLocalData && !localData.hasCloudMigration()
-        ? mergeLegacyData(remoteState, normalize(localState))
-        : remoteState;
-    }
-
-    return localState;
-  }
-
-  var stateStore = window.DesvelarStateStore.create({
-    load: function () {
-      return loadAccountData();
+  var stateStore = null;
+  var cloudSync = window.DesvelarCloudSync.create({
+    initialSnapshot: window.desvelarCloudBootstrap || {},
+    repository: window.desvelarCloudData || null,
+    localData: localData,
+    normalize: normalize,
+    mergeLegacyData: mergeLegacyData,
+    mergeForSync: DataModel.mergeForSync,
+    getState: function () {
+      return stateStore ? stateStore.getState() : null;
     },
+    replaceState: function (state) {
+      return stateStore ? stateStore.replaceState(state) : false;
+    },
+    persist: function () {
+      return stateStore ? stateStore.persist() : false;
+    },
+    onStatusChange: function (label) {
+      var status = document.getElementById("cloud-sync-status");
+      if (status) status.textContent = label;
+    },
+    onSyncError: function (message) {
+      toast(message);
+    },
+  });
+
+  stateStore = window.DesvelarStateStore.create({
+    load: cloudSync.loadAccountData,
     save: function (state) {
-      saveOk = localData.save(state);
-      if (saveOk) cloudSyncPromise = syncCloud(state);
+      saveOk = cloudSync.save(state);
       return saveOk;
     },
     normalize: normalize,
@@ -205,103 +96,6 @@
       S = state;
     },
   });
-
-  function retryCloudSync() {
-    if (cloudRetrying) return cloudRetryPromise;
-    if (!cloudRepository || !stateStore.getState()) return Promise.resolve(false);
-    if (navigator.onLine === false) {
-      scheduleCloudRetry();
-      return Promise.resolve(false);
-    }
-
-    cloudRetrying = true;
-    if (cloudRetryTimer) {
-      window.clearTimeout(cloudRetryTimer);
-      cloudRetryTimer = 0;
-    }
-
-    var refresh =
-      typeof cloudRepository.refresh === "function"
-        ? cloudRepository.refresh()
-        : cloudRepository.load();
-
-    var attempt = refresh
-      .then(function (snapshot) {
-        if (!snapshot || snapshot.error) {
-          throw (snapshot && snapshot.error) || new Error("Falha ao reler os dados da conta.");
-        }
-
-        cloudBootstrap = snapshot;
-        window.desvelarCloudBootstrap = snapshot;
-        var currentState = stateStore.getState();
-        var nextState = currentState;
-
-        if (snapshot.data) {
-          if (localData.hasPendingCloudSync()) {
-            var cloudBase = localData.loadCloudBase();
-            nextState = cloudBase
-              ? DataModel.mergeForSync(
-                  normalize(cloudBase),
-                  normalize(currentState),
-                  normalize(snapshot.data),
-                )
-              : hadLocalDataAtStartup
-                ? mergeLegacyData(
-                    normalize(snapshot.data),
-                    normalize(currentState),
-                  )
-                : normalize(snapshot.data);
-          } else {
-            nextState = normalize(snapshot.data);
-          }
-        }
-
-        if (!stateStore.replaceState(nextState)) {
-          throw new Error("Não foi possível guardar o estado recuperado neste dispositivo.");
-        }
-        return cloudSyncPromise;
-      })
-      .then(function (synced) {
-        return synced === true && !localData.hasPendingCloudSync();
-      })
-      .catch(function (error) {
-        cloudBootstrap = {
-          data: cloudBootstrap.data || null,
-          revision: cloudBootstrap.revision || 0,
-          updatedAt: cloudBootstrap.updatedAt || null,
-          error: error,
-        };
-        window.desvelarCloudBootstrap = cloudBootstrap;
-        cloudSyncState = "error";
-        updateCloudSyncStatus();
-        console.error("Erro ao retomar a sincronização:", error);
-        return false;
-      })
-      .finally(function () {
-        cloudRetrying = false;
-        if (cloudSyncState === "error") scheduleCloudRetry();
-      });
-    cloudRetryPromise = attempt;
-    return attempt;
-  }
-
-  async function flushCloudSync() {
-    if (!stateStore.persist()) return { saved: false, synced: false };
-
-    if (await cloudSyncPromise && !localData.hasPendingCloudSync()) {
-      return { saved: true, synced: true };
-    }
-
-    if (navigator.onLine === false) {
-      return { saved: true, synced: false };
-    }
-
-    var synced = await retryCloudSync();
-    return {
-      saved: true,
-      synced: synced === true && !localData.hasPendingCloudSync(),
-    };
-  }
 
   function persist() {
     return stateStore.persist();
@@ -1014,7 +808,7 @@
   });
   var SystemViews = window.DesvelarSystemViews.create({
     getState: stateStore.getState,
-    getCloudSyncStatus: cloudSyncLabel,
+    getCloudSyncStatus: cloudSync.getStatusLabel,
     getWipeArm: function () {
       return wipeArm;
     },
@@ -1713,7 +1507,7 @@
     signingOut = true;
 
     try {
-      var saveResult = await flushCloudSync();
+      var saveResult = await cloudSync.flush();
       if (!saveResult.saved) {
         toast("Não foi possível salvar neste navegador. Você continua conectado.");
         return false;
@@ -1983,11 +1777,7 @@
   } catch (e) {}
 
   window.addEventListener("online", function () {
-    if (!stateStore.getState()) return;
-    if (cloudBootstrap.error || localData.hasPendingCloudSync()) {
-      retryCloudSync();
-    } else {
-      syncCloud(stateStore.getState());
-    }
+    cloudSync.handleOnline();
   });
 })();
+
