@@ -1,9 +1,5 @@
 (function () {
   "use strict";
-  var KEY = "painel-estudos-v2:" + window.desvelarUser.id;
-  var LEGACY_KEY = "painel-estudos-v2";
-  var LEGACY_OWNER_KEY = "painel-estudos-v2:migrated-to";
-  var legacyMigration = false;
   var U = window.DesvelarUtils;
 
   if (!U) {
@@ -547,45 +543,19 @@
 
     return o;
   }
+  var localData = window.DesvelarLocalDataRepository.create({
+    userId: window.desvelarUser.id,
+    normalize: normalize,
+    mergeLegacyData: mergeLegacyData,
+  });
+
   function persist() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(S));
-      saveOk = true;
-      return true;
-    } catch (e) {
-      saveOk = false;
-      return false;
-    }
+    saveOk = localData.save(S);
+    return saveOk;
   }
+
   function load() {
-    var r = localStorage.getItem(KEY);
-    var legacyOwner = localStorage.getItem(LEGACY_OWNER_KEY);
-    var userId = window.desvelarUser.id;
-    var pendingOwner = "pending:" + userId;
-
-    if (legacyOwner && legacyOwner.indexOf("done:") === 0) {
-      return r === null ? null : JSON.parse(r);
-    }
-
-    if (
-      legacyOwner &&
-      legacyOwner !== userId &&
-      legacyOwner !== pendingOwner
-    ) {
-      return r === null ? null : JSON.parse(r);
-    }
-
-    var legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy === null) return r === null ? null : JSON.parse(r);
-
-    if (!legacyOwner) {
-      localStorage.setItem(LEGACY_OWNER_KEY, pendingOwner);
-    }
-
-    legacyMigration = true;
-    var legacyData = normalize(JSON.parse(legacy));
-    if (r === null) return legacyData;
-    return mergeLegacyData(normalize(JSON.parse(r)), legacyData);
+    return localData.load();
   }
   function mergeLegacyData(current, legacy) {
     var merged = Object.assign({}, legacy, current);
@@ -3077,10 +3047,7 @@
   }
 
   function vSistema() {
-    var size = 0;
-    try {
-      size = (localStorage.getItem(KEY) || "").length;
-    } catch (e) {}
+    var size = localData.getSize();
     return (
       head(
         "Sistema",
@@ -4037,16 +4004,8 @@
   }
 
   var initSaved = persist();
-  var migrationFinalized = false;
-  if (legacyMigration && initSaved) {
-    try {
-      localStorage.setItem(
-        LEGACY_OWNER_KEY,
-        "done:" + window.desvelarUser.id,
-      );
-      migrationFinalized = true;
-    } catch (e) {}
-  }
+  var legacyMigration = localData.hasLegacyMigration();
+  var migrationFinalized = localData.finalizeLegacyMigration(initSaved);
   render();
 
   if (legacyMigration) {

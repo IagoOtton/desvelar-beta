@@ -163,6 +163,7 @@ async function openApp({
   failRpc = false,
   failSharedGoals = false,
   sharedGoalsResponseError = false,
+  legacyData = null,
 } = {}) {
   const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
@@ -174,7 +175,10 @@ async function openApp({
     window.__testFailRpc = options.failRpc;
     window.__testFailSharedGoals = options.failSharedGoals;
     window.__testSharedGoalsResponseError = options.sharedGoalsResponseError;
-  }, { authenticated, failRpc, failSharedGoals, sharedGoalsResponseError });
+    if (options.legacyData) {
+      localStorage.setItem("painel-estudos-v2", JSON.stringify(options.legacyData));
+    }
+  }, { authenticated, failRpc, failSharedGoals, sharedGoalsResponseError, legacyData });
   await page.route(
     "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
     (route) =>
@@ -274,6 +278,41 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
       .locator("#view .list .t")
       .filter({ hasText: "Atividade persistente de teste" })
       .waitFor({ state: "visible" });
+  } finally {
+    await context.close();
+  }
+});
+
+test("migra dados legados para a conta e mantém a cópia original", async () => {
+  const legacyData = {
+    v: 3,
+    name: "Perfil legado",
+    goalH: 17,
+    sessions: [
+      {
+        id: "legacy-session",
+        date: "2026-01-15",
+        min: 45,
+        tag: "Anatomia",
+        note: "",
+      },
+    ],
+  };
+  const { context, page } = await openApp({ legacyData });
+
+  try {
+    await waitForApp(page);
+    const migrated = await page.evaluate((storageKey) => ({
+      data: JSON.parse(localStorage.getItem(storageKey)),
+      original: JSON.parse(localStorage.getItem("painel-estudos-v2")),
+      owner: localStorage.getItem("painel-estudos-v2:migrated-to"),
+    }), STORAGE_KEY);
+
+    assert.equal(migrated.data.name, "Perfil legado");
+    assert.equal(migrated.data.goalH, 17);
+    assert.equal(migrated.data.sessions[0].id, "legacy-session");
+    assert.deepEqual(migrated.original, legacyData);
+    assert.equal(migrated.owner, `done:${USER.id}`);
   } finally {
     await context.close();
   }
