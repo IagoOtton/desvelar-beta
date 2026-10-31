@@ -657,6 +657,17 @@
     esc: esc,
     repository: window.DesvelarGroupRepository,
   });
+  var TaskViews = window.DesvelarTaskViews.create({
+    getState: function () {
+      return S;
+    },
+    today: today,
+    esc: esc,
+    chip: chip,
+    fmtD: fmtD,
+    head: head,
+    tagInput: tagInput,
+  });
 
   async function vInicio() {
     var groupGoalsHtml = await GroupViews.homeGroupGoals(
@@ -2274,70 +2285,7 @@
   }
 
   function vTarefas() {
-    var t = today();
-    var pend = S.tasks
-      .filter(function (x) {
-        return !x.done;
-      })
-      .sort(function (a, b) {
-        return (a.due || "9") < (b.due || "9") ? -1 : 1;
-      });
-    var done = S.tasks
-      .filter(function (x) {
-        return x.done;
-      })
-      .slice(-8)
-      .reverse();
-    var li = function (x) {
-      var late = !x.done && x.due && x.due < t;
-      return (
-        '<li class="' +
-        (x.done ? "done" : "") +
-        '"><button class="check' +
-        (x.done ? " on" : "") +
-        '" data-a="toggle" data-id="' +
-        esc(x.id) +
-        '" aria-label="Alternar conclusão">' +
-        (x.done ? "✓" : "") +
-        '</button><span class="t">' +
-        esc(x.title) +
-        '<div class="m">' +
-        chip(x.tag) +
-        (x.due
-          ? ' · <span class="' +
-            (late ? "late" : "") +
-            '">' +
-            (late ? "atrasada · " : "") +
-            fmtD(x.due) +
-            "</span>"
-          : "") +
-        '</div></span><button class="ico" data-a="del" data-k="tasks" data-id="' +
-        esc(x.id) +
-        '" aria-label="Apagar atividade">×</button></li>'
-      );
-    };
-    return (
-      head(
-        "Atividades",
-        "Resumos, listas, objetivos de PBL e tudo que tem prazo.",
-      ) +
-      '<div class="card"><h2>Nova atividade</h2><form class="row" data-form="task"><label class="f grow">O que fazer<input id="k-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Resumo de farmacocinética"></label>' +
-      '<label class="f grow">Tag' +
-      tagInput("k-tag", "ex.: Farmacologia") +
-      '</label><label class="f">Prazo<input id="k-due" type="date" name="due"></label><button class="btn pri" type="submit">Adicionar</button></form></div>' +
-      '<div class="grid"><div class="card"><h2>Pendentes (' +
-      pend.length +
-      ")</h2>" +
-      (pend.length
-        ? '<ul class="list">' + pend.map(li).join("") + "</ul>"
-        : '<p class="empty">Nada pendente.</p>') +
-      "</div>" +
-      '<div class="card"><h2>Concluídas</h2>' +
-      (done.length
-        ? '<ul class="list">' + done.map(li).join("") + "</ul>"
-        : '<p class="empty">Nenhuma concluída ainda.</p>') +
-      "</div></div>"
-    );
+    return TaskViews.tasksPage();
   }
 
   function vDesempenho() {

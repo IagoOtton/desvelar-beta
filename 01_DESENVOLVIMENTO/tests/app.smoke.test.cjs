@@ -270,6 +270,15 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
       .locator("#view .list .t")
       .filter({ hasText: "Atividade persistente de teste" })
       .waitFor({ state: "visible" });
+    await page
+      .locator("#view li")
+      .filter({ hasText: "Atividade persistente de teste" })
+      .locator('[data-a="toggle"]')
+      .click();
+    await page
+      .locator("#view li.done")
+      .filter({ hasText: "Atividade persistente de teste" })
+      .waitFor({ state: "visible" });
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await waitForApp(page);
@@ -278,6 +287,16 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
       .locator("#view .list .t")
       .filter({ hasText: "Atividade persistente de teste" })
       .waitFor({ state: "visible" });
+    assert.equal(
+      await page.evaluate((storageKey) => {
+        const data = JSON.parse(localStorage.getItem(storageKey));
+        const task = data.tasks.find(
+          (item) => item.title === "Atividade persistente de teste",
+        );
+        return task && task.done;
+      }, STORAGE_KEY),
+      true,
+    );
   } finally {
     await context.close();
   }
