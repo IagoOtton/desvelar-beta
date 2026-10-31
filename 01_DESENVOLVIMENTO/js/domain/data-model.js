@@ -576,6 +576,125 @@
     return merged;
   }
 
+  function mergeForSync(base, local, remote) {
+    var missing = {};
+
+    function clone(value) {
+      if (value === missing || value === undefined) return value;
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function equal(left, right) {
+      if (left === missing || right === missing) return left === right;
+      return JSON.stringify(left) === JSON.stringify(right);
+    }
+
+    function isObject(value) {
+      return (
+        value !== missing &&
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      );
+    }
+
+    function mergeArray(baseArray, localArray, remoteArray) {
+      var baseItems = indexItems(baseArray);
+      var localItems = indexItems(localArray);
+      var remoteItems = indexItems(remoteArray);
+      var keys = [];
+      var seen = Object.create(null);
+      var result = [];
+
+      [remoteArray, localArray, baseArray].forEach(function (items) {
+        items.forEach(function (item, index) {
+          var key = item && item.id != null ? "id:" + item.id : "index:" + index;
+          if (!seen[key]) {
+            seen[key] = true;
+            keys.push(key);
+          }
+        });
+      });
+
+      keys.forEach(function (key) {
+        var merged = mergeValue(
+          Object.prototype.hasOwnProperty.call(baseItems, key) ? baseItems[key] : missing,
+          Object.prototype.hasOwnProperty.call(localItems, key) ? localItems[key] : missing,
+          Object.prototype.hasOwnProperty.call(remoteItems, key) ? remoteItems[key] : missing,
+        );
+        if (merged !== missing) result.push(merged);
+      });
+
+      return result;
+    }
+
+    function indexItems(items) {
+      var indexed = Object.create(null);
+      items.forEach(function (item, index) {
+        var key = item && item.id != null ? "id:" + item.id : "index:" + index;
+        indexed[key] = item;
+      });
+      return indexed;
+    }
+
+    function mergeObject(baseValue, localValue, remoteValue) {
+      var result = {};
+      var keys = Object.create(null);
+
+      [baseValue, localValue, remoteValue].forEach(function (value) {
+        if (isObject(value)) {
+          Object.keys(value).forEach(function (key) {
+            keys[key] = true;
+          });
+        }
+      });
+
+      Object.keys(keys).forEach(function (key) {
+        var merged = mergeValue(
+          isObject(baseValue) && Object.prototype.hasOwnProperty.call(baseValue, key)
+            ? baseValue[key]
+            : missing,
+          isObject(localValue) && Object.prototype.hasOwnProperty.call(localValue, key)
+            ? localValue[key]
+            : missing,
+          isObject(remoteValue) && Object.prototype.hasOwnProperty.call(remoteValue, key)
+            ? remoteValue[key]
+            : missing,
+        );
+        if (merged !== missing) result[key] = merged;
+      });
+
+      return result;
+    }
+
+    function mergeValue(baseValue, localValue, remoteValue) {
+      if (equal(localValue, remoteValue)) return clone(localValue);
+      if (equal(localValue, baseValue)) return clone(remoteValue);
+      if (equal(remoteValue, baseValue)) return clone(localValue);
+
+      // Uma exclusão feita em um dispositivo prevalece sobre um valor sem alteração.
+      if (localValue === missing && baseValue !== missing) return missing;
+      if (remoteValue === missing && baseValue !== missing) return clone(localValue);
+
+      if (Array.isArray(localValue) || Array.isArray(remoteValue) || Array.isArray(baseValue)) {
+        return mergeArray(
+          Array.isArray(baseValue) ? baseValue : [],
+          Array.isArray(localValue) ? localValue : [],
+          Array.isArray(remoteValue) ? remoteValue : [],
+        );
+      }
+
+      if (isObject(localValue) || isObject(remoteValue) || isObject(baseValue)) {
+        return mergeObject(baseValue, localValue, remoteValue);
+      }
+
+      // Em conflito no mesmo campo simples, preserva a alteração local mais recente.
+      return clone(localValue);
+    }
+
+    return mergeValue(base, local, remote);
+  }
+
   window.DesvelarDataModel = Object.freeze({
     LISTS: Object.freeze(LISTS.slice()),
     TAGGED: Object.freeze(TAGGED.slice()),
@@ -583,5 +702,7 @@
     demo: demo,
     normalize: normalize,
     mergeLegacyData: mergeLegacyData,
+    mergeForSync: mergeForSync,
   });
 })();
+

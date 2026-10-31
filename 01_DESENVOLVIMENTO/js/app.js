@@ -54,17 +54,98 @@
     TM = {};
 
   /* ---------- dados ---------- */
+  var cloudBootstrap = window.desvelarCloudBootstrap || {};
+  var cloudRepository = window.desvelarCloudData || null;
+  var cloudSyncState = cloudBootstrap.error ? "error" : "syncing";
+  var cloudSaveRequest = 0;
+  var cloudErrorNotified = false;
   var localData = window.DesvelarLocalDataRepository.create({
     userId: window.desvelarUser.id,
     normalize: normalize,
     mergeLegacyData: mergeLegacyData,
   });
+
+  function cloudSyncLabel() {
+    if (cloudSyncState === "synced") return "Sincronizado com sua conta";
+    if (cloudSyncState === "error") return "Sem sincronização com a nuvem";
+    return "Sincronizando com sua conta…";
+  }
+
+  function updateCloudSyncStatus() {
+    var status = document.getElementById("cloud-sync-status");
+    if (status) status.textContent = cloudSyncLabel();
+  }
+
+  function syncCloud(state) {
+    if (!cloudRepository) {
+      cloudSyncState = "error";
+      updateCloudSyncStatus();
+      return;
+    }
+
+    var requestId = ++cloudSaveRequest;
+    cloudSyncState = "syncing";
+    updateCloudSyncStatus();
+
+    cloudRepository
+      .save(state)
+      .then(function (result) {
+        if (requestId !== cloudSaveRequest) return;
+
+        if (!result || !result.ok) {
+          cloudSyncState = "error";
+          updateCloudSyncStatus();
+          console.error("Erro ao sincronizar os dados:", result && result.error);
+          if (!cloudErrorNotified) {
+            cloudErrorNotified = true;
+            toast(
+              "Os dados ficaram salvos neste dispositivo, mas não sincronizaram. Confira sua conexão e a tela Sistema.",
+            );
+          }
+          return;
+        }
+
+        cloudSyncState = "synced";
+        localData.finalizeCloudMigration(true);
+        cloudErrorNotified = false;
+        updateCloudSyncStatus();
+      })
+      .catch(function (error) {
+        if (requestId !== cloudSaveRequest) return;
+        cloudSyncState = "error";
+        updateCloudSyncStatus();
+        console.error("Erro ao sincronizar os dados:", error);
+        if (!cloudErrorNotified) {
+          cloudErrorNotified = true;
+          toast(
+            "Os dados ficaram salvos neste dispositivo, mas não sincronizaram. Confira sua conexão e a tela Sistema.",
+          );
+        }
+      });
+  }
+
+  function loadAccountData() {
+    var hasLocalData = localData.hasStoredData();
+    var shouldMergeLocal = hasLocalData && !localData.hasCloudMigration();
+    var localState = shouldMergeLocal ? localData.load() : null;
+
+    if (cloudBootstrap.data) {
+      var remoteState = JSON.parse(JSON.stringify(cloudBootstrap.data));
+      return shouldMergeLocal
+        ? mergeLegacyData(normalize(remoteState), normalize(localState))
+        : remoteState;
+    }
+
+    return shouldMergeLocal ? localState : null;
+  }
+
   var stateStore = window.DesvelarStateStore.create({
     load: function () {
-      return localData.load();
+      return loadAccountData();
     },
     save: function (state) {
       saveOk = localData.save(state);
+      if (saveOk) syncCloud(state);
       return saveOk;
     },
     normalize: normalize,
@@ -779,6 +860,7 @@
     getSize: function () {
       return localData.getSize();
     },
+    getCloudSyncStatus: cloudSyncLabel,
     getWipeArm: function () {
       return wipeArm;
     },
@@ -1684,4 +1766,9 @@
     if (navigator.storage && navigator.storage.persist)
       navigator.storage.persist();
   } catch (e) {}
+
+  window.addEventListener("online", function () {
+    if (stateStore.getState()) syncCloud(stateStore.getState());
+  });
 })();
+

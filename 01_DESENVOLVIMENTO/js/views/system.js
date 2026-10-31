@@ -4,6 +4,7 @@
     var required = [
       "getState",
       "getSize",
+      "getCloudSyncStatus",
       "getWipeArm",
       "head",
       "esc",
@@ -20,8 +21,11 @@
       return (
         dependencies.head(
           "Sistema",
-          "Seus dados ficam salvos neste navegador. Faça backup de vez em quando.",
+          "Seus dados acompanham sua conta e sincronizam entre dispositivos. Faça backups de vez em quando.",
         ) +
+        '<div class="card"><h2>Sincronização</h2><p id="cloud-sync-status" role="status">' +
+        dependencies.esc(dependencies.getCloudSyncStatus()) +
+        '</p><p class="m">Use a mesma conta em cada dispositivo. Sem conexão, as alterações ficam guardadas neste navegador e tentam sincronizar quando a conexão voltar.</p></div>' +
         '<div class="grid"><div class="card"><h2>Perfil</h2><form class="row" data-form="profile"><label class="f grow">Seu nome<input id="p-name" class="grow" name="name" maxlength="30" value="' +
         dependencies.esc(state.name) +
         '" required></label>' +
@@ -51,3 +55,4 @@
   }
   window.DesvelarSystemViews = Object.freeze({ create: create });
 })();
+

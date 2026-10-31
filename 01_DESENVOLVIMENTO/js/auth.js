@@ -31,7 +31,7 @@
       </form>
 
       <p id="auth-message" role="status"></p>
-      <p class="auth-note">Cada pessoa deve criar sua própria conta. Estudos, tarefas, hábitos, metas e finanças ficam salvos neste navegador e não sincronizam entre dispositivos. Grupos e feedback usam a nuvem. Evite registrar dados pessoais ou financeiros sensíveis.</p>
+      <p class="auth-note">Cada pessoa deve usar sua própria conta. Estudos, tarefas, hábitos, metas e finanças ficam associados à conta e sincronizam entre navegadores e dispositivos. Faça backups periódicos e evite registrar dados pessoais ou financeiros sensíveis.</p>
     </section>
   `;
 
@@ -51,22 +51,59 @@
     if (!user || appStarted) return;
     appStarted = true;
     window.desvelarUser = user;
-    message.textContent = "Abrindo o DESVELAR…";
+    message.textContent = "Carregando seus dados…";
 
-    var appScript = document.createElement("script");
-    appScript.src = "./js/app.js";
-    appScript.onload = function () {
-      root.style.display = "none";
-      if (shell) shell.style.display = "";
-      if (bottom) bottom.style.display = "";
-    };
-    appScript.onerror = function () {
-      appStarted = false;
-      message.textContent = "Não foi possível carregar o app. Tente novamente.";
-      form.hidden = false;
-      toggle.hidden = false;
-    };
-    document.body.appendChild(appScript);
+    function openApp() {
+      var appScript = document.createElement("script");
+      appScript.src = "./js/app.js";
+      appScript.onload = function () {
+        root.style.display = "none";
+        if (shell) shell.style.display = "";
+        if (bottom) bottom.style.display = "";
+      };
+      appScript.onerror = function () {
+        appStarted = false;
+        message.textContent = "Não foi possível carregar o app. Tente novamente.";
+        form.hidden = false;
+        toggle.hidden = false;
+      };
+      document.body.appendChild(appScript);
+    }
+
+    try {
+      window.desvelarCloudData = window.DesvelarCloudDataRepository.create({
+        client: window.desvelarSupabase,
+        userId: user.id,
+        mergeForSync: window.DesvelarDataModel.mergeForSync,
+      });
+    } catch (error) {
+      console.error("Erro ao preparar a sincronização:", error);
+      window.desvelarCloudBootstrap = {
+        data: null,
+        revision: 0,
+        updatedAt: null,
+        error: error,
+      };
+      openApp();
+      return;
+    }
+
+    window.desvelarCloudData
+      .load()
+      .then(function (snapshot) {
+        window.desvelarCloudBootstrap = snapshot;
+        openApp();
+      })
+      .catch(function (error) {
+        console.error("Erro ao carregar dados da nuvem:", error);
+        window.desvelarCloudBootstrap = {
+          data: null,
+          revision: 0,
+          updatedAt: null,
+          error: error,
+        };
+        openApp();
+      });
   }
 
   function showLogin(errorMessage) {
@@ -141,3 +178,4 @@
       showLogin("Não foi possível recuperar a sessão. Entre novamente.");
     });
 })();
+

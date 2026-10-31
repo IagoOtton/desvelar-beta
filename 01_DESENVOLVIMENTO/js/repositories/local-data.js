@@ -15,6 +15,7 @@
     var key = "painel-estudos-v2:" + options.userId;
     var legacyKey = "painel-estudos-v2";
     var legacyOwnerKey = "painel-estudos-v2:migrated-to";
+    var cloudMigrationKey = key + ":cloud-migrated";
     var legacyMigration = false;
 
     function parse(value) {
@@ -71,6 +72,43 @@
       }
     }
 
+    function hasStoredData() {
+      try {
+        if (window.localStorage.getItem(key) !== null) return true;
+
+        var legacy = window.localStorage.getItem(legacyKey);
+        if (legacy === null) return false;
+
+        var owner = window.localStorage.getItem(legacyOwnerKey);
+        return (
+          !owner ||
+          owner === options.userId ||
+          owner === "pending:" + options.userId
+        );
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function hasCloudMigration() {
+      try {
+        return window.localStorage.getItem(cloudMigrationKey) === "done";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function finalizeCloudMigration(saved) {
+      if (!saved) return false;
+
+      try {
+        window.localStorage.setItem(cloudMigrationKey, "done");
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
     function hasLegacyMigration() {
       return legacyMigration;
     }
@@ -93,6 +131,9 @@
       load: load,
       save: save,
       getSize: getSize,
+      hasStoredData: hasStoredData,
+      hasCloudMigration: hasCloudMigration,
+      finalizeCloudMigration: finalizeCloudMigration,
       hasLegacyMigration: hasLegacyMigration,
       finalizeLegacyMigration: finalizeLegacyMigration,
     });
@@ -100,3 +141,4 @@
 
   window.DesvelarLocalDataRepository = Object.freeze({ create: create });
 })();
+

@@ -26,11 +26,19 @@ join auth.users as u on u.id = f.user_id
 order by f.created_at desc;
 ```
 
-## 2. Habilitar confirmação de e-mail para amigos
+## 2. Habilitar a sincronização do progresso
+
+1. No **SQL Editor** do mesmo projeto, crie outra consulta.
+2. Copie e execute todo o conteúdo de [`create_app_user_data.sql`](../01_DESENVOLVIMENTO/supabase/create_app_user_data.sql).
+3. Confirme que `public.app_user_data` aparece no Table Editor e que a função `public.save_my_app_data(jsonb, bigint)` aparece em Database → Functions.
+
+Essa tabela guarda o progresso pessoal em um único registro por conta. A RLS limita a leitura ao próprio usuário; a gravação ocorre por uma função que valida a conta autenticada e a revisão dos dados para evitar sobrescritas entre dispositivos.
+
+## 3. Habilitar confirmação de e-mail para amigos
 
 O SMTP padrão do Supabase só envia para endereços da equipe do projeto e tem limite baixo. Configure um provedor SMTP na área **Authentication → Emails → SMTP Settings** do Supabase. As credenciais devem ser inseridas diretamente no painel do provedor/Supabase; não as coloque no código ou no GitHub. Mantenha a confirmação de e-mail ativada.
 
-## 3. Configurar o retorno depois da confirmação
+## 4. Configurar o retorno depois da confirmação
 
 Depois de criar o repositório e obter o endereço GitHub Pages, abra **Authentication → URL Configuration** no Supabase:
 
@@ -39,7 +47,7 @@ Depois de criar o repositório e obter o endereço GitHub Pages, abra **Authenti
 
 O app usa a URL atual da página como destino de confirmação. Por isso, atualize essas configurações se o endereço do Pages mudar.
 
-## 4. Criar o repositório e publicar
+## 5. Criar o repositório e publicar
 
 1. Crie no GitHub um repositório vazio chamado, por exemplo, `desvelar-beta`. Para usar o Pages no GitHub Free, deixe o repositório público. Não adicione README, licença ou `.gitignore` pelo GitHub; eles já existem neste projeto.
 2. No terminal, na pasta do projeto, adicione as alterações e crie um commit:
@@ -58,12 +66,15 @@ O app usa a URL atual da página como destino de confirmação. Por isso, atuali
 5. Quando a execução terminar, abra o endereço mostrado pelo deployment do GitHub Pages e teste cadastro, confirmação de e-mail, entrada e envio de feedback.
 6. Envie esse endereço aos amigos. Cada pessoa deve criar sua própria conta.
 
-## 5. O que pedir no feedback
+## 6. O que pedir no feedback
 
-Peça que testem uma tarefa real e descrevam: o que tentaram fazer, o que aconteceu e o que esperavam. O feedback enviado em **Sistema → Enviar feedback** fica associado à conta. Os dados pessoais de estudo, rotina, hábitos, metas e finanças continuam salvos somente no navegador de cada pessoa; grupos e feedback usam o Supabase.
+Peça que testem uma tarefa real e descrevam: o que tentaram fazer, o que aconteceu e o que esperavam. O feedback enviado em **Sistema → Enviar feedback** fica associado à conta. Os dados pessoais de estudo, rotina, hábitos, metas e finanças também ficam no Supabase e sincronizam ao entrar com a mesma conta em outro dispositivo. O navegador conserva uma cópia local e permite exportar um backup.
+
+Se alguém já usava a cópia local aberta por `file://`, deve exportar os dados dessa cópia e importar o arquivo na versão publicada. O site não pode ler automaticamente o armazenamento de outro endereço.
 
 ## Referências
 
 - [Supabase: configurar SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
 - [Supabase: URLs de redirecionamento](https://supabase.com/docs/guides/auth/redirect-urls)
 - [GitHub: criar um site do Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)
+
