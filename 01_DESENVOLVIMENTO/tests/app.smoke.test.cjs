@@ -456,6 +456,40 @@ test("rejeita IDs perigosos em backups importados sem executar HTML", async () =
   }
 });
 
+test("normaliza configurações Pomodoro inseguras em backups importados", async () => {
+  const { context, page } = await openApp();
+
+  try {
+    await waitForApp(page);
+    const backup = await page.evaluate((storageKey) =>
+      JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
+    backup.pomo.focus = XSS_PAYLOAD;
+    backup.pomo.daily = XSS_PAYLOAD;
+
+    await page.locator('#sidenav [data-tab="sistema"]').click();
+    await page.locator("#imp").setInputFiles({
+      name: "backup-configuracao-invalida.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(backup)),
+    });
+    await page.getByText("dados importados", { exact: true }).waitFor({ state: "visible" });
+    await page.waitForTimeout(100);
+
+    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
+    const saved = await page.evaluate((storageKey) =>
+      JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
+    assert.equal(saved.pomo.focus, 25);
+    assert.equal(saved.pomo.daily, 6);
+
+    await page.locator('#sidenav [data-tab="foco"]').click();
+    assert.equal(await page.locator('input[name="focus"]').inputValue(), "25");
+    assert.equal(await page.locator('input[name="daily"]').inputValue(), "6");
+    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
+  } finally {
+    await context.close();
+  }
+});
+
 test("exibe erro de consulta de objetivos sem esconder o restante da aba Grupos", async () => {
   const { context, page } = await openApp({ sharedGoalsResponseError: true });
 

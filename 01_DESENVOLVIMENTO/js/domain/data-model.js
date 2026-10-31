@@ -404,6 +404,15 @@
     ];
     return o;
   }
+  function boundedInteger(value, fallback, min, max) {
+    return typeof value === "number" &&
+      Number.isInteger(value) &&
+      value >= min &&
+      value <= max
+      ? value
+      : fallback;
+  }
+
   function normalize(o) {
     // Primeiro acesso: inicializa com os dados demonstrativos.
     if (o === null) o = demo();
@@ -478,14 +487,14 @@
     }
 
     var P = o.pomo;
-    P.focus = P.focus || 25;
-    P.short = P.short || 5;
-    P.long = P.long || 15;
-    P.every = P.every || 4;
-    P.cycle = P.cycle || 1;
-    P.lastTag = P.lastTag || "";
-    P.daily = P.daily || 6;
-    P.rateId = P.rateId || "";
+    P.focus = boundedInteger(P.focus, 25, 1, 180);
+    P.short = boundedInteger(P.short, 5, 1, 60);
+    P.long = boundedInteger(P.long, 15, 1, 90);
+    P.every = boundedInteger(P.every, 4, 2, 10);
+    P.cycle = boundedInteger(P.cycle, 1, 1, P.every);
+    P.lastTag = typeof P.lastTag === "string" ? P.lastTag : "";
+    P.daily = boundedInteger(P.daily, 6, 1, 30);
+    P.rateId = typeof P.rateId === "string" ? P.rateId : "";
 
     if (o.pomoRun === undefined) {
       o.pomoRun = null;
