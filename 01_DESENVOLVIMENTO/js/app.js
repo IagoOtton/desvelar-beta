@@ -166,12 +166,11 @@
         storedTheme = window.localStorage.getItem("painel-tema");
       } catch (error) {}
 
-      state.theme =
-        storedTheme === "dark" || storedTheme === "light"
-          ? storedTheme
-          : "system";
+      if (storedTheme === "dark" || storedTheme === "light") {
+        state.theme = storedTheme;
+      }
     }
-    applyTheme(state.theme);
+    applyTheme(state.theme || "system");
     return state;
   }
   /* ---------- tags livres ---------- */
