@@ -800,6 +800,21 @@
     months: MES,
     weekdays: DIAS,
   });
+  var FormController = window.DesvelarFormController.create({
+    getState: function () {
+      return S;
+    },
+    getSelectedDay: function () {
+      return selDay;
+    },
+    getUserId: function () {
+      return window.desvelarUser.id;
+    },
+    uid: uid,
+    commit: commit,
+    toast: toast,
+    groupRepository: window.DesvelarGroupRepository,
+  });
 
   async function vInicio() {
     var groupGoalsHtml = await GroupViews.homeGroupGoals(
@@ -1682,215 +1697,12 @@
     } else return;
     commit(msg);
   });
-  document.addEventListener("submit", function (e) {
-    submitForm(e).catch(function (error) {
+  document.addEventListener("submit", function (event) {
+    FormController.submit(event).catch(function (error) {
       console.error("Erro ao processar formulário:", error);
       toast("Não foi possível concluir esta ação. Tente novamente.");
     });
   });
-
-  async function submitForm(e) {
-    var f = e.target.closest("form[data-form]");
-    if (!f) return;
-    e.preventDefault();
-    var k = f.dataset.form,
-      v = Object.fromEntries(new FormData(f).entries()),
-      msg = "registrado",
-      tg = (v.tag || "").trim();
-    if (k === "session") {
-      S.sessions.push({
-        id: uid(),
-        date: v.date,
-        min: Number(v.min),
-        tag: tg,
-        note: (v.note || "").trim(),
-      });
-      msg = "sessão registrada";
-    } else if (k === "book") {
-      S.books.push({
-        id: uid(),
-        title: v.title.trim(),
-        tag: tg,
-        total: Number(v.total),
-        read: 0,
-      });
-      msg = "livro adicionado na página 0";
-    } else if (k === "read") {
-      var bk = S.books.find(function (x) {
-        return x.id === v.id;
-      });
-      if (!bk) return;
-      var to = Math.min(bk.total, Math.round(Number(v.to)));
-      if (!(to > bk.read)) {
-        toast("Informe uma página maior que " + bk.read);
-        return;
-      }
-      S.readlog.push({
-        id: uid(),
-        bookId: bk.id,
-        date: v.date,
-        from: bk.read,
-        to: to,
-        pages: to - bk.read,
-        min: v.min ? Number(v.min) : 0,
-      });
-      msg = "+" + (to - bk.read) + " páginas lidas";
-      bk.read = to;
-    } else if (k === "event")
-      S.events.push({
-        id: uid(),
-        date: selDay,
-        time: v.time || "",
-        title: v.title.trim(),
-        kind: (v.kind || "").trim(),
-      });
-    else if (k === "task")
-      S.tasks.push({
-        id: uid(),
-        title: v.title.trim(),
-        due: v.due || "",
-        tag: tg,
-        done: false,
-        doneOn: "",
-      });
-    else if (k === "question") {
-      var tt = Number(v.total),
-        cc = Math.min(tt, Number(v.correct));
-      S.questions.push({
-        id: uid(),
-        date: v.date,
-        tag: tg,
-        total: tt,
-        correct: cc,
-      });
-    } else if (k === "theme") {
-      S.themes.push({
-        id: uid(),
-        date: v.date,
-        title: v.title.trim(),
-        tag: tg,
-        diff: Number(v.diff),
-        note: (v.note || "").trim(),
-        reviewed: false,
-      });
-      msg = "tema registrado";
-    } else if (k === "habit") {
-      S.habits.push({ id: uid(), name: v.name.trim(), days: {} });
-      msg = "hábito criado";
-    } else if (k === "tx") {
-      S.txs.push({
-        id: uid(),
-        date: v.date,
-        type: v.type === "in" ? "in" : "out",
-        amount: Math.round(Number(v.amount) * 100) / 100,
-        title: v.title.trim(),
-        tag: tg,
-      });
-      msg = "lançamento salvo";
-    } else if (k === "goal") {
-      S.goals.push({
-        id: uid(),
-        title: v.title.trim(),
-        tag: tg,
-        due: v.due || "",
-        manual: 0,
-        ms: [],
-      });
-      msg = "meta criada";
-    } else if (k === "ms") {
-      S.goals.forEach(function (g) {
-        if (g.id === v.g)
-          g.ms.push({ id: uid(), text: v.text.trim(), done: false });
-      });
-      msg = "marco adicionado";
-    } else if (k === "gman") {
-      S.goals.forEach(function (g) {
-        if (g.id === v.g) g.manual = Math.max(0, Math.min(100, Number(v.pct)));
-      });
-      msg = "progresso atualizado";
-    } else if (k === "routine") {
-      var dsel = [].slice
-        .call(f.querySelectorAll("input[name=d]:checked"))
-        .map(function (x) {
-          return Number(x.value);
-        });
-      if (!dsel.length) {
-        toast("Escolha ao menos um dia");
-        return;
-      }
-      if (v.end <= v.start) {
-        toast("O fim precisa ser depois do início");
-        return;
-      }
-      dsel.forEach(function (d) {
-        S.routine.push({
-          id: uid(),
-          day: d,
-          start: v.start,
-          end: v.end,
-          title: v.title.trim(),
-          tag: tg,
-        });
-      });
-      msg = "bloco adicionado";
-    } else if (k === "pomo") {
-      var P1 = S.pomo;
-      P1.focus = Number(v.focus);
-      P1.short = Number(v.short);
-      P1.long = Number(v.long);
-      P1.every = Number(v.every);
-      P1.daily = Number(v.daily) || 6;
-      if (P1.cycle > P1.every) P1.cycle = 1;
-      msg = "ajustes salvos";
-    } else if (k === "group") {
-      var groupResult = await window.DesvelarGroupRepository.createGroup(
-        v.name,
-      );
-
-      if (groupResult.error) {
-        console.error("Erro ao criar grupo:", groupResult.error);
-        toast("Erro ao criar grupo: " + groupResult.error.message);
-        return;
-      }
-
-      msg = "grupo criado";
-    } else if (k === "join-group") {
-      var joinResult = await window.DesvelarGroupRepository.joinGroup(
-        v.invite_code,
-      );
-
-      if (joinResult.error) {
-        console.error("Erro ao entrar no grupo:", joinResult.error);
-        toast("Não foi possível entrar: " + joinResult.error.message);
-        return;
-      }
-
-      msg = "Você entrou no grupo";
-    } else if (k === "shared-goal") {
-      var goalResult = await window.DesvelarGroupRepository.createSharedGoal({
-        groupId: v.group_id,
-        title: v.title,
-        description: v.description,
-        userId: window.desvelarUser.id,
-      });
-
-      if (goalResult.error) {
-        console.error(
-          "Erro ao criar objetivo compartilhado:",
-          goalResult.error,
-        );
-        toast("Não foi possível criar o objetivo: " + goalResult.error.message);
-        return;
-      }
-
-      msg = "objetivo compartilhado criado";
-    } else if (k === "profile") {
-      S.name = v.name.trim() || S.name;
-      S.goalH = Number(v.h);
-      msg = "perfil salvo";
-    }
-    commit(msg);
-  }
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && zen) {
       zen = false;
