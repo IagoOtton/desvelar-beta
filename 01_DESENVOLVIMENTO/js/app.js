@@ -1239,30 +1239,20 @@
     var content = "";
 
     try {
-      var results = await Promise.all([
-        window.desvelarSupabase
-          .from("group_members")
-          .select("groups(id, name)")
-          .eq("user_id", window.desvelarUser.id),
-        window.desvelarSupabase
-          .from("shared_goals")
-          .select("id, group_id, title, description, completed, created_at")
-          .order("created_at", { ascending: false })
-          .limit(4),
-      ]);
-      var groupsResult = results[0];
-      var goalsResult = results[1];
+      var result = await window.DesvelarGroupRepository.loadHomeGoals(
+        window.desvelarUser.id,
+      );
 
-      if (groupsResult.error || goalsResult.error) {
+      if (result.error) {
         content =
           '<p class="m">Não foi possível carregar as metas compartilhadas agora.</p>';
       } else {
         var groupNames = Object.create(null);
-        (groupsResult.data || []).forEach(function (item) {
+        result.groups.forEach(function (item) {
           if (item.groups) groupNames[item.groups.id] = item.groups.name;
         });
 
-        var goals = goalsResult.data || [];
+        var goals = result.goals;
         content = goals.length
           ? '<ul class="list">' +
             goals
@@ -3115,10 +3105,9 @@
     );
   }
   async function vGrupos() {
-    var result = await window.desvelarSupabase
-      .from("group_members")
-      .select("groups(id, name, invite_code)")
-      .eq("user_id", window.desvelarUser.id);
+    var result = await window.DesvelarGroupRepository.loadGroupsPage(
+      window.desvelarUser.id,
+    );
     if (result.error) {
       return (
         head("Grupos", "Área para compartilhar objetivos com outras pessoas.") +
@@ -3126,23 +3115,15 @@
       );
     }
 
-    var groups = (result.data || [])
-      .map(function (item) {
-        return item.groups;
-      })
-      .filter(Boolean);
-    var goalsResult = await window.desvelarSupabase
-      .from("shared_goals")
-      .select("id, group_id, title, description, created_at, completed")
-      .order("created_at", { ascending: false });
+    var groups = result.groups;
     var goalsHtml = "";
 
-    if (goalsResult.error) {
-      console.error("Erro ao carregar objetivos dos grupos:", goalsResult.error);
+    if (result.goalsError) {
+      console.error("Erro ao carregar objetivos dos grupos:", result.goalsError);
       goalsHtml =
         '<p class="m">Não foi possível carregar os objetivos compartilhados agora.</p>';
-    } else if ((goalsResult.data || []).length) {
-      goalsHtml = goalsResult.data
+    } else if (result.goals.length) {
+      goalsHtml = result.goals
         .map(function (goal) {
           var group = groups.find(function (item) {
             return item.id === goal.group_id;
@@ -3842,9 +3823,8 @@
       if (P1.cycle > P1.every) P1.cycle = 1;
       msg = "ajustes salvos";
     } else if (k === "group") {
-      var groupResult = await window.desvelarSupabase.rpc(
-        "create_group_with_owner",
-        { p_name: v.name.trim() },
+      var groupResult = await window.DesvelarGroupRepository.createGroup(
+        v.name,
       );
 
       if (groupResult.error) {
@@ -3855,9 +3835,8 @@
 
       msg = "grupo criado";
     } else if (k === "join-group") {
-      var joinResult = await window.desvelarSupabase.rpc(
-        "join_group_by_invite",
-        { p_invite_code: v.invite_code.trim() },
+      var joinResult = await window.DesvelarGroupRepository.joinGroup(
+        v.invite_code,
       );
 
       if (joinResult.error) {
@@ -3868,14 +3847,12 @@
 
       msg = "Você entrou no grupo";
     } else if (k === "shared-goal") {
-      var goalResult = await window.desvelarSupabase
-        .from("shared_goals")
-        .insert({
-          group_id: v.group_id,
-          title: v.title.trim(),
-          description: v.description.trim(),
-          created_by: window.desvelarUser.id,
-        });
+      var goalResult = await window.DesvelarGroupRepository.createSharedGoal({
+        groupId: v.group_id,
+        title: v.title,
+        description: v.description,
+        userId: window.desvelarUser.id,
+      });
 
       if (goalResult.error) {
         console.error(
