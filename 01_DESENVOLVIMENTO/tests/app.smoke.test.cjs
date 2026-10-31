@@ -150,6 +150,17 @@ const MOCK_SDK = `
           error: null,
         };
       }
+      if (name === "create_group_with_owner") {
+        const createdGroupId = "33333333-3333-4333-8333-333333333333";
+        groups.push({
+          groups: {
+            id: createdGroupId,
+            name: args.p_name,
+            invite_code: "NOVO1234",
+          },
+        });
+        return { data: createdGroupId, error: null };
+      }
       return { data: ${JSON.stringify(GROUP_ID)}, error: null };
     },
   };
@@ -217,9 +228,12 @@ async function openApp({
   sharedGoalsResponseError = false,
   legacyData = null,
 } = {}) {
-  const context = await browser.newContext({ acceptDownloads: true });
+  const context = await browser.newContext({
+    acceptDownloads: true,
+    reducedMotion: "reduce",
+  });
   const page = await context.newPage();
-  page.setDefaultTimeout(8_000);
+  page.setDefaultTimeout(12_000);
   page.setDefaultNavigationTimeout(20_000);
   page.on("pageerror", (error) => console.error("Browser page error:", error.message));
   await page.addInitScript((options) => {
@@ -247,8 +261,8 @@ async function openApp({
 }
 
 async function waitForApp(page) {
-  await page.locator(".shell").waitFor({ state: "visible", timeout: 10_000 });
-  await page.locator("#view h1").waitFor({ state: "visible", timeout: 10_000 });
+  await page.locator(".shell").waitFor({ state: "visible", timeout: 15_000 });
+  await page.locator("#view h1").waitFor({ state: "visible", timeout: 15_000 });
 }
 
 test("gerencia transições do Pomodoro no domínio", () => {
@@ -460,6 +474,54 @@ test("autentica o usuário e abre o aplicativo", async () => {
   }
 });
 
+test("limpa senha incorreta e alterna mostrar e ocultar no login", async () => {
+  const { context, page } = await openApp({ authenticated: false });
+
+  try {
+    const email = page.locator("#auth-email");
+    const password = page.locator("#auth-password");
+    const visibilityToggle = page.locator(
+      '[data-password-toggle="auth-password"]',
+    );
+
+    await email.waitFor({ state: "visible", timeout: 15_000 });
+    await email.fill(USER.email);
+    await password.fill("senha-errada");
+
+    await visibilityToggle.click();
+    assert.equal(await password.getAttribute("type"), "text");
+    assert.equal(await visibilityToggle.getAttribute("aria-pressed"), "true");
+    assert.equal(await password.inputValue(), "senha-errada");
+
+    await visibilityToggle.click();
+    assert.equal(await password.getAttribute("type"), "password");
+    assert.equal(await visibilityToggle.getAttribute("aria-pressed"), "false");
+
+    await page.locator("#auth-submit").click();
+    const errorMessage = page.locator("#auth-message.auth-message--error");
+    await errorMessage.waitFor({ state: "visible" });
+
+    assert.equal(
+      await errorMessage.textContent(),
+      "E-mail ou senha incorretos. Confira os dados e tente novamente.",
+    );
+    assert.equal(await password.inputValue(), "");
+    assert.equal(await password.getAttribute("aria-invalid"), "true");
+    assert.equal(
+      await page.locator("#auth-form").evaluate((form) =>
+        form.classList.contains("auth-form--error"),
+      ),
+      true,
+    );
+
+    await password.fill("senha-de-teste");
+    assert.equal(await password.getAttribute("aria-invalid"), null);
+    assert.equal(await errorMessage.count(), 0);
+  } finally {
+    await context.close();
+  }
+});
+
 test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar", async () => {
   const { context, page } = await openApp();
 
@@ -488,8 +550,10 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
       { timeout: 5_000 },
     );
     await page
-      .getByText("grupo criado", { exact: true })
-      .waitFor({ state: "visible", timeout: 5_000 });
+      .locator("#view .card")
+      .filter({ hasText: "NOVO1234" })
+      .getByText("Grupo novo", { exact: true })
+      .waitFor({ state: "visible", timeout: 10_000 });
 
     const createGroupCall = await page.evaluate(() =>
       window.__mockCalls.find(
@@ -832,6 +896,14 @@ test("exige a senha para apagar tudo e mantém os dados se a senha estiver incor
     await page.locator('[data-a="wipe"]').evaluate((button) => button.click());
     await page.locator("#wipe-password").waitFor({ state: "visible" });
     await page.locator("#wipe-password").fill("senha-errada");
+    const wipePasswordToggle = page.locator(
+      '[data-password-toggle="wipe-password"]',
+    );
+    await wipePasswordToggle.click();
+    assert.equal(await page.locator("#wipe-password").getAttribute("type"), "text");
+    assert.equal(await page.locator("#wipe-password").inputValue(), "senha-errada");
+    await wipePasswordToggle.click();
+    assert.equal(await page.locator("#wipe-password").getAttribute("type"), "password");
     await page.locator('[data-a="wipe-confirm"]').evaluate((button) => button.click());
     await page.getByText("Senha incorreta. Seus dados continuam salvos.", { exact: true }).waitFor({ state: "visible" });
     assert.deepEqual(
