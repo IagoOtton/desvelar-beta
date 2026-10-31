@@ -652,62 +652,16 @@
     });
   }
 
-  async function homeGroupGoals() {
-    var title =
-      '<div class="rowflex" style="justify-content:space-between"><div><h2>Metas dos grupos</h2><p class="m">Objetivos compartilhados com seus grupos.</p></div><button class="btn sm" data-a="tab" data-tab="grupos">Abrir grupos</button></div>';
-    var content = "";
-
-    try {
-      var result = await window.DesvelarGroupRepository.loadHomeGoals(
-        window.desvelarUser.id,
-      );
-
-      if (result.error) {
-        content =
-          '<p class="m">Não foi possível carregar as metas compartilhadas agora.</p>';
-      } else {
-        var groupNames = Object.create(null);
-        result.groups.forEach(function (item) {
-          if (item.groups) groupNames[item.groups.id] = item.groups.name;
-        });
-
-        var goals = result.goals;
-        content = goals.length
-          ? '<ul class="list">' +
-            goals
-              .map(function (goal) {
-                var groupName = groupNames[goal.group_id] || "Grupo";
-                var description = goal.description
-                  ? '<div class="m">' + esc(goal.description) + "</div>"
-                  : "";
-
-                return (
-                  '<li><span class="t"><strong>' +
-                  esc(goal.title) +
-                  '</strong><div class="m">' +
-                  esc(groupName) +
-                  "</div>" +
-                  description +
-                  '</span><span class="badge">' +
-                  (goal.completed ? "Concluída" : "Em andamento") +
-                  "</span></li>"
-                );
-              })
-              .join("") +
-            "</ul>"
-          : '<p class="empty">Ainda não há metas compartilhadas. Crie um grupo ou entre em um para começar.</p>';
-      }
-    } catch (error) {
-      console.error("Erro ao carregar metas dos grupos:", error);
-      content =
-        '<p class="m">Não foi possível carregar as metas compartilhadas agora.</p>';
-    }
-
-    return '<div class="grid"><div class="card">' + title + content + "</div></div>";
-  }
+  var GroupViews = window.DesvelarGroupViews.create({
+    head: head,
+    esc: esc,
+    repository: window.DesvelarGroupRepository,
+  });
 
   async function vInicio() {
-    var groupGoalsHtml = await homeGroupGoals();
+    var groupGoalsHtml = await GroupViews.homeGroupGoals(
+      window.desvelarUser.id,
+    );
     var t = today(),
       ws = wkStart(t),
       we = addDays(ws, 6),
@@ -2520,82 +2474,8 @@
       "</button></div></div>"
     );
   }
-  async function vGrupos() {
-    var result = await window.DesvelarGroupRepository.loadGroupsPage(
-      window.desvelarUser.id,
-    );
-    if (result.error) {
-      return (
-        head("Grupos", "Área para compartilhar objetivos com outras pessoas.") +
-        '<div class="card"><p class="m">Não foi possível carregar os grupos.</p></div>'
-      );
-    }
-
-    var groups = result.groups;
-    var goalsHtml = "";
-
-    if (result.goalsError) {
-      console.error("Erro ao carregar objetivos dos grupos:", result.goalsError);
-      goalsHtml =
-        '<p class="m">Não foi possível carregar os objetivos compartilhados agora.</p>';
-    } else if (result.goals.length) {
-      goalsHtml = result.goals
-        .map(function (goal) {
-          var group = groups.find(function (item) {
-            return item.id === goal.group_id;
-          });
-
-          return (
-            '<div class="rowflex"><div><p><strong>' +
-            esc(goal.title) +
-            "</strong></p><p>" +
-            esc(goal.description || "") +
-            '</p><p class="m">Grupo: ' +
-            esc(group ? group.name : "Grupo") +
-            "</p></div></div>"
-          );
-        })
-        .join("");
-    } else {
-      goalsHtml = '<p class="m">Nenhum objetivo compartilhado ainda.</p>';
-    }
-
-    return (
-      head("Grupos", "Área para compartilhar objetivos com outras pessoas.") +
-      '<div class="card"><h2>Criar grupo</h2><form data-form="group"><label class="f">Nome do grupo<input class="grow" name="name" maxlength="60" required></label><button class="btn pri" type="submit">Criar grupo</button></form></div>' +
-      '<div class="card"><h2>Entrar em grupo</h2><form data-form="join-group"><label class="f">Código de convite<input class="grow" name="invite_code" maxlength="8" required></label><button class="btn pri" type="submit">Entrar com código</button></form></div>' +
-      '<div class="card"><h2>Objetivos compartilhados</h2><form data-form="shared-goal"><label class="f">Grupo<select name="group_id" required>' +
-      groups
-        .map(function (group) {
-          return (
-            '<option value="' +
-            esc(group.id) +
-            '">' +
-            esc(group.name) +
-            "</option>"
-          );
-        })
-        .join("") +
-      '</select></label><label class="f">Objetivo<input class="grow" name="title" maxlength="100" required></label><label class="f">Descrição<textarea name="description" maxlength="500"></textarea></label><button class="btn pri" type="submit">Criar objetivo</button></form></div>' +
-      '<div class="card"><h2>Objetivos cadastrados</h2>' +
-      goalsHtml +
-      "</div>" +
-      '<div class="card"><h2>Seus grupos</h2>' +
-      (groups.length
-        ? groups
-            .map(function (group) {
-              return (
-                '<div class="rowflex"><p>' +
-                esc(group.name) +
-                '</p><p class="m">Convite: <strong>' +
-                esc(group.invite_code || "sem código") +
-                "</strong></p></div>"
-              );
-            })
-            .join("")
-        : '<p class="m">Você ainda não participa de nenhum grupo.</p>') +
-      "</div>"
-    );
+  function vGrupos() {
+    return GroupViews.groupsPage(window.desvelarUser.id);
   }
   var VIEWS = {
     inicio: vInicio,
