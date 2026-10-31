@@ -1,8 +1,9 @@
 (function () {
   "use strict";
-  var KEY =
-    "painel-estudos-v2"; /* mesma chave das versões anteriores: seus dados continuam aqui */
-
+  var KEY = "painel-estudos-v2:" + window.desvelarUser.id;
+  var LEGACY_KEY = "painel-estudos-v2";
+  var LEGACY_OWNER_KEY = "painel-estudos-v2:migrated-to";
+  var legacyMigration = false;
   var U = window.DesvelarUtils;
 
   if (!U) {
@@ -558,8 +559,90 @@
   }
   function load() {
     var r = localStorage.getItem(KEY);
-    if (r === null) return null;
-    return JSON.parse(r);
+    var legacyOwner = localStorage.getItem(LEGACY_OWNER_KEY);
+    var userId = window.desvelarUser.id;
+    var pendingOwner = "pending:" + userId;
+
+    if (legacyOwner && legacyOwner.indexOf("done:") === 0) {
+      return r === null ? null : JSON.parse(r);
+    }
+
+    if (
+      legacyOwner &&
+      legacyOwner !== userId &&
+      legacyOwner !== pendingOwner
+    ) {
+      return r === null ? null : JSON.parse(r);
+    }
+
+    var legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy === null) return r === null ? null : JSON.parse(r);
+
+    if (!legacyOwner) {
+      localStorage.setItem(LEGACY_OWNER_KEY, pendingOwner);
+    }
+
+    legacyMigration = true;
+    var legacyData = normalize(JSON.parse(legacy));
+    if (r === null) return legacyData;
+    return mergeLegacyData(normalize(JSON.parse(r)), legacyData);
+  }
+  function mergeLegacyData(current, legacy) {
+    var merged = Object.assign({}, legacy, current);
+
+    LISTS.forEach(function (key) {
+      var items = legacy[key].slice();
+      var byId = Object.create(null);
+
+      items.forEach(function (item, index) {
+        if (item.id != null) byId[item.id] = index;
+      });
+
+      current[key].forEach(function (item) {
+        if (
+          item.id != null &&
+          Object.prototype.hasOwnProperty.call(byId, item.id)
+        ) {
+          items[byId[item.id]] = item;
+        } else {
+          if (item.id != null) byId[item.id] = items.length;
+          items.push(item);
+        }
+      });
+
+      merged[key] = items;
+    });
+
+    if (current.name === "Iago" && legacy.name) merged.name = legacy.name;
+    if (current.goalH === 20 && legacy.goalH) merged.goalH = legacy.goalH;
+    if (!current.lastBackup && legacy.lastBackup) {
+      merged.lastBackup = legacy.lastBackup;
+    }
+
+    var pomoDefaults = {
+      focus: 25,
+      short: 5,
+      long: 15,
+      every: 4,
+      cycle: 1,
+      lastTag: "",
+      daily: 6,
+      rateId: "",
+    };
+    merged.pomo = Object.assign({}, legacy.pomo, current.pomo);
+    Object.keys(pomoDefaults).forEach(function (key) {
+      if (
+        current.pomo[key] === pomoDefaults[key] &&
+        legacy.pomo[key] !== undefined
+      ) {
+        merged.pomo[key] = legacy.pomo[key];
+      }
+    });
+    if (current.pomoRun == null && legacy.pomoRun != null) {
+      merged.pomoRun = legacy.pomoRun;
+    }
+
+    return merged;
   }
 
   /* ---------- tags livres ---------- */
@@ -606,7 +689,7 @@
     for (var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) % 360;
     return "hsl(" + h + " 72% var(--tl))";
   }
-    function chip(t) {
+  function chip(t) {
     return Common.chip(tcolor(t), esc(tlabel(t)));
   }
 
@@ -1065,7 +1148,7 @@
     ["inicio", "Início", "M3 11l9-8 9 8v9H3z", ""],
     [
       "foco",
-      "Foco",
+      "Pomodoro",
       "M10 2h4M12 5a8 8 0 100 16 8 8 0 000-16zM12 9v4l2.5 1.5",
       "Estudos",
     ],
@@ -1104,6 +1187,12 @@
       "Vida",
     ],
     ["financas", "Finanças", "M3 7h18v12H3zM3 11h18M16 15h2", "Vida"],
+    [
+      "grupos",
+      "Grupos",
+      "M16 11a3 3 0 100-6 3 3 0 000 6zM8 11a3 3 0 100-6 3 3 0 000 6zM16 13c-1.1 0-2.15.2-3.09.56 1.29.82 2.09 1.84 2.09 2.94V19h7v-2c0-2.21-3.13-4-6-4zM8 13c-3 0-6 1.79-6 4v2h11v-2c0-2.21-2.69-4-5-4z",
+      "Comunidade",
+    ],
     [
       "sistema",
       "Sistema",
@@ -1144,7 +1233,72 @@
     });
   }
 
-  function vInicio() {
+  async function homeGroupGoals() {
+    var title =
+      '<div class="rowflex" style="justify-content:space-between"><div><h2>Metas dos grupos</h2><p class="m">Objetivos compartilhados com seus grupos.</p></div><button class="btn sm" data-a="tab" data-tab="grupos">Abrir grupos</button></div>';
+    var content = "";
+
+    try {
+      var results = await Promise.all([
+        window.desvelarSupabase
+          .from("group_members")
+          .select("groups(id, name)")
+          .eq("user_id", window.desvelarUser.id),
+        window.desvelarSupabase
+          .from("shared_goals")
+          .select("id, group_id, title, description, completed, created_at")
+          .order("created_at", { ascending: false })
+          .limit(4),
+      ]);
+      var groupsResult = results[0];
+      var goalsResult = results[1];
+
+      if (groupsResult.error || goalsResult.error) {
+        content =
+          '<p class="m">Não foi possível carregar as metas compartilhadas agora.</p>';
+      } else {
+        var groupNames = Object.create(null);
+        (groupsResult.data || []).forEach(function (item) {
+          if (item.groups) groupNames[item.groups.id] = item.groups.name;
+        });
+
+        var goals = goalsResult.data || [];
+        content = goals.length
+          ? '<ul class="list">' +
+            goals
+              .map(function (goal) {
+                var groupName = groupNames[goal.group_id] || "Grupo";
+                var description = goal.description
+                  ? '<div class="m">' + esc(goal.description) + "</div>"
+                  : "";
+
+                return (
+                  '<li><span class="t"><strong>' +
+                  esc(goal.title) +
+                  '</strong><div class="m">' +
+                  esc(groupName) +
+                  "</div>" +
+                  description +
+                  '</span><span class="badge">' +
+                  (goal.completed ? "Concluída" : "Em andamento") +
+                  "</span></li>"
+                );
+              })
+              .join("") +
+            "</ul>"
+          : '<p class="empty">Ainda não há metas compartilhadas. Crie um grupo ou entre em um para começar.</p>';
+      }
+    } catch (error) {
+      console.error("Erro ao carregar metas dos grupos:", error);
+      content =
+        '<p class="m">Não foi possível carregar as metas compartilhadas agora.</p>';
+    }
+
+    return '<div class="grid"><div class="card">' + title + content + "</div></div>";
+  }
+
+  async function vInicio() {
+    var groupGoalsHtml = await homeGroupGoals();
     var t = today(),
       ws = wkStart(t),
       we = addDays(ws, 6),
@@ -1494,6 +1648,7 @@
       '</div><div class="card"><h2>Metas em andamento</h2>' +
       glh +
       "</div></div>" +
+      groupGoalsHtml +
       '<div class="grid"><div class="card"><h2>Próximos compromissos</h2>' +
       evh +
       '</div><div class="card"><h2>Atividades pendentes</h2>' +
@@ -1754,7 +1909,7 @@
     var dpct = Math.min(100, Math.round((blocks.length / P.daily) * 100));
     return (
       head(
-        "Foco",
+        "Pomodoro",
         "Método Pomodoro: blocos de foco com pausas. Cada bloco concluído é salvo automaticamente nas suas horas de estudo.",
       ) +
       '<div class="pomo">' +
@@ -2958,7 +3113,82 @@
       "</button></div></div>"
     );
   }
+  async function vGrupos() {
+    var result = await window.desvelarSupabase
+      .from("group_members")
+      .select("groups(id, name, invite_code)")
+      .eq("user_id", window.desvelarUser.id);
+    if (result.error) {
+      return (
+        head("Grupos", "Área para compartilhar objetivos com outras pessoas.") +
+        '<div class="card"><p class="m">Não foi possível carregar os grupos.</p></div>'
+      );
+    }
 
+    var groups = (result.data || [])
+      .map(function (item) {
+        return item.groups;
+      })
+      .filter(Boolean);
+    var goalsResult = await window.desvelarSupabase
+      .from("shared_goals")
+      .select("id, group_id, title, description, created_at, completed")
+      .order("created_at", { ascending: false });
+    return (
+      head("Grupos", "Área para compartilhar objetivos com outras pessoas.") +
+      '<div class="card"><h2>Criar grupo</h2><form data-form="group"><label class="f">Nome do grupo<input class="grow" name="name" maxlength="60" required></label><button class="btn pri" type="submit">Criar grupo</button></form></div>' +
+      '<div class="card"><h2>Entrar em grupo</h2><form data-form="join-group"><label class="f">Código de convite<input class="grow" name="invite_code" maxlength="8" required></label><button class="btn pri" type="submit">Entrar com código</button></form></div>' +
+      '<div class="card"><h2>Objetivos compartilhados</h2><form data-form="shared-goal"><label class="f">Grupo<select name="group_id" required>' +
+      groups
+        .map(function (group) {
+          return (
+            '<option value="' +
+            esc(group.id) +
+            '">' +
+            esc(group.name) +
+            "</option>"
+          );
+        })
+        .join("") +
+      '</select></label><label class="f">Objetivo<input class="grow" name="title" maxlength="100" required></label><label class="f">Descrição<textarea name="description" maxlength="500"></textarea></label><button class="btn pri" type="submit">Criar objetivo</button></form></div>' +
+      '<div class="card"><h2>Objetivos cadastrados</h2>' +
+      ((goalsResult.data || []).length
+        ? goalsResult.data
+            .map(function (goal) {
+              var group = groups.find(function (item) {
+                return item.id === goal.group_id;
+              });
+
+              return (
+                '<div class="rowflex"><div><p><strong>' +
+                esc(goal.title) +
+                "</strong></p><p>" +
+                esc(goal.description || "") +
+                '</p><p class="m">Grupo: ' +
+                esc(group ? group.name : "Grupo") +
+                "</p></div></div>"
+              );
+            })
+            .join("")
+        : '<p class="m">Nenhum objetivo compartilhado ainda.</p>') +
+      "</div>" +
+      '<div class="card"><h2>Seus grupos</h2>' +
+      (groups.length
+        ? groups
+            .map(function (group) {
+              return (
+                '<div class="rowflex"><p>' +
+                esc(group.name) +
+                '</p><p class="m">Convite: <strong>' +
+                esc(group.invite_code || "sem código") +
+                "</strong></p></div>"
+              );
+            })
+            .join("")
+        : '<p class="m">Você ainda não participa de nenhum grupo.</p>') +
+      "</div>"
+    );
+  }
   var VIEWS = {
     inicio: vInicio,
     foco: vFoco,
@@ -2972,6 +3202,7 @@
     agenda: vAgenda,
     tarefas: vTarefas,
     desempenho: vDesempenho,
+    grupos: vGrupos,
     sistema: vSistema,
   };
   function render() {
@@ -2989,9 +3220,18 @@
     document.getElementById("botnav").innerHTML = navHtml(false);
     if (tab !== "foco") zen = false;
     document.body.classList.toggle("zen", zen);
+    var currentTab = tab;
     document.getElementById("view").innerHTML =
-      (zen ? "" : tickerHtml()) + VIEWS[tab]();
-    tick();
+      (zen ? "" : tickerHtml()) +
+      '<div class="card"><p class="m">Carregando...</p></div>';
+
+    Promise.resolve(VIEWS[currentTab]()).then(function (html) {
+      if (tab === currentTab) {
+        document.getElementById("view").innerHTML =
+          (zen ? "" : tickerHtml()) + html;
+        tick();
+      }
+    });
   }
   function toast(msg) {
     var el = document.createElement("div");
@@ -3414,7 +3654,7 @@
     } else return;
     commit(msg);
   });
-  document.addEventListener("submit", function (e) {
+  document.addEventListener("submit", async function (e) {
     var f = e.target.closest("form[data-form]");
     if (!f) return;
     e.preventDefault();
@@ -3567,6 +3807,52 @@
       P1.daily = Number(v.daily) || 6;
       if (P1.cycle > P1.every) P1.cycle = 1;
       msg = "ajustes salvos";
+    } else if (k === "group") {
+      var groupResult = await window.desvelarSupabase.rpc(
+        "create_group_with_owner",
+        { p_name: v.name.trim() },
+      );
+
+      if (groupResult.error) {
+        console.error("Erro ao criar grupo:", groupResult.error);
+        toast("Erro ao criar grupo: " + groupResult.error.message);
+        return;
+      }
+
+      msg = "grupo criado";
+    } else if (k === "join-group") {
+      var joinResult = await window.desvelarSupabase.rpc(
+        "join_group_by_invite",
+        { p_invite_code: v.invite_code.trim() },
+      );
+
+      if (joinResult.error) {
+        console.error("Erro ao entrar no grupo:", joinResult.error);
+        toast("Não foi possível entrar: " + joinResult.error.message);
+        return;
+      }
+
+      msg = "Você entrou no grupo";
+    } else if (k === "shared-goal") {
+      var goalResult = await window.desvelarSupabase
+        .from("shared_goals")
+        .insert({
+          group_id: v.group_id,
+          title: v.title.trim(),
+          description: v.description.trim(),
+          created_by: window.desvelarUser.id,
+        });
+
+      if (goalResult.error) {
+        console.error(
+          "Erro ao criar objetivo compartilhado:",
+          goalResult.error,
+        );
+        toast("Não foi possível criar o objetivo: " + goalResult.error.message);
+        return;
+      }
+
+      msg = "objetivo compartilhado criado";
     } else if (k === "profile") {
       S.name = v.name.trim() || S.name;
       S.goalH = Number(v.h);
@@ -3690,7 +3976,27 @@
   }
 
   var initSaved = persist();
+  var migrationFinalized = false;
+  if (legacyMigration && initSaved) {
+    try {
+      localStorage.setItem(
+        LEGACY_OWNER_KEY,
+        "done:" + window.desvelarUser.id,
+      );
+      migrationFinalized = true;
+    } catch (e) {}
+  }
   render();
+
+  if (legacyMigration) {
+    toast(
+      !initSaved
+        ? "Não foi possível salvar a migração. Os dados originais foram preservados."
+        : migrationFinalized
+          ? "Dados locais mesclados na sua conta. A cópia original foi preservada."
+          : "Dados copiados, mas não foi possível finalizar a migração. A cópia original foi preservada.",
+    );
+  }
 
   if (caught) {
     toast(

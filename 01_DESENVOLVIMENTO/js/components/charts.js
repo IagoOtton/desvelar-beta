@@ -334,7 +334,7 @@
       return (
         '<div class="ringbox"><svg viewBox="0 0 132 132" aria-hidden="true"><defs><linearGradient id="' +
         id +
-        '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs>' +
+        '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--chart-primary)"/><stop offset="1" stop-color="var(--chart-secondary)"/></linearGradient></defs>' +
         '<circle cx="66" cy="66" r="' +
         r +
         '" fill="none" stroke="var(--surface2)" stroke-width="11"/>' +
