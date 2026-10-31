@@ -18,8 +18,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v6
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: 01_DESENVOLVIMENTO/pnpm-lock.yaml
+      - name: Instalar dependências
+        working-directory: 01_DESENVOLVIMENTO
+        run: pnpm install --frozen-lockfile
+      - name: Instalar Chromium e dependências do sistema
+        working-directory: 01_DESENVOLVIMENTO
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Executar testes automatizados
+        working-directory: 01_DESENVOLVIMENTO
+        run: pnpm test
+
   build:
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Baixar o código
         uses: actions/checkout@v6
@@ -45,3 +71,4 @@ jobs:
       - name: Publicar no GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
