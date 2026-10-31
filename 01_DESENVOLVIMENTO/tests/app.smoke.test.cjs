@@ -325,6 +325,69 @@ test("renderiza a agenda e salva novos compromissos", async () => {
   }
 });
 
+test("salva dados pelas telas acadêmicas extraídas", async () => {
+  const { context, page } = await openApp();
+
+  try {
+    await waitForApp(page);
+
+    await page.locator('#sidenav [data-tab="estudo"]').click();
+    await page.locator("#s-tag").fill("Neuroanatomia");
+    await page.locator("#s-min").fill("75");
+    await page.locator("#s-note").fill("Sessão do módulo acadêmico");
+    await page.locator('form[data-form="session"] button[type="submit"]').click();
+    await page
+      .locator("#view .list .t")
+      .filter({ hasText: "Sessão do módulo acadêmico" })
+      .waitFor({ state: "visible" });
+
+    await page.locator('#sidenav [data-tab="temas"]').click();
+    await page.locator("#th-title").fill("Tema do módulo acadêmico");
+    await page.locator("#th-tag").fill("Neuroanatomia");
+    await page.locator("#th-diff").selectOption("5");
+    await page.locator('form[data-form="theme"] button[type="submit"]').click();
+    await page
+      .locator("#view .list .t")
+      .filter({ hasText: "Tema do módulo acadêmico" })
+      .first()
+      .waitFor({ state: "visible" });
+
+    await page.locator('#sidenav [data-tab="leitura"]').click();
+    await page.locator("#b-title").fill("Livro do módulo acadêmico");
+    await page.locator("#b-total").fill("100");
+    await page.locator("#b-tag").fill("Neuroanatomia");
+    await page.locator('form[data-form="book"] button[type="submit"]').click();
+    const book = page
+      .locator(".card.book")
+      .filter({ hasText: "Livro do módulo acadêmico" });
+    await book.waitFor({ state: "visible" });
+    await book.locator('form[data-form="read"] input[name="to"]').fill("20");
+    await book.locator('form[data-form="read"] button[type="submit"]').click();
+    await book
+      .locator(".hist")
+      .filter({ hasText: "p.0 → p.20" })
+      .waitFor({ state: "visible" });
+
+    const saved = await page.evaluate((storageKey) => {
+      const data = JSON.parse(localStorage.getItem(storageKey));
+      return {
+        session: data.sessions.some(
+          (item) => item.note === "Sessão do módulo acadêmico",
+        ),
+        theme: data.themes.some(
+          (item) => item.title === "Tema do módulo acadêmico",
+        ),
+        bookRead: data.books.find(
+          (item) => item.title === "Livro do módulo acadêmico",
+        ).read,
+      };
+    }, STORAGE_KEY);
+    assert.deepEqual(saved, { session: true, theme: true, bookRead: 20 });
+  } finally {
+    await context.close();
+  }
+});
+
 test("migra dados legados para a conta e mantém a cópia original", async () => {
   const legacyData = {
     v: 3,
