@@ -159,7 +159,20 @@
   }
 
   function load() {
-    return stateStore.load();
+    var state = stateStore.load();
+    if (["dark", "light", "system"].indexOf(state.theme) === -1) {
+      var storedTheme = null;
+      try {
+        storedTheme = window.localStorage.getItem("painel-tema");
+      } catch (error) {}
+
+      state.theme =
+        storedTheme === "dark" || storedTheme === "light"
+          ? storedTheme
+          : "system";
+    }
+    applyTheme(state.theme);
+    return state;
   }
   /* ---------- tags livres ---------- */
   var T = window.DesvelarTags;
@@ -905,6 +918,7 @@
   });
   var ActionController = window.DesvelarActionController.create({
     stateStore: stateStore,
+    setTheme: applyTheme,
     getUiState: function () {
       return {
         tab: tab,
@@ -1513,12 +1527,21 @@
 
     if (msg) toast(msg);
   }
-  function applyTheme() {
-    var th = null;
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") {
+      document.documentElement.setAttribute("data-theme", theme);
+    } else {
+      theme = "system";
+      document.documentElement.removeAttribute("data-theme");
+    }
+
     try {
-      th = localStorage.getItem("painel-tema");
-    } catch (e) {}
-    if (th) document.documentElement.setAttribute("data-theme", th);
+      if (theme === "system") {
+        window.localStorage.removeItem("painel-tema");
+      } else {
+        window.localStorage.setItem("painel-tema", theme);
+      }
+    } catch (error) {}
   }
 
   /* ---------- pomodoro ---------- */
@@ -1708,8 +1731,6 @@
   document.addEventListener("change", function (event) {
     BackupController.handleFileChange(event);
   });
-  applyTheme();
-
   try {
     load();
   } catch (e) {

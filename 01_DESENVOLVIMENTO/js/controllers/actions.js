@@ -5,6 +5,7 @@
     var required = [
       "getUiState",
       "setUiState",
+      "setTheme",
       "uid",
       "today",
       "dateKey",
@@ -70,17 +71,28 @@
         return;
       }
       if (action === "theme") {
-        var currentTheme =
-            document.documentElement.getAttribute("data-theme") ||
-            (window.matchMedia &&
+        var state = dependencies.stateStore.createDraft();
+        var currentTheme = state.theme;
+        if (currentTheme !== "light" && currentTheme !== "dark") {
+          currentTheme = document.documentElement.getAttribute("data-theme");
+        }
+        if (currentTheme !== "light" && currentTheme !== "dark") {
+          currentTheme =
+            window.matchMedia &&
             window.matchMedia("(prefers-color-scheme: light)").matches
               ? "light"
-              : "dark"),
-          nextTheme = currentTheme === "light" ? "dark" : "light";
-        document.documentElement.setAttribute("data-theme", nextTheme);
-        try {
-          localStorage.setItem("painel-tema", nextTheme);
-        } catch (error) {}
+              : "dark";
+        }
+        var nextTheme = currentTheme === "light" ? "dark" : "light";
+        state.theme = nextTheme;
+        var saved = dependencies.stateStore.saveDraft(state);
+        if (!saved) {
+          dependencies.commit("", false);
+          return;
+        }
+
+        dependencies.setTheme(nextTheme);
+        dependencies.commit("", true);
         return;
       }
 
@@ -292,3 +304,4 @@
 
   window.DesvelarActionController = Object.freeze({ create: create });
 })();
+

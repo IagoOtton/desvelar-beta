@@ -477,6 +477,10 @@
 
     delete o.timer;
 
+    if (["dark", "light", "system"].indexOf(o.theme) === -1) {
+      delete o.theme;
+    }
+
     // Valida e prepara as configurações do Pomodoro.
     if (o.pomo === undefined || o.pomo === null) {
       o.pomo = {};
