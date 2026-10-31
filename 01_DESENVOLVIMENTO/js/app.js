@@ -167,119 +167,29 @@
   function tagInput(id, ph, req) {
     return Common.tagInput(id, ph, req);
   }
-  function groupMin(a, b) {
-    var g = {};
-    S.sessions.forEach(function (x) {
-      if (x.date >= a && x.date <= b) {
-        var k = tkey(x.tag);
-        g[k] = (g[k] || 0) + x.min;
-      }
-    });
-    return Object.keys(g)
-      .map(function (k) {
-        return { k: k, label: tlabel(k), m: g[k] };
-      })
-      .sort(function (x, y) {
-        return y.m - x.m;
-      });
-  }
-  function accByTag() {
-    var g = {};
-    S.questions.forEach(function (q) {
-      var k = tkey(q.tag);
-      g[k] = g[k] || { t: 0, c: 0 };
-      g[k].t += q.total;
-      g[k].c += q.correct;
-    });
-    return Object.keys(g)
-      .map(function (k) {
-        return { k: k, label: tlabel(k), t: g[k].t, c: g[k].c };
-      })
-      .sort(function (x, y) {
-        return x.c / x.t - y.c / y.t;
-      });
-  }
 
-  /* ---------- cálculos ---------- */
-  function minsOn(d) {
-    return sum(
-      S.sessions.filter(function (x) {
-        return x.date === d;
-      }),
-      function (x) {
-        return x.min;
-      },
-    );
-  }
-  function minsRange(a, b) {
-    return sum(
-      S.sessions.filter(function (x) {
-        return x.date >= a && x.date <= b;
-      }),
-      function (x) {
-        return x.min;
-      },
-    );
-  }
-  function pagesRange(a, b) {
-    return sum(
-      S.readlog.filter(function (x) {
-        return x.date >= a && x.date <= b;
-      }),
-      function (x) {
-        return x.pages;
-      },
-    );
-  }
-  function streak() {
-    var d = today(),
-      n = 0;
-    if (!minsOn(d)) d = addDays(d, -1);
-    while (minsOn(d) > 0) {
-      n++;
-      d = addDays(d, -1);
-    }
-    return n;
-  }
-  function qTot(f) {
-    var q = S.questions.filter(
-      f ||
-        function () {
-          return true;
-        },
-    );
-    return {
-      t: sum(q, function (x) {
-        return x.total;
-      }),
-      c: sum(q, function (x) {
-        return x.correct;
-      }),
-    };
-  }
-  function hasDemo() {
-    return LISTS.some(function (k) {
-      return S[k].some(function (x) {
-        return x.ex;
-      });
-    });
-  }
-  function realCount() {
-    return sum(LISTS, function (k) {
-      return S[k].filter(function (x) {
-        return !x.ex;
-      }).length;
-    });
-  }
-  function bookLog(b) {
-    return S.readlog
-      .filter(function (r) {
-        return r.bookId === b.id;
-      })
-      .sort(function (a, c) {
-        return a.date < c.date ? -1 : a.date > c.date ? 1 : a.to - c.to;
-      });
-  }
+  var Analytics = window.DesvelarAnalytics.create({
+    getState: function () {
+      return S;
+    },
+    lists: LISTS,
+    tagKey: tkey,
+    tagLabel: tlabel,
+    sum: sum,
+    today: today,
+    addDays: addDays,
+  });
+  var groupMin = Analytics.groupMin;
+  var accByTag = Analytics.accuracyByTag;
+  var minsOn = Analytics.minutesOn;
+  var minsRange = Analytics.minutesInRange;
+  var pagesRange = Analytics.pagesInRange;
+  var streak = Analytics.streak;
+  var qTot = Analytics.questionTotals;
+  var hasDemo = Analytics.hasDemoData;
+  var realCount = Analytics.realCount;
+  var bookLog = Analytics.bookLog;
+  var pagesRangeBook = Analytics.pagesForBookInRange;
 
   /* ---------- gráficos ---------- */
   var C = window.DesvelarCharts;
@@ -1350,17 +1260,6 @@
   function vLeitura() {
     return LearningViews.readingPage();
   }
-  function pagesRangeBook(b, a, z) {
-    return sum(
-      S.readlog.filter(function (r) {
-        return r.bookId === b.id && r.date >= a && r.date <= z;
-      }),
-      function (r) {
-        return r.pages;
-      },
-    );
-  }
-
   function vAgenda() {
     return AgendaViews.agendaPage();
   }
