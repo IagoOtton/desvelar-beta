@@ -47,34 +47,22 @@ Depois de criar o repositório e obter o endereço GitHub Pages, abra **Authenti
 
 O app usa a URL atual da página como destino de confirmação. Por isso, atualize essas configurações se o endereço do Pages mudar.
 
-## 5. Criar o repositório e publicar
+## 5. Publicar ou atualizar o beta
 
-1. Crie no GitHub um repositório vazio chamado, por exemplo, `desvelar-beta`. Para usar o Pages no GitHub Free, deixe o repositório público. Não adicione README, licença ou `.gitignore` pelo GitHub; eles já existem neste projeto.
-2. No terminal, na pasta do projeto, adicione as alterações e crie um commit:
+O repositório [`IagoOtton/desvelar-beta`](https://github.com/IagoOtton/desvelar-beta) e o GitHub Pages já estão configurados. As alterações em `01_DESENVOLVIMENTO/` são publicadas quando um commit chega à branch `main`; o workflow **Publicar beta no GitHub Pages** monta o site e o publica automaticamente.
 
-   ```powershell
-   git add .
-   git commit -m "Preparar beta do DESVELAR"
-   git branch -M main
-   git remote add origin https://github.com/SEU-USUARIO/desvelar-beta.git
-   git push -u origin main
-   ```
+Para atualizar o beta, altere os arquivos-fonte em `01_DESENVOLVIMENTO/`, envie as alterações revisadas para `main` e acompanhe a execução em **Actions**. O link atual continua o mesmo: <https://iagootton.github.io/desvelar-beta/>. Não adicione arquivos de dados pessoais, credenciais ou cópias de dados ao repositório.
 
-   Troque `SEU-USUARIO` pelo seu usuário do GitHub. Se já houver um `origin`, atualize-o para o endereço do novo repositório em vez de executar `git remote add`.
-3. No repositório, abra **Settings → Pages** e selecione **GitHub Actions** como origem de publicação.
-4. Abra **Actions** e acompanhe o workflow **Publicar beta no GitHub Pages**. Ele publica após um push na branch `main`; também pode ser iniciado manualmente por **Run workflow**.
-5. Quando a execução terminar, abra o endereço mostrado pelo deployment do GitHub Pages e teste cadastro, confirmação de e-mail, entrada e envio de feedback.
-6. Envie esse endereço aos amigos. Cada pessoa deve criar sua própria conta.
+Se estiver configurando uma cópia local nova, use o repositório existente em vez de criar outro. No GitHub Free, o repositório precisa ser público para essa configuração do Pages; os arquivos-fonte e documentos versionados ficam visíveis no GitHub, mas somente o app corrigido e as pastas `css/` e `js/` são colocados no site.
 
 ## 6. O que pedir no feedback
 
-Peça que testem uma tarefa real e descrevam: o que tentaram fazer, o que aconteceu e o que esperavam. O feedback enviado em **Sistema → Enviar feedback** fica associado à conta. Os dados pessoais de estudo, rotina, hábitos, metas e finanças também ficam no Supabase e sincronizam ao entrar com a mesma conta em outro dispositivo. O navegador conserva uma cópia local e permite exportar um backup.
+Peça que testem uma tarefa real e descrevam: o que tentaram fazer, o que aconteceu e o que esperavam. O feedback enviado em **Sistema → Enviar feedback** fica associado à conta. Os dados pessoais de estudo, rotina, hábitos, metas e finanças também ficam no Supabase e sincronizam ao entrar com a mesma conta em outro dispositivo. O navegador conserva uma cópia local para uso sem conexão; confira em **Sistema** se as alterações foram sincronizadas. A exportação/importação manual foi removida; alterações que ainda não aparecem como sincronizadas permanecem apenas no navegador atual.
 
-Se alguém já usava a cópia local aberta por `file://`, deve exportar os dados dessa cópia e importar o arquivo na versão publicada. O site não pode ler automaticamente o armazenamento de outro endereço.
+Oriente todos a usar o endereço publicado e entrar na própria conta. O site não lê automaticamente o armazenamento isolado de uma cópia aberta por `file://`.
 
 ## Referências
 
 - [Supabase: configurar SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
 - [Supabase: URLs de redirecionamento](https://supabase.com/docs/guides/auth/redirect-urls)
 - [GitHub: criar um site do Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)
-

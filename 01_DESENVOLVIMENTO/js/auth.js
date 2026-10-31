@@ -52,7 +52,7 @@
       </form>
 
       <p id="auth-message" role="status"></p>
-      <p class="auth-note">Cada pessoa deve usar sua própria conta. Estudos, tarefas, hábitos, metas e finanças ficam associados à conta e sincronizam entre navegadores e dispositivos. Faça backups periódicos e evite registrar dados pessoais ou financeiros sensíveis.</p>
+      <p class="auth-note">Cada pessoa deve usar sua própria conta. Estudos, tarefas, hábitos, metas e finanças ficam associados à conta e sincronizam entre navegadores e dispositivos. Evite registrar dados pessoais ou financeiros sensíveis.</p>
     </section>
   `;
 
@@ -344,4 +344,3 @@
       }
     });
 })();
-

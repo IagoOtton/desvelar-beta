@@ -16,6 +16,8 @@
     var legacyKey = "painel-estudos-v2";
     var legacyOwnerKey = "painel-estudos-v2:migrated-to";
     var cloudMigrationKey = key + ":cloud-migrated";
+    var cloudPendingKey = key + ":cloud-pending";
+    var cloudBaseKey = key + ":cloud-base";
     var legacyMigration = false;
 
     function parse(value) {
@@ -57,18 +59,63 @@
 
     function save(data) {
       try {
-        window.localStorage.setItem(key, JSON.stringify(data));
+        var serialized = JSON.stringify(data);
+        window.localStorage.setItem(cloudPendingKey, "pending");
+        window.localStorage.setItem(key, serialized);
         return true;
       } catch (error) {
         return false;
       }
     }
 
-    function getSize() {
+    function stableStringify(value) {
+      if (Array.isArray(value)) {
+        return "[" + value.map(stableStringify).join(",") + "]";
+      }
+      if (value && typeof value === "object") {
+        return (
+          "{" +
+          Object.keys(value)
+            .sort()
+            .map(function (key) {
+              return JSON.stringify(key) + ":" + stableStringify(value[key]);
+            })
+            .join(",") +
+          "}"
+        );
+      }
+      return JSON.stringify(value);
+    }
+
+    function hasPendingCloudSync() {
       try {
-        return (window.localStorage.getItem(key) || "").length;
+        return window.localStorage.getItem(cloudPendingKey) === "pending";
       } catch (error) {
-        return 0;
+        return false;
+      }
+    }
+
+    function loadCloudBase() {
+      try {
+        return parse(window.localStorage.getItem(cloudBaseKey));
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function finalizeCloudSync(data) {
+      if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+
+      try {
+        window.localStorage.setItem(cloudBaseKey, JSON.stringify(data));
+        var stored = parse(window.localStorage.getItem(key));
+        if (stored && stableStringify(stored) === stableStringify(data)) {
+          window.localStorage.removeItem(cloudPendingKey);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        return false;
       }
     }
 
@@ -130,9 +177,11 @@
     return Object.freeze({
       load: load,
       save: save,
-      getSize: getSize,
       hasStoredData: hasStoredData,
       hasCloudMigration: hasCloudMigration,
+      hasPendingCloudSync: hasPendingCloudSync,
+      loadCloudBase: loadCloudBase,
+      finalizeCloudSync: finalizeCloudSync,
       finalizeCloudMigration: finalizeCloudMigration,
       hasLegacyMigration: hasLegacyMigration,
       finalizeLegacyMigration: finalizeLegacyMigration,
@@ -141,4 +190,3 @@
 
   window.DesvelarLocalDataRepository = Object.freeze({ create: create });
 })();
-

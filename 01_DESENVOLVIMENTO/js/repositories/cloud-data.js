@@ -30,7 +30,7 @@
           .maybeSingle();
 
         if (result.error) {
-          loaded = true;
+          loaded = false;
           revision = 0;
           baseData = null;
           return { data: null, revision: 0, updatedAt: null, error: result.error };
@@ -52,11 +52,20 @@
           error: null,
         };
       } catch (error) {
-        loaded = true;
+        loaded = false;
         revision = 0;
         baseData = null;
         return { data: null, revision: 0, updatedAt: null, error: error };
       }
+    }
+
+    function refresh() {
+      var operation = queue.then(load);
+      queue = operation.then(
+        function () {},
+        function () {},
+      );
+      return operation;
     }
 
     async function saveSnapshot(snapshot) {
@@ -95,6 +104,7 @@
           baseData = clone(saved.data || next);
           return {
             ok: true,
+            data: clone(baseData),
             revision: revision,
             updatedAt: saved.updated_at || null,
           };
@@ -137,9 +147,8 @@
       return operation;
     }
 
-    return Object.freeze({ load: load, save: save });
+    return Object.freeze({ load: load, refresh: refresh, save: save });
   }
 
   window.DesvelarCloudDataRepository = Object.freeze({ create: create });
 })();
-

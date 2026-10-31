@@ -96,4 +96,3 @@ $function$;
 
 revoke all on function public.save_my_app_data(jsonb, bigint) from public, anon, authenticated;
 grant execute on function public.save_my_app_data(jsonb, bigint) to authenticated;
-

@@ -6,6 +6,8 @@
       "getUiState",
       "setUiState",
       "setTheme",
+      "verifyPassword",
+      "toast",
       "uid",
       "today",
       "dateKey",
@@ -26,14 +28,12 @@
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
       }) ||
-      !Array.isArray(dependencies.lists) ||
-      !dependencies.backupController ||
-      typeof dependencies.backupController.exportBackup !== "function"
+      !Array.isArray(dependencies.lists)
     ) {
       throw new Error("As dependências das ações não foram informadas.");
     }
 
-    function handleClick(event) {
+    async function handleClick(event) {
       var button = event.target.closest("[data-a]");
       if (!button) return;
 
@@ -41,7 +41,19 @@
       var ui = dependencies.getUiState();
       var message = "";
 
-      if (action !== "wipe") dependencies.setUiState({ wipeArm: 0 });
+      if (
+        action !== "wipe" &&
+        action !== "wipe-confirm" &&
+        action !== "wipe-cancel"
+      ) {
+        dependencies.setUiState({ wipeArm: 0 });
+      }
+
+      if (action === "wipe-cancel") {
+        dependencies.setUiState({ wipeArm: 0 });
+        dependencies.render();
+        return;
+      }
 
       if (action === "tab") {
         dependencies.setUiState({ tab: button.dataset.tab, zen: false });
@@ -269,27 +281,41 @@
           });
         });
         message = "exemplos apagados";
-      } else if (action === "export") {
-        message = dependencies.backupController.exportBackup(state);
       } else if (action === "wipe") {
         if (!ui.wipeArm) {
           dependencies.setUiState({ wipeArm: 1 });
           dependencies.render();
-          setTimeout(function () {
-            var currentUi = dependencies.getUiState();
-            if (currentUi.wipeArm) {
-              dependencies.setUiState({ wipeArm: 0 });
-              if (dependencies.getUiState().tab === "sistema") {
-                dependencies.render();
-              }
-            }
-          }, 4000);
           return;
         }
+        return;
+      } else if (action === "wipe-confirm") {
+        var passwordInput = document.getElementById("wipe-password");
+        var password = passwordInput ? passwordInput.value : "";
+        if (!password) {
+          dependencies.toast("Digite sua senha para confirmar.");
+          return;
+        }
+
+        var verified;
+        try {
+          verified = await dependencies.verifyPassword(password);
+        } catch (error) {
+          console.error("Erro ao confirmar senha para apagar os dados:", error);
+          dependencies.toast("Não foi possível confirmar a senha. Tente novamente.");
+          return;
+        }
+
+        if (!verified) {
+          if (passwordInput) passwordInput.value = "";
+          dependencies.toast("Senha incorreta. Seus dados continuam salvos.");
+          return;
+        }
+
         dependencies.setUiState({ wipeArm: 0 });
         var name = state.name;
         var weeklyGoal = state.goalH;
-        state = { name: name, goalH: weeklyGoal };
+        var theme = state.theme;
+        state = { name: name, goalH: weeklyGoal, theme: theme };
         message = "tudo apagado";
       } else {
         return;
@@ -304,4 +330,3 @@
 
   window.DesvelarActionController = Object.freeze({ create: create });
 })();
-

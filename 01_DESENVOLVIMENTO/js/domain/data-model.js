@@ -52,7 +52,6 @@
         tasks: [],
         questions: [],
         readlog: [],
-        lastBackup: "",
       };
     var tg = [
       "Fisiologia",
@@ -516,7 +515,7 @@
 
     if (!o.goalH) o.goalH = 20;
     if (!o.name) o.name = "Iago";
-    if (o.lastBackup == null) o.lastBackup = "";
+    delete o.lastBackup;
 
     o.v = 4;
 
@@ -550,10 +549,6 @@
 
     if (current.name === "Iago" && legacy.name) merged.name = legacy.name;
     if (current.goalH === 20 && legacy.goalH) merged.goalH = legacy.goalH;
-    if (!current.lastBackup && legacy.lastBackup) {
-      merged.lastBackup = legacy.lastBackup;
-    }
-
     var pomoDefaults = {
       focus: 25,
       short: 5,
@@ -709,4 +704,3 @@
     mergeForSync: mergeForSync,
   });
 })();
-

@@ -35,6 +35,8 @@ const MOCK_SDK = `
     completed: false,
     created_at: "2026-01-01T12:00:00Z",
   }];
+  let accountData = null;
+  let accountRevision = 0;
   window.__mockCalls = [];
 
   const client = {
@@ -43,8 +45,18 @@ const MOCK_SDK = `
         data: { session: window.__testAuthenticated ? { user } : null },
         error: null,
       }),
+      onAuthStateChange: (callback) => {
+        callback("INITIAL_SESSION", window.__testAuthenticated ? { user } : null);
+        return { data: { subscription: { unsubscribe() {} } } };
+      },
       signInWithPassword: async (credentials) => {
         window.__mockCalls.push({ type: "signIn", email: credentials.email });
+        if (credentials.password !== "senha-de-teste") {
+          return {
+            data: { user: null },
+            error: { status: 400, code: "invalid_credentials" },
+          };
+        }
         window.__testAuthenticated = true;
         return { data: { user }, error: null };
       },
@@ -68,6 +80,22 @@ const MOCK_SDK = `
         limit(count) {
           query.maxRows = count;
           return this;
+        },
+        maybeSingle() {
+          window.__mockCalls.push({ type: "select", table, query });
+          if (table !== "app_user_data") {
+            return Promise.resolve({ data: null, error: null });
+          }
+          return Promise.resolve({
+            data: accountData
+              ? {
+                  data: accountData,
+                  revision: accountRevision,
+                  updated_at: "2026-01-01T00:00:00.000Z",
+                }
+              : null,
+            error: null,
+          });
         },
         insert(values) {
           window.__mockCalls.push({ type: "insert", table, values });
@@ -99,6 +127,29 @@ const MOCK_SDK = `
     async rpc(name, args) {
       window.__mockCalls.push({ type: "rpc", name, args });
       if (window.__testFailRpc) throw new Error("Erro de RPC simulado");
+      if (name === "save_my_app_data") {
+        if (args.p_expected_revision !== accountRevision) {
+          return {
+            data: {
+              ok: false,
+              data: accountData,
+              revision: accountRevision,
+            },
+            error: null,
+          };
+        }
+        accountData = JSON.parse(JSON.stringify(args.p_data));
+        accountRevision += 1;
+        return {
+          data: {
+            ok: true,
+            data: accountData,
+            revision: accountRevision,
+            updated_at: "2026-01-01T00:00:00.000Z",
+          },
+          error: null,
+        };
+      }
       return { data: ${JSON.stringify(GROUP_ID)}, error: null };
     },
   };
@@ -252,76 +303,89 @@ test("gerencia transições do Pomodoro no domínio", () => {
   assert.equal(state.pomo.cycle, 2);
 });
 
-test("preserva os dados atuais se a gravação de um backup falhar", () => {
-  const context = { window: {} };
-  const storeSource = fs.readFileSync(
-    path.join(APP_ROOT, "js/state/store.js"),
-    "utf8",
-  );
-  const source = fs.readFileSync(
-    path.join(APP_ROOT, "js/controllers/backups.js"),
-    "utf8",
-  );
-  vm.runInNewContext(storeSource, context);
-  vm.runInNewContext(source, context);
-
-  const collections = [
-    "sessions",
-    "books",
-    "events",
-    "tasks",
-    "questions",
-    "readlog",
-    "themes",
-    "habits",
-    "txs",
-    "goals",
-    "routine",
-  ];
-  const backup = { v: 4 };
-  collections.forEach((collection) => {
-    backup[collection] = [];
-  });
-
-  const notifications = [];
-  let failSave = false;
-  let currentState = null;
-  let attemptedState = null;
-  let renderCount = 0;
-  const stateStore = context.window.DesvelarStateStore.create({
-    load: () => ({ marker: "estado anterior" }),
-    save: () => !failSave,
-    normalize: (state) => state,
-    onStateChange: (state) => {
-      currentState = state;
-    },
-  });
-  stateStore.load();
-  const previousState = currentState;
-  failSave = true;
-
-  const controller = context.window.DesvelarBackupController.create({
-    stateStore: {
-      replaceState: (state) => {
-        attemptedState = state;
-        return stateStore.replaceState(state);
+test("mantém alterações locais como pendentes até a confirmação da nuvem", () => {
+  const values = new Map();
+  const context = {
+    window: {
+      localStorage: {
+        getItem: (key) => values.get(key) ?? null,
+        setItem: (key, value) => values.set(key, String(value)),
+        removeItem: (key) => values.delete(key),
       },
     },
-    lists: collections,
-    render: () => {
-      renderCount += 1;
-    },
-    toast: (message) => notifications.push(message),
-    today: () => "2026-10-31",
-  });
+  };
+  const source = fs.readFileSync(
+    path.join(APP_ROOT, "js/repositories/local-data.js"),
+    "utf8",
+  );
+  vm.runInNewContext(source, context);
 
-  assert.equal(controller.importText(JSON.stringify(backup)), false);
-  assert.equal(attemptedState.v, 4);
-  assert.equal(currentState, previousState);
-  assert.equal(renderCount, 1);
-  assert.deepEqual(notifications, [
-    "Não foi possível salvar os dados importados.",
-  ]);
+  const repository = context.window.DesvelarLocalDataRepository.create({
+    userId: USER.id,
+    normalize: (state) => state,
+    mergeLegacyData: (current) => current,
+  });
+  const first = { name: "Iago", tasks: [{ id: "task-1" }] };
+  const newer = { name: "Iago", tasks: [{ id: "task-1" }, { id: "task-2" }] };
+
+  assert.equal(repository.save(first), true);
+  assert.equal(repository.hasPendingCloudSync(), true);
+  assert.equal(repository.finalizeCloudSync(first), true);
+  assert.equal(repository.hasPendingCloudSync(), false);
+  assert.deepEqual(JSON.parse(JSON.stringify(repository.loadCloudBase())), first);
+
+  assert.equal(repository.save(newer), true);
+  assert.equal(repository.hasPendingCloudSync(), true);
+  assert.equal(repository.finalizeCloudSync(first), false);
+  assert.equal(repository.hasPendingCloudSync(), true);
+});
+
+test("mescla alterações simultâneas preservando inclusões remotas e locais", () => {
+  const context = {
+    window: {
+      DesvelarUtils: { today: () => "2026-01-01", addDays: () => "2026-01-01" },
+      DesvelarFormatting: { uid: () => "generated-id" },
+    },
+  };
+  const source = fs.readFileSync(
+    path.join(APP_ROOT, "js/domain/data-model.js"),
+    "utf8",
+  );
+  vm.runInNewContext(source, context);
+
+  const base = {
+    tasks: [{ id: "base-task", title: "Manter" }, { id: "removed-task", title: "Remover" }],
+    theme: "dark",
+    pomo: { focus: 25, short: 5 },
+  };
+  const local = {
+    tasks: [{ id: "base-task", title: "Manter" }, { id: "local-task", title: "Criada aqui" }],
+    theme: "light",
+    pomo: { focus: 25, short: 5 },
+  };
+  const remote = {
+    tasks: [
+      { id: "base-task", title: "Manter" },
+      { id: "removed-task", title: "Remover" },
+      { id: "remote-task", title: "Criada no outro dispositivo" },
+    ],
+    theme: "dark",
+    pomo: { focus: 50, short: 5 },
+  };
+
+  const merged = context.window.DesvelarDataModel.mergeForSync(base, local, remote);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(merged)),
+    {
+      tasks: [
+        { id: "base-task", title: "Manter" },
+        { id: "remote-task", title: "Criada no outro dispositivo" },
+        { id: "local-task", title: "Criada aqui" },
+      ],
+      theme: "light",
+      pomo: { focus: 50, short: 5 },
+    },
+  );
 });
 
 test("centraliza rascunhos, persistência e rollback no store", () => {
@@ -723,173 +787,69 @@ test("migra dados legados para a conta e mantém a cópia original", async () =>
   }
 });
 
-test("importa um backup válido e exporta um arquivo JSON", async () => {
-  const { context, page } = await openApp();
+test("preserva alterações locais e retoma a sincronização após uma falha", async () => {
+  const { context, page } = await openApp({ failRpc: true });
 
   try {
     await waitForApp(page);
-    const collections = [
-      "sessions",
-      "books",
-      "events",
-      "tasks",
-      "questions",
-      "readlog",
-      "themes",
-      "habits",
-      "txs",
-      "goals",
-      "routine",
-    ];
-    const backup = {
-      v: 4,
-      name: "Conta de teste",
-      goalH: 20,
-      lastBackup: "",
-      pomo: {
-        focus: 25,
-        short: 5,
-        long: 15,
-        every: 4,
-        cycle: 1,
-        lastTag: "",
-        daily: 6,
-        rateId: "",
-      },
-      pomoRun: null,
-    };
-    collections.forEach((collection) => {
-      backup[collection] = [];
-    });
-    const unsafeAttribute = XSS_PAYLOAD;
-    backup.tasks.push({
-      id: "imported-task",
-      title: "Atividade do backup",
-      due: "",
-      tag: "",
-      done: false,
-      doneOn: "",
-    });
-    backup.routine.push({
-      id: "routine-1",
-      day: 0,
-      start: unsafeAttribute,
-      end: "09:00",
-      title: "Rotina do backup",
-      tag: "",
-    });
-
     await page.locator('#sidenav [data-tab="sistema"]').click();
-    await page.locator("#imp").setInputFiles({
-      name: "backup.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(backup)),
+    await page.getByText("Sem sincronização com a nuvem", { exact: true }).waitFor({ state: "visible" });
+
+    const pendingBeforeRetry = await page.evaluate((storageKey) => ({
+      data: JSON.parse(localStorage.getItem(storageKey)),
+      pending: localStorage.getItem(storageKey + ":cloud-pending"),
+    }), STORAGE_KEY);
+    assert.equal(pendingBeforeRetry.pending, "pending");
+
+    await page.evaluate(() => {
+      window.__testFailRpc = false;
+      window.dispatchEvent(new Event("online"));
     });
-    await page.getByText("dados importados", { exact: true }).waitFor({ state: "visible" });
+    await page.getByText("Sincronizado com sua conta", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
 
-    await page.locator('#sidenav [data-tab="tarefas"]').click();
-    const importedTasks = await page.evaluate((storageKey) => {
-      const data = localStorage.getItem(storageKey);
-      return data ? JSON.parse(data).tasks.map((task) => task.title) : [];
-    }, STORAGE_KEY);
-    assert.deepEqual(importedTasks, ["Atividade do backup"]);
-    await page
-      .locator("#view .list .t")
-      .filter({ hasText: "Atividade do backup" })
-      .waitFor({ state: "visible" });
-    await page.waitForTimeout(100);
-    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
-
-    await page.locator('#sidenav [data-tab="rotina"]').click();
-    await page.getByText("Rotina semanal", { exact: true }).waitFor({ state: "visible" });
-    await page.waitForFunction(() => window.__testXss === true, null, { timeout: 2_000 }).catch(() => {});
-    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
-
-    await page.locator('#sidenav [data-tab="sistema"]').click();
-    const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-a="export"]').click();
-    const download = await downloadPromise;
-    assert.match(
-      download.suggestedFilename(),
-      /^painel-estudos-backup-\d{4}-\d{2}-\d{2}\.json$/,
-    );
+    const afterRetry = await page.evaluate((storageKey) => ({
+      data: JSON.parse(localStorage.getItem(storageKey)),
+      pending: localStorage.getItem(storageKey + ":cloud-pending"),
+    }), STORAGE_KEY);
+    assert.equal(afterRetry.pending, null);
+    assert.deepEqual(afterRetry.data, pendingBeforeRetry.data);
+    assert.equal(await page.locator("#imp").count(), 0);
+    assert.equal(await page.locator('[data-a="export"]').count(), 0);
   } finally {
     await context.close();
   }
 });
 
-test("rejeita IDs perigosos em backups importados sem executar HTML", async () => {
+test("exige a senha para apagar tudo e mantém os dados se a senha estiver incorreta", async () => {
   const { context, page } = await openApp();
 
   try {
     await waitForApp(page);
-    const before = await page.evaluate(
-      (storageKey) => localStorage.getItem(storageKey),
-      STORAGE_KEY,
-    );
-    const backup = JSON.parse(before);
-    backup.tasks.push({
-      id: XSS_PAYLOAD,
-      title: "Registro malicioso",
-      due: "",
-      tag: "",
-      done: false,
-      doneOn: "",
-    });
-
     await page.locator('#sidenav [data-tab="sistema"]').click();
-    await page.locator("#imp").setInputFiles({
-      name: "backup-malicioso.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(backup)),
-    });
-    await page
-      .getByText("arquivo inválido", { exact: true })
-      .waitFor({ state: "visible" });
-    await page.waitForTimeout(100);
+    const before = await page.evaluate((storageKey) =>
+      JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
 
-    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
-    assert.equal(
-      await page.evaluate(
-        (storageKey) => localStorage.getItem(storageKey),
-        STORAGE_KEY,
-      ),
+    await page.locator('[data-a="wipe"]').evaluate((button) => button.click());
+    await page.locator("#wipe-password").waitFor({ state: "visible" });
+    await page.locator("#wipe-password").fill("senha-errada");
+    await page.locator('[data-a="wipe-confirm"]').evaluate((button) => button.click());
+    await page.getByText("Senha incorreta. Seus dados continuam salvos.", { exact: true }).waitFor({ state: "visible" });
+    assert.deepEqual(
+      await page.evaluate((storageKey) => JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY),
       before,
     );
-  } finally {
-    await context.close();
-  }
-});
 
-test("normaliza configurações Pomodoro inseguras em backups importados", async () => {
-  const { context, page } = await openApp();
-
-  try {
-    await waitForApp(page);
-    const backup = await page.evaluate((storageKey) =>
+    await page.locator("#wipe-password").fill("senha-de-teste");
+    await page.locator('[data-a="wipe-confirm"]').evaluate((button) => button.click());
+    await page.getByText("tudo apagado", { exact: true }).waitFor({ state: "visible" });
+    const after = await page.evaluate((storageKey) =>
       JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
-    backup.pomo.focus = XSS_PAYLOAD;
-    backup.pomo.daily = XSS_PAYLOAD;
-
-    await page.locator('#sidenav [data-tab="sistema"]').click();
-    await page.locator("#imp").setInputFiles({
-      name: "backup-configuracao-invalida.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(backup)),
-    });
-    await page.getByText("dados importados", { exact: true }).waitFor({ state: "visible" });
-    await page.waitForTimeout(100);
-
-    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
-    const saved = await page.evaluate((storageKey) =>
-      JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
-    assert.equal(saved.pomo.focus, 25);
-    assert.equal(saved.pomo.daily, 6);
-
-    await page.locator('#sidenav [data-tab="foco"]').click();
-    assert.equal(await page.locator('input[name="focus"]').inputValue(), "25");
-    assert.equal(await page.locator('input[name="daily"]').inputValue(), "6");
-    assert.equal(await page.evaluate(() => Boolean(window.__testXss)), false);
+    assert.equal(after.name, before.name);
+    assert.equal(after.goalH, before.goalH);
+    assert.equal(after.theme, before.theme);
+    for (const collection of ["sessions", "books", "events", "tasks", "questions", "readlog", "themes", "habits", "txs", "goals", "routine"]) {
+      assert.deepEqual(after[collection], [], collection);
+    }
   } finally {
     await context.close();
   }

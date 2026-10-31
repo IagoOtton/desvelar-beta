@@ -59,11 +59,15 @@
   var cloudSyncState = cloudBootstrap.error ? "error" : "syncing";
   var cloudSaveRequest = 0;
   var cloudErrorNotified = false;
+  var cloudRetryTimer = 0;
+  var cloudRetryDelay = 1000;
+  var cloudRetrying = false;
   var localData = window.DesvelarLocalDataRepository.create({
     userId: window.desvelarUser.id,
     normalize: normalize,
     mergeLegacyData: mergeLegacyData,
   });
+  var hadLocalDataAtStartup = localData.hasStoredData();
 
   function cloudSyncLabel() {
     if (cloudSyncState === "synced") return "Sincronizado com sua conta";
@@ -76,10 +80,28 @@
     if (status) status.textContent = cloudSyncLabel();
   }
 
+  function scheduleCloudRetry() {
+    if (cloudRetryTimer || cloudRetrying || !cloudRepository) return;
+
+    var delay = cloudRetryDelay;
+    cloudRetryDelay = Math.min(cloudRetryDelay * 2, 60000);
+    cloudRetryTimer = window.setTimeout(function () {
+      cloudRetryTimer = 0;
+      retryCloudSync();
+    }, delay);
+  }
+
   function syncCloud(state) {
     if (!cloudRepository) {
       cloudSyncState = "error";
       updateCloudSyncStatus();
+      return;
+    }
+
+    if (cloudBootstrap.error) {
+      cloudSyncState = "error";
+      updateCloudSyncStatus();
+      scheduleCloudRetry();
       return;
     }
 
@@ -96,6 +118,7 @@
           cloudSyncState = "error";
           updateCloudSyncStatus();
           console.error("Erro ao sincronizar os dados:", result && result.error);
+          scheduleCloudRetry();
           if (!cloudErrorNotified) {
             cloudErrorNotified = true;
             toast(
@@ -105,9 +128,21 @@
           return;
         }
 
+        if (!localData.finalizeCloudSync(result.data || state)) {
+          cloudSyncState = "syncing";
+          updateCloudSyncStatus();
+          scheduleCloudRetry();
+          return;
+        }
+
         cloudSyncState = "synced";
         localData.finalizeCloudMigration(true);
+        cloudRetryDelay = 1000;
         cloudErrorNotified = false;
+        if (cloudRetryTimer) {
+          window.clearTimeout(cloudRetryTimer);
+          cloudRetryTimer = 0;
+        }
         updateCloudSyncStatus();
       })
       .catch(function (error) {
@@ -115,6 +150,7 @@
         cloudSyncState = "error";
         updateCloudSyncStatus();
         console.error("Erro ao sincronizar os dados:", error);
+        scheduleCloudRetry();
         if (!cloudErrorNotified) {
           cloudErrorNotified = true;
           toast(
@@ -126,17 +162,29 @@
 
   function loadAccountData() {
     var hasLocalData = localData.hasStoredData();
-    var shouldMergeLocal = hasLocalData && !localData.hasCloudMigration();
-    var localState = shouldMergeLocal ? localData.load() : null;
+    var localState = hasLocalData ? localData.load() : null;
+
+    if (cloudBootstrap.error) return localState;
 
     if (cloudBootstrap.data) {
-      var remoteState = JSON.parse(JSON.stringify(cloudBootstrap.data));
-      return shouldMergeLocal
-        ? mergeLegacyData(normalize(remoteState), normalize(localState))
+      var remoteState = normalize(JSON.parse(JSON.stringify(cloudBootstrap.data)));
+      if (hasLocalData && localData.hasPendingCloudSync()) {
+        var cloudBase = localData.loadCloudBase();
+        return cloudBase
+          ? DataModel.mergeForSync(
+              normalize(cloudBase),
+              normalize(localState),
+              remoteState,
+            )
+          : mergeLegacyData(remoteState, normalize(localState));
+      }
+
+      return hasLocalData && !localData.hasCloudMigration()
+        ? mergeLegacyData(remoteState, normalize(localState))
         : remoteState;
     }
 
-    return shouldMergeLocal ? localState : null;
+    return localState;
   }
 
   var stateStore = window.DesvelarStateStore.create({
@@ -153,6 +201,77 @@
       S = state;
     },
   });
+
+  function retryCloudSync() {
+    if (cloudRetrying || !cloudRepository || !stateStore.getState()) return;
+    if (navigator.onLine === false) {
+      scheduleCloudRetry();
+      return;
+    }
+
+    cloudRetrying = true;
+    if (cloudRetryTimer) {
+      window.clearTimeout(cloudRetryTimer);
+      cloudRetryTimer = 0;
+    }
+
+    var refresh =
+      typeof cloudRepository.refresh === "function"
+        ? cloudRepository.refresh()
+        : cloudRepository.load();
+
+    refresh
+      .then(function (snapshot) {
+        if (!snapshot || snapshot.error) {
+          throw (snapshot && snapshot.error) || new Error("Falha ao reler os dados da conta.");
+        }
+
+        cloudBootstrap = snapshot;
+        window.desvelarCloudBootstrap = snapshot;
+        var currentState = stateStore.getState();
+        var nextState = currentState;
+
+        if (snapshot.data) {
+          if (localData.hasPendingCloudSync()) {
+            var cloudBase = localData.loadCloudBase();
+            nextState = cloudBase
+              ? DataModel.mergeForSync(
+                  normalize(cloudBase),
+                  normalize(currentState),
+                  normalize(snapshot.data),
+                )
+              : hadLocalDataAtStartup
+                ? mergeLegacyData(
+                    normalize(snapshot.data),
+                    normalize(currentState),
+                  )
+                : normalize(snapshot.data);
+          } else {
+            nextState = normalize(snapshot.data);
+          }
+        }
+
+        if (!stateStore.replaceState(nextState)) {
+          throw new Error("Não foi possível guardar o estado recuperado neste dispositivo.");
+        }
+      })
+      .catch(function (error) {
+        cloudBootstrap = {
+          data: cloudBootstrap.data || null,
+          revision: cloudBootstrap.revision || 0,
+          updatedAt: cloudBootstrap.updatedAt || null,
+          error: error,
+        };
+        window.desvelarCloudBootstrap = cloudBootstrap;
+        cloudSyncState = "error";
+        updateCloudSyncStatus();
+        console.error("Erro ao retomar a sincronização:", error);
+      })
+      .finally(function () {
+        cloudRetrying = false;
+        if (cloudSyncState === "error") scheduleCloudRetry();
+      });
+  }
 
   function persist() {
     return stateStore.persist();
@@ -751,11 +870,7 @@
   }
 
   function head(title, sub) {
-    var lastBackup = S.lastBackup || "";
-
     return Common.head(title, sub, {
-      lastBackup: lastBackup,
-      daysSinceBackup: lastBackup ? daysBetween(lastBackup, today()) : 999,
       saveOk: saveOk,
       hasDemo: hasDemo(),
       realCount: realCount(),
@@ -869,16 +984,12 @@
   });
   var SystemViews = window.DesvelarSystemViews.create({
     getState: stateStore.getState,
-    getSize: function () {
-      return localData.getSize();
-    },
     getCloudSyncStatus: cloudSyncLabel,
     getWipeArm: function () {
       return wipeArm;
     },
     head: head,
     esc: esc,
-    fmtD: fmtD,
   });
   var AgendaViews = window.DesvelarAgendaViews.create({
     getState: stateStore.getState,
@@ -908,16 +1019,11 @@
     groupRepository: window.DesvelarGroupRepository,
     feedbackRepository: window.DesvelarFeedbackRepository,
   });
-  var BackupController = window.DesvelarBackupController.create({
-    stateStore: stateStore,
-    lists: LISTS,
-    render: render,
-    toast: toast,
-    today: today,
-  });
   var ActionController = window.DesvelarActionController.create({
     stateStore: stateStore,
     setTheme: applyTheme,
+    verifyPassword: verifyAccountPassword,
+    toast: toast,
     getUiState: function () {
       return {
         tab: tab,
@@ -959,7 +1065,6 @@
     pomoComplete: pomoComplete,
     render: render,
     commit: commit,
-    backupController: BackupController,
   });
 
   async function vInicio() {
@@ -1520,7 +1625,7 @@
     render();
 
     if (!saved) {
-      toast("Não foi possível salvar. Exporte seus dados assim que possível.");
+      toast("Não foi possível salvar esta alteração. Verifique o armazenamento e tente novamente.");
       return;
     }
 
@@ -1541,6 +1646,33 @@
         window.localStorage.setItem("painel-tema", theme);
       }
     } catch (error) {}
+  }
+
+  async function verifyAccountPassword(password) {
+    if (!password || !window.desvelarUser || !window.desvelarUser.email) {
+      return false;
+    }
+
+    var result = await window.desvelarSupabase.auth.signInWithPassword({
+      email: window.desvelarUser.email,
+      password: password,
+    });
+
+    if (result.error) {
+      if (
+        result.error.status === 400 ||
+        result.error.code === "invalid_credentials"
+      ) {
+        return false;
+      }
+      throw result.error;
+    }
+
+    return Boolean(
+      result.data &&
+        result.data.user &&
+        result.data.user.id === window.desvelarUser.id,
+    );
   }
 
   /* ---------- pomodoro ---------- */
@@ -1660,11 +1792,11 @@
       if (fin === "focus") {
         msg = saved
           ? "Foco concluído e salvo. Hora da pausa."
-          : "Foco concluído, mas não foi possível salvar os dados. Exporte um backup assim que possível.";
+          : "Foco concluído, mas não foi possível salvar os dados. Verifique a sincronização na tela Sistema.";
       } else {
         msg = saved
           ? "Pausa terminou. Pronto para o próximo foco?"
-          : "Pausa terminou, mas não foi possível salvar os dados. Exporte um backup assim que possível.";
+          : "Pausa terminou, mas não foi possível salvar os dados. Verifique a sincronização na tela Sistema.";
       }
 
       beep();
@@ -1691,7 +1823,10 @@
 
   /* ---------- ações ---------- */
   document.addEventListener("click", function (event) {
-    ActionController.handleClick(event);
+    ActionController.handleClick(event).catch(function (error) {
+      console.error("Erro ao processar ação:", error);
+      toast("Não foi possível concluir esta ação. Tente novamente.");
+    });
   });
   document.addEventListener("submit", function (event) {
     FormController.submit(event).catch(function (error) {
@@ -1727,9 +1862,6 @@
     commit();
   });
 
-  document.addEventListener("change", function (event) {
-    BackupController.handleFileChange(event);
-  });
   try {
     load();
   } catch (e) {
@@ -1778,7 +1910,7 @@
     toast(
       initSaved
         ? "Pomodoro concluído enquanto a aba estava fechada."
-        : "Pomodoro concluído, mas não foi possível salvar os dados. Exporte um backup assim que possível.",
+        : "Pomodoro concluído, mas não foi possível salvar os dados. Verifique a sincronização na tela Sistema.",
     );
   }
 
@@ -1788,7 +1920,11 @@
   } catch (e) {}
 
   window.addEventListener("online", function () {
-    if (stateStore.getState()) syncCloud(stateStore.getState());
+    if (!stateStore.getState()) return;
+    if (cloudBootstrap.error || localData.hasPendingCloudSync()) {
+      retryCloudSync();
+    } else {
+      syncCloud(stateStore.getState());
+    }
   });
 })();
-
