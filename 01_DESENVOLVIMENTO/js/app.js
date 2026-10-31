@@ -668,6 +668,22 @@
     head: head,
     tagInput: tagInput,
   });
+  var AgendaViews = window.DesvelarAgendaViews.create({
+    getState: function () {
+      return S;
+    },
+    getCalendar: function () {
+      return { month: calM, selectedDay: selDay };
+    },
+    today: today,
+    addDays: addDays,
+    ds: ds,
+    pd: pd,
+    esc: esc,
+    head: head,
+    months: MES,
+    weekdays: DIAS,
+  });
 
   async function vInicio() {
     var groupGoalsHtml = await GroupViews.homeGroupGoals(
@@ -2185,103 +2201,7 @@
   }
 
   function vAgenda() {
-    var y = calM.getFullYear(),
-      m = calM.getMonth(),
-      first = new Date(y, m, 1),
-      off = (first.getDay() + 6) % 7,
-      start = addDays(ds(first), -off),
-      t = today(),
-      cells = "";
-    for (var i = 0; i < 42; i++) {
-      var d = addDays(start, i),
-        dm = pd(d).getMonth() === m;
-      var ne = S.events.filter(function (e) {
-          return e.date === d;
-        }).length,
-        nt = S.tasks.filter(function (x) {
-          return x.due === d && !x.done;
-        }).length;
-      cells +=
-        '<button class="d' +
-        (dm ? "" : " out") +
-        (d === t ? " today" : "") +
-        (d === selDay ? " sel" : "") +
-        '" data-a="sel" data-d="' +
-        d +
-        '" aria-label="' +
-        d +
-        '">' +
-        pd(d).getDate() +
-        '<span class="dots">' +
-        (ne ? "<i></i>" : "") +
-        (nt ? '<i class="k"></i>' : "") +
-        "</span></button>";
-    }
-    var ev = S.events
-      .filter(function (e) {
-        return e.date === selDay;
-      })
-      .sort(function (a, b) {
-        return a.time < b.time ? -1 : 1;
-      });
-    var tk = S.tasks.filter(function (x) {
-      return x.due === selDay;
-    });
-    return (
-      head(
-        "Agenda",
-        "Ponto azul: compromisso. Ponto âmbar: atividade com prazo no dia.",
-      ) +
-      '<div class="grid"><div class="card"><div class="rowflex" style="justify-content:space-between;margin-bottom:12px"><button class="btn sm" data-a="cal-prev" aria-label="Mês anterior">‹</button><h2 style="margin:0">' +
-      MES[m] +
-      " de " +
-      y +
-      '</h2><button class="btn sm" data-a="cal-next" aria-label="Próximo mês">›</button></div>' +
-      '<div class="cal">' +
-      DIAS.map(function (x) {
-        return '<div class="h">' + x + "</div>";
-      }).join("") +
-      cells +
-      "</div></div>" +
-      '<div class="card"><h2>' +
-      pd(selDay).getDate() +
-      " de " +
-      MES[pd(selDay).getMonth()] +
-      "</h2>" +
-      (ev.length || tk.length
-        ? '<ul class="list">' +
-          ev
-            .map(function (e) {
-              return (
-                '<li><span class="m num">' +
-                esc(e.time || "--:--") +
-                '</span><span class="t">' +
-                esc(e.title) +
-                (e.kind ? '<div class="m">' + esc(e.kind) + "</div>" : "") +
-                '</span><button class="ico" data-a="del" data-k="events" data-id="' +
-                esc(e.id) +
-                '" aria-label="Apagar compromisso">×</button></li>'
-              );
-            })
-            .join("") +
-          tk
-            .map(function (x) {
-              return (
-                '<li><span class="m">prazo</span><span class="t' +
-                (x.done ? " done" : "") +
-                '">' +
-                esc(x.title) +
-                "</span></li>"
-              );
-            })
-            .join("") +
-          "</ul>"
-        : '<p class="empty">Nada marcado neste dia.</p>') +
-      '<form class="row" data-form="event" style="margin-top:14px"><label class="f grow">Novo compromisso<input id="e-title" class="grow" name="title" maxlength="100" required placeholder="ex.: Prova de patologia"></label>' +
-      '<label class="f">Hora<input id="e-time" type="time" name="time"></label>' +
-      '<label class="f grow">Tipo (opcional)<input id="e-kind" name="kind" list="kinds" maxlength="30" autocomplete="off" placeholder="ex.: Aula, Prova"></label>' +
-      '<button class="btn pri" type="submit">Adicionar</button></form></div></div>'
-    );
+    return AgendaViews.agendaPage();
   }
 
   function vTarefas() {

@@ -302,6 +302,29 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
   }
 });
 
+test("renderiza a agenda e salva novos compromissos", async () => {
+  const { context, page } = await openApp();
+
+  try {
+    await waitForApp(page);
+    await page.locator('#sidenav [data-tab="agenda"]').click();
+    await page.locator("#e-title").fill("Compromisso da agenda");
+    await page.locator('form[data-form="event"] button[type="submit"]').click();
+    await page
+      .locator("#view .list .t")
+      .filter({ hasText: "Compromisso da agenda" })
+      .waitFor({ state: "visible" });
+
+    const saved = await page.evaluate((storageKey) => {
+      const data = JSON.parse(localStorage.getItem(storageKey));
+      return data.events.some((event) => event.title === "Compromisso da agenda");
+    }, STORAGE_KEY);
+    assert.equal(saved, true);
+  } finally {
+    await context.close();
+  }
+});
+
 test("migra dados legados para a conta e mantém a cópia original", async () => {
   const legacyData = {
     v: 3,
