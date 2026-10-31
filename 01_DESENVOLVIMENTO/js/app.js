@@ -690,6 +690,41 @@
     barChart: barChart,
     brainGraph: brainGraph,
   });
+  var BRL = function (n) {
+    return n.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+  var LifeViews = window.DesvelarLifeViews.create({
+    getState: function () {
+      return S;
+    },
+    getFinanceMonth: function () {
+      return finM;
+    },
+    today: today,
+    addDays: addDays,
+    pd: pd,
+    fmtD: fmtD,
+    fmtM: fmtM,
+    pad: pad,
+    esc: esc,
+    chip: chip,
+    tagInput: tagInput,
+    head: head,
+    sum: sum,
+    tkey: tkey,
+    tlabel: tlabel,
+    tcolor: tcolor,
+    donut: donut,
+    barChart: barChart,
+    BRL: BRL,
+    daysBetween: daysBetween,
+    gprog: gprog,
+    months: MES,
+    weekdays: DIAS,
+  });
   var AgendaViews = window.DesvelarAgendaViews.create({
     getState: function () {
       return S;
@@ -1382,21 +1417,6 @@
   }
 
   /* ---------- vida: temas, hábitos, finanças, metas, rotina ---------- */
-  var BRL = function (n) {
-    return n.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
-  var DIAF = [
-    "Segunda",
-    "Terça",
-    "Quarta",
-    "Quinta",
-    "Sexta",
-    "Sábado",
-    "Domingo",
-  ];
   function gprog(g) {
     return g.ms.length
       ? Math.round(
@@ -1411,416 +1431,18 @@
   function vTemas() {
     return LearningViews.themesPage();
   }
-  function habStreak(h) {
-    var d = today();
-    if (!h.days[d]) d = addDays(d, -1);
-    var n = 0;
-    while (h.days[d]) {
-      n++;
-      d = addDays(d, -1);
-    }
-    return n;
-  }
-  function hab30(h) {
-    var t = today(),
-      c = 0;
-    for (var i = 0; i < 30; i++) if (h.days[addDays(t, -i)]) c++;
-    return Math.round((c / 30) * 100);
-  }
   function vHabitos() {
-    var t = today(),
-      days = [];
-    for (var i = 6; i >= 0; i--) days.push(addDays(t, -i));
-    var done = S.habits.filter(function (h) {
-        return h.days[t];
-      }).length,
-      avg30 = S.habits.length
-        ? Math.round(sum(S.habits, hab30) / S.habits.length)
-        : 0,
-      best = S.habits.reduce(function (a, h) {
-        return Math.max(a, habStreak(h));
-      }, 0);
-    var rows = S.habits
-      .map(function (h) {
-        return (
-          '<div class="hab"><span class="t">' +
-          esc(h.name) +
-          "</span>" +
-          days
-            .map(function (d) {
-              return (
-                '<button class="hd' +
-                (h.days[d] ? " on" : "") +
-                (d === t ? " td" : "") +
-                '" data-a="hab-toggle" data-id="' +
-                esc(h.id) +
-                '" data-d="' +
-                d +
-                '" aria-label="' +
-                esc(h.name) +
-                " em " +
-                fmtD(d) +
-                '"></button>'
-              );
-            })
-            .join("") +
-          '<span class="m num">' +
-          habStreak(h) +
-          ' d</span><button class="ico" data-a="del" data-k="habits" data-id="' +
-          esc(h.id) +
-          '" aria-label="Apagar hábito">×</button></div>'
-        );
-      })
-      .join("");
-    return (
-      head(
-        "Hábitos",
-        "Marque o que você fez em cada dia. Dá para corrigir dias anteriores clicando no círculo.",
-      ) +
-      '<div class="tiles"><div class="tile"><div class="l">Hoje</div><div class="v num">' +
-      done +
-      "/" +
-      S.habits.length +
-      '</div><div class="n">hábitos feitos</div></div>' +
-      '<div class="tile"><div class="l">Melhor sequência atual</div><div class="v num">' +
-      best +
-      '</div><div class="n">dias seguidos</div></div>' +
-      '<div class="tile"><div class="l">Constância · 30 dias</div><div class="v num">' +
-      (S.habits.length ? avg30 + "%" : "–") +
-      '</div><div class="n">média dos hábitos</div></div></div>' +
-      '<div class="card"><h2>Últimos 7 dias</h2>' +
-      (S.habits.length
-        ? '<div class="habwrap"><div class="hab hh"><span></span>' +
-          days
-            .map(function (d) {
-              return "<span>" + DIAS[(pd(d).getDay() + 6) % 7] + "</span>";
-            })
-            .join("") +
-          "<span>seq.</span><span></span></div>" +
-          rows +
-          "</div>"
-        : '<p class="empty">Nenhum hábito ainda. Adicione abaixo.</p>') +
-      "</div>" +
-      '<div class="card"><h2>Novo hábito</h2><form class="row" data-form="habit"><label class="f grow">Nome<input id="h-name" class="grow" name="name" maxlength="50" required placeholder="ex.: Dormir 7h, Meditar, Caminhar"></label><button class="btn pri" type="submit">Adicionar</button></form></div>'
-    );
+    return LifeViews.habitsPage();
   }
   function vFinancas() {
-    var y = finM.getFullYear(),
-      m = finM.getMonth(),
-      ym = y + "-" + pad(m + 1);
-    var tx = S.txs
-      .filter(function (x) {
-        return x.date.slice(0, 7) === ym;
-      })
-      .sort(function (a, b) {
-        return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
-      });
-    var inn = sum(
-        tx.filter(function (x) {
-          return x.type === "in";
-        }),
-        function (x) {
-          return x.amount;
-        },
-      ),
-      out = sum(
-        tx.filter(function (x) {
-          return x.type === "out";
-        }),
-        function (x) {
-          return x.amount;
-        },
-      ),
-      sd = inn - out;
-    var g = {};
-    tx.filter(function (x) {
-      return x.type === "out";
-    }).forEach(function (x) {
-      var k = tkey(x.tag);
-      g[k] = (g[k] || 0) + x.amount;
-    });
-    var segs = Object.keys(g)
-      .map(function (k) {
-        return { k: k, label: tlabel(k), m: g[k] };
-      })
-      .sort(function (a, b) {
-        return b.m - a.m;
-      });
-    var items = [];
-    for (var i = 5; i >= 0; i--) {
-      var d = new Date(y, m - i, 1),
-        key = d.getFullYear() + "-" + pad(d.getMonth() + 1);
-      items.push({
-        l: MES[d.getMonth()].slice(0, 3),
-        v: sum(
-          S.txs.filter(function (x) {
-            return x.type === "out" && x.date.slice(0, 7) === key;
-          }),
-          function (x) {
-            return x.amount;
-          },
-        ),
-      });
-    }
-    var leg = segs.length
-      ? '<div class="leg">' +
-        segs
-          .slice(0, 6)
-          .map(function (x) {
-            return (
-              '<div><i style="background:' +
-              tcolor(x.k) +
-              '"></i><span>' +
-              esc(x.label) +
-              "</span><em>" +
-              esc(BRL(x.m)) +
-              "</em></div>"
-            );
-          })
-          .join("") +
-        "</div>"
-      : '<p class="empty">Sem saídas neste mês.</p>';
-    return (
-      head(
-        "Finanças",
-        "Entradas e saídas simples do mês, com categorias que você mesmo escolhe.",
-      ) +
-      '<div class="rowflex" style="justify-content:space-between"><button class="btn sm" data-a="fin-prev" aria-label="Mês anterior">‹</button><h2 style="margin:0">' +
-      MES[m] +
-      " de " +
-      y +
-      '</h2><button class="btn sm" data-a="fin-next" aria-label="Próximo mês">›</button></div>' +
-      '<div class="tiles"><div class="tile"><div class="l">Entradas</div><div class="v num" style="font-size:21px;color:var(--good)">' +
-      esc(BRL(inn)) +
-      "</div></div>" +
-      '<div class="tile"><div class="l">Saídas</div><div class="v num" style="font-size:21px">' +
-      esc(BRL(out)) +
-      "</div></div>" +
-      '<div class="tile"><div class="l">Saldo</div><div class="v num" style="font-size:21px;color:var(--' +
-      (sd >= 0 ? "good" : "bad") +
-      ')">' +
-      esc(BRL(sd)) +
-      "</div></div></div>" +
-      '<div class="grid"><div class="card"><h2>Saídas por categoria</h2><div class="donut">' +
-      donut(segs, BRL(out), "em saídas", true) +
-      leg +
-      "</div></div>" +
-      '<div class="card"><h2>Saídas · 6 meses (R$)</h2>' +
-      barChart(items, {
-        H: 200,
-        label: "Saídas por mês nos últimos 6 meses",
-      }) +
-      "</div></div>" +
-      '<div class="card"><h2>Novo lançamento</h2><form class="row" data-form="tx"><label class="f">Tipo<select id="x-type" name="type"><option value="out">Saída</option><option value="in">Entrada</option></select></label>' +
-      '<label class="f">Valor (R$)<input id="x-amt" type="number" name="amount" min="0.01" step="0.01" required></label>' +
-      '<label class="f grow">Descrição<input id="x-title" class="grow" name="title" maxlength="80" required placeholder="ex.: Mercado"></label>' +
-      '<label class="f grow">Categoria' +
-      tagInput("x-tag", "ex.: Alimentação, Moradia") +
-      "</label>" +
-      '<label class="f">Data<input id="x-date" type="date" name="date" value="' +
-      (today().slice(0, 7) === ym ? today() : ym + "-01") +
-      '" required></label>' +
-      '<button class="btn pri" type="submit">Lançar</button></form></div>' +
-      '<div class="card"><h2>Lançamentos do mês</h2>' +
-      (tx.length
-        ? '<ul class="list">' +
-          tx
-            .map(function (x) {
-              return (
-                '<li><span class="m num">' +
-                fmtD(x.date) +
-                '</span><span class="t">' +
-                esc(x.title) +
-                '<div class="m">' +
-                chip(x.tag) +
-                '</div></span><span class="num" style="color:var(--' +
-                (x.type === "in" ? "good" : "ink") +
-                ')">' +
-                (x.type === "in" ? "+" : "−") +
-                esc(BRL(x.amount)) +
-                '</span><button class="ico" data-a="del" data-k="txs" data-id="' +
-                esc(x.id) +
-                '" aria-label="Apagar lançamento">×</button></li>'
-              );
-            })
-            .join("") +
-          "</ul>"
-        : '<p class="empty">Nenhum lançamento neste mês.</p>') +
-      "</div>"
-    );
+    return LifeViews.financePage();
   }
   function vMetas() {
-    var t = today(),
-      act = S.goals.filter(function (g) {
-        return gprog(g) < 100;
-      }).length,
-      dn = S.goals.length - act;
-    var cards = S.goals
-      .slice()
-      .sort(function (a, b) {
-        return (a.due || "9") < (b.due || "9") ? -1 : 1;
-      })
-      .map(function (g) {
-        var p = gprog(g),
-          dl = g.due ? daysBetween(t, g.due) : null;
-        var due = g.due
-          ? p >= 100
-            ? "concluída"
-            : (dl < 0
-                ? '<span class="late">atrasada há ' + -dl + " dias</span>"
-                : dl + " dias restantes") +
-              " · " +
-              fmtD(g.due)
-          : "sem prazo";
-        var ms = g.ms
-          .map(function (x) {
-            return (
-              '<li class="' +
-              (x.done ? "done" : "") +
-              '"><button class="check' +
-              (x.done ? " on" : "") +
-              '" data-a="ms-toggle" data-g="' +
-              esc(g.id) +
-              '" data-id="' +
-              esc(x.id) +
-              '" aria-label="Alternar marco">' +
-              (x.done ? "✓" : "") +
-              '</button><span class="t">' +
-              esc(x.text) +
-              '</span><button class="ico" data-a="ms-del" data-g="' +
-              esc(g.id) +
-              '" data-id="' +
-              esc(x.id) +
-              '" aria-label="Apagar marco">×</button></li>'
-            );
-          })
-          .join("");
-        return (
-          '<div class="card book"><div class="rowflex" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><div style="min-width:0"><h3>' +
-          esc(g.title) +
-          "</h3>" +
-          (g.tag ? chip(g.tag) + " · " : "") +
-          '<span class="m">' +
-          due +
-          '</span></div><button class="ico" data-a="del" data-k="goals" data-id="' +
-          esc(g.id) +
-          '" aria-label="Apagar meta">×</button></div>' +
-          '<div class="rowflex" style="justify-content:space-between;margin-top:10px"><span class="m">progresso</span><b class="num">' +
-          p +
-          '%</b></div><div class="bar" style="margin-top:4px"><b style="width:' +
-          p +
-          '%"></b></div>' +
-          (ms
-            ? '<ul class="list" style="margin-top:8px">' + ms + "</ul>"
-            : "") +
-          '<form class="row" data-form="ms" style="margin-top:10px"><input type="hidden" name="g" value="' +
-          esc(g.id) +
-          '"><label class="f grow">Novo marco<input id="m-' +
-          esc(g.id) +
-          '" class="grow" name="text" maxlength="100" required placeholder="ex.: Terminar o módulo de cardio"></label><button class="btn sm" type="submit">Adicionar marco</button></form>' +
-          (g.ms.length
-            ? ""
-            : '<form class="row" data-form="gman" style="margin-top:10px"><input type="hidden" name="g" value="' +
-              esc(g.id) +
-              '"><label class="f">Ou informe o progresso (%)<input id="gp-' +
-              esc(g.id) +
-              '" type="number" name="pct" min="0" max="100" value="' +
-              (g.manual || 0) +
-              '" required></label><button class="btn sm" type="submit">Atualizar</button></form>') +
-          "</div>"
-        );
-      })
-      .join("");
-    return (
-      head(
-        "Metas de longo prazo",
-        "Objetivos do semestre, do ano ou da carreira. Divida em marcos e acompanhe o progresso.",
-      ) +
-      '<div class="tiles"><div class="tile"><div class="l">Em andamento</div><div class="v num">' +
-      act +
-      '</div><div class="n">metas</div></div><div class="tile"><div class="l">Concluídas</div><div class="v num">' +
-      dn +
-      '</div><div class="n">metas</div></div></div>' +
-      '<div class="card"><h2>Nova meta</h2><form class="row" data-form="goal"><label class="f grow">Meta<input id="go-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Passar na residência"></label>' +
-      '<label class="f grow">Tag (opcional)' +
-      tagInput("go-tag", "ex.: Carreira, Saúde") +
-      '</label><label class="f">Prazo<input id="go-due" type="date" name="due"></label><button class="btn pri" type="submit">Criar meta</button></form></div>' +
-      (cards || '<p class="empty">Nenhuma meta ainda.</p>')
-    );
+    return LifeViews.goalsPage();
   }
   function vRotina() {
-    var dow = (new Date().getDay() + 6) % 7;
-    var cols = [0, 1, 2, 3, 4, 5, 6]
-      .map(function (d) {
-        var bl = S.routine
-          .filter(function (x) {
-            return x.day === d;
-          })
-          .sort(function (a, b) {
-            return a.start < b.start ? -1 : 1;
-          });
-        return (
-          '<div class="card rcol' +
-          (d === dow ? " today" : "") +
-          '"><h2>' +
-          DIAF[d] +
-          "</h2>" +
-          (bl.length
-            ? '<ul class="list">' +
-              bl
-                .map(function (x) {
-                  return (
-                    '<li><span class="t"><b class="num">' +
-                    esc(x.start) +
-                    "–" +
-                    esc(x.end) +
-                    "</b><br>" +
-                    esc(x.title) +
-                    (x.tag ? '<div class="m">' + chip(x.tag) + "</div>" : "") +
-                    '</span><button class="ico" data-a="del" data-k="routine" data-id="' +
-                    esc(x.id) +
-                    '" aria-label="Apagar bloco">×</button></li>'
-                  );
-                })
-                .join("") +
-              "</ul>"
-            : '<p class="empty">livre</p>') +
-          "</div>"
-        );
-      })
-      .join("");
-    return (
-      head(
-        "Rotina semanal",
-        "Seus blocos fixos de cada semana: aulas, estágio, academia, refeições. O que cair em hoje aparece no Início.",
-      ) +
-      '<div class="card"><h2>Novo bloco fixo</h2><form class="row" data-form="routine"><label class="f grow">Atividade<input id="ro-title" class="grow" name="title" maxlength="80" required placeholder="ex.: Aulas, Academia"></label>' +
-      '<label class="f grow">Tag (opcional)' +
-      tagInput("ro-tag", "ex.: Faculdade, Saúde") +
-      "</label>" +
-      '<label class="f">Início<input id="ro-start" type="time" name="start" value="08:00" required></label><label class="f">Fim<input id="ro-end" type="time" name="end" value="09:00" required></label>' +
-      '<fieldset class="days" style="width:100%"><legend class="m" style="padding:0 0 5px">Dias da semana</legend>' +
-      DIAF.map(function (n, i) {
-        return (
-          '<label class="dchk" for="rd' +
-          i +
-          '"><input id="rd' +
-          i +
-          '" type="checkbox" name="d" value="' +
-          i +
-          '">' +
-          n.slice(0, 3) +
-          "</label>"
-        );
-      }).join("") +
-      "</fieldset>" +
-      '<button class="btn pri" type="submit">Adicionar</button></form></div>' +
-      '<div class="rgrid">' +
-      cols +
-      "</div>"
-    );
+    return LifeViews.routinePage();
   }
-
   function vEstudo() {
     return LearningViews.studyPage();
   }

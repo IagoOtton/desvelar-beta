@@ -388,6 +388,90 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
   }
 });
 
+test("atualiza dados pelas telas da área Vida extraídas", async () => {
+  const { context, page } = await openApp();
+
+  try {
+    await waitForApp(page);
+
+    await page.locator('#sidenav [data-tab="habitos"]').click();
+    await page.locator("#h-name").fill("Hábito do módulo Vida");
+    await page.locator('form[data-form="habit"] button[type="submit"]').click();
+    const habit = page
+      .locator("#view .hab")
+      .filter({ hasText: "Hábito do módulo Vida" });
+    await habit.waitFor({ state: "visible" });
+    const todayKey = await habit.locator("button.td").getAttribute("data-d");
+    await habit.locator("button.td").click();
+
+    await page.locator('#sidenav [data-tab="financas"]').click();
+    await page.locator("#x-amt").fill("123.45");
+    await page.locator("#x-title").fill("Lançamento do módulo Vida");
+    await page.locator("#x-tag").fill("Alimentação");
+    await page.locator('form[data-form="tx"] button[type="submit"]').click();
+    await page
+      .locator("#view .list .t")
+      .filter({ hasText: "Lançamento do módulo Vida" })
+      .waitFor({ state: "visible" });
+
+    await page.locator('#sidenav [data-tab="metas"]').click();
+    await page.locator("#go-title").fill("Meta do módulo Vida");
+    await page.locator('form[data-form="goal"] button[type="submit"]').click();
+    const goal = page
+      .locator("#view .card.book")
+      .filter({ hasText: "Meta do módulo Vida" });
+    await goal.waitFor({ state: "visible" });
+    await goal
+      .locator('form[data-form="ms"] input[name="text"]')
+      .fill("Primeiro marco");
+    await goal.locator('form[data-form="ms"] button[type="submit"]').click();
+    await goal.locator('[data-a="ms-toggle"]').click();
+
+    await page.locator('#sidenav [data-tab="rotina"]').click();
+    await page.locator("#ro-title").fill("Bloco do módulo Vida");
+    await page.locator("#ro-start").fill("06:30");
+    await page.locator("#ro-end").fill("07:30");
+    await page.locator("#rd0").check();
+    await page.locator('form[data-form="routine"] button[type="submit"]').click();
+    await page
+      .locator("#view .rcol")
+      .filter({ hasText: "Bloco do módulo Vida" })
+      .waitFor({ state: "visible" });
+
+    const saved = await page.evaluate(
+      ({ storageKey, day }) => {
+        const data = JSON.parse(localStorage.getItem(storageKey));
+        const newGoal = data.goals.find(
+          (item) => item.title === "Meta do módulo Vida",
+        );
+        return {
+          habit: data.habits.find(
+            (item) => item.name === "Hábito do módulo Vida",
+          ).days[day],
+          transaction: data.txs.some(
+            (item) =>
+              item.title === "Lançamento do módulo Vida" &&
+              item.amount === 123.45,
+          ),
+          milestone: newGoal.ms[0].done,
+          routine: data.routine.some(
+            (item) => item.title === "Bloco do módulo Vida" && item.day === 0,
+          ),
+        };
+      },
+      { storageKey: STORAGE_KEY, day: todayKey },
+    );
+    assert.deepEqual(saved, {
+      habit: 1,
+      transaction: true,
+      milestone: true,
+      routine: true,
+    });
+  } finally {
+    await context.close();
+  }
+});
+
 test("migra dados legados para a conta e mantém a cópia original", async () => {
   const legacyData = {
     v: 3,
