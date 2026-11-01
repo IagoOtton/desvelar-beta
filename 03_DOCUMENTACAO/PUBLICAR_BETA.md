@@ -34,11 +34,35 @@ order by f.created_at desc;
 
 Essa tabela guarda o progresso pessoal em um único registro por conta. A RLS limita a leitura ao próprio usuário; a gravação ocorre por uma função que valida a conta autenticada e a revisão dos dados para evitar sobrescritas entre dispositivos.
 
-## 3. Habilitar confirmação de e-mail para amigos
+## 3. Ativar a Comunidade de leitores
+
+1. No **SQL Editor** do Supabase, crie uma consulta e execute todo o conteúdo de [`reader_community_schema.sql`](../01_DESENVOLVIMENTO/supabase/reader_community_schema.sql).
+2. Confirme que as tabelas `reader_profiles`, `community_posts` e `reader_groups` aparecem no Table Editor. As demais tabelas `reader_*` e `community_*` guardam comentários, reações, denúncias, ciclos mensais, indicações e progresso.
+3. No app, cada pessoa cria um perfil com nome de exibição antes de publicar. Publicações e perfis escolhidos ficam disponíveis às contas autenticadas; os ciclos e o progresso ficam restritos às pessoas dos respectivos grupos. E-mails e dados da biblioteca pessoal não são publicados pela Comunidade.
+4. Para começar um grupo, uma pessoa cria o grupo e compartilha o código de convite com os demais. O responsável abre um ciclo mensal, ou escolhe o livro diretamente; se abrir indicações, os membros podem sugerir títulos e o responsável faz um único sorteio.
+
+As denúncias são gravadas no Supabase, mas ainda não há uma tela de moderação. Para revisá-las, use o SQL Editor do Supabase:
+
+```sql
+select
+  r.created_at,
+  r.reason,
+  r.details,
+  reporter.display_name as reporter,
+  author.display_name as author,
+  p.body
+from public.community_post_reports as r
+join public.community_posts as p on p.id = r.post_id
+left join public.reader_profiles as reporter on reporter.user_id = r.reporter_id
+left join public.reader_profiles as author on author.user_id = p.author_id
+order by r.created_at desc;
+```
+
+## 4. Habilitar confirmação de e-mail para amigos
 
 O SMTP padrão do Supabase só envia para endereços da equipe do projeto e tem limite baixo. Configure um provedor SMTP na área **Authentication → Emails → SMTP Settings** do Supabase. As credenciais devem ser inseridas diretamente no painel do provedor/Supabase; não as coloque no código ou no GitHub. Mantenha a confirmação de e-mail ativada.
 
-## 4. Configurar o retorno depois da confirmação
+## 5. Configurar o retorno depois da confirmação
 
 Depois de criar o repositório e obter o endereço GitHub Pages, abra **Authentication → URL Configuration** no Supabase:
 
@@ -47,7 +71,7 @@ Depois de criar o repositório e obter o endereço GitHub Pages, abra **Authenti
 
 O app usa a URL atual da página como destino de confirmação. Por isso, atualize essas configurações se o endereço do Pages mudar.
 
-## 5. Publicar ou atualizar o beta
+## 6. Publicar ou atualizar o beta
 
 O repositório [`IagoOtton/desvelar-beta`](https://github.com/IagoOtton/desvelar-beta) e o GitHub Pages já estão configurados. As alterações em `01_DESENVOLVIMENTO/` são publicadas quando um commit chega à branch `main`; o workflow **Publicar beta no GitHub Pages** monta o site e o publica automaticamente.
 
@@ -55,7 +79,7 @@ Para atualizar o beta, altere os arquivos-fonte em `01_DESENVOLVIMENTO/`, envie 
 
 Se estiver configurando uma cópia local nova, use o repositório existente em vez de criar outro. No GitHub Free, o repositório precisa ser público para essa configuração do Pages; os arquivos-fonte e documentos versionados ficam visíveis no GitHub, mas somente o app corrigido e as pastas `css/` e `js/` são colocados no site.
 
-## 6. O que pedir no feedback
+## 7. O que pedir no feedback
 
 Peça que testem uma tarefa real e descrevam: o que tentaram fazer, o que aconteceu e o que esperavam. O feedback enviado em **Sistema → Enviar feedback** fica associado à conta. Os dados pessoais de estudo, rotina, hábitos, metas e finanças também ficam no Supabase e sincronizam ao entrar com a mesma conta em outro dispositivo. O navegador conserva uma cópia local para uso sem conexão; confira em **Sistema** se as alterações foram sincronizadas. A exportação/importação manual foi removida; alterações que ainda não aparecem como sincronizadas permanecem apenas no navegador atual.
 

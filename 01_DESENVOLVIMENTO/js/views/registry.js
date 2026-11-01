@@ -17,6 +17,7 @@
       "getCloudSyncStatus",
       "getWipeArm",
       "groupRepository",
+      "communityRepository",
     ];
     if (
       !dependencies ||
@@ -60,6 +61,11 @@
       head: head,
       esc: formatting.esc,
       repository: dependencies.groupRepository,
+    });
+    var community = window.DesvelarCommunityViews.create({
+      head: head,
+      esc: formatting.esc,
+      repository: dependencies.communityRepository,
     });
     var tasks = window.DesvelarTaskViews.create({
       getState: stateStore.getState,
@@ -224,6 +230,9 @@
         desempenho: performance.performancePage,
         grupos: function () {
           return groups.groupsPage(dependencies.getUserId());
+        },
+        comunidade: function () {
+          return community.communityPage(dependencies.getUserId());
         },
         sistema: system.systemPage,
       }),

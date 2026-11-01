@@ -314,6 +314,7 @@
     getCloudSyncStatus: cloudSync.getStatusLabel,
     getWipeArm: function () { return wipeArm; },
     groupRepository: window.DesvelarGroupRepository,
+    communityRepository: window.DesvelarCommunityRepository,
     modules: ModuleRegistry.systemModules,
     circumference: PC,
     phaseName: phaseName,
@@ -403,6 +404,14 @@
       var state = stateStore.getState();
       return !state || !state.enabledTabs || state.enabledTabs[tabId] !== false;
     },
+  });
+  var CommunityController = window.DesvelarCommunityController.create({
+    repository: window.DesvelarCommunityRepository,
+    getUserId: function () {
+      return window.desvelarUser.id;
+    },
+    toast: toast,
+    render: render,
   });
 
   function focusRenderedTarget(options) {
@@ -541,12 +550,28 @@
       openMobileMore.open = false;
     }
 
+    if (event.target.closest("[data-community-action]")) {
+      CommunityController.handleClick(event).catch(function (error) {
+        console.error("Erro ao processar ação:", error);
+        toast("Não foi possível concluir esta ação. Tente novamente.");
+      });
+      return;
+    }
+
     ActionController.handleClick(event).catch(function (error) {
       console.error("Erro ao processar ação:", error);
       toast("Não foi possível concluir esta ação. Tente novamente.");
     });
   });
   document.addEventListener("submit", function (event) {
+    if (event.target.closest("form[data-community-form]")) {
+      CommunityController.submit(event).catch(function (error) {
+        console.error("Erro ao processar formulário:", error);
+        toast("Não foi possível concluir esta ação. Tente novamente.");
+      });
+      return;
+    }
+
     FormController.submit(event).catch(function (error) {
       console.error("Erro ao processar formulário:", error);
       toast("Não foi possível concluir esta ação. Tente novamente.");
