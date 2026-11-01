@@ -10,77 +10,128 @@
   if (bottom) bottom.style.display = "none";
 
   root.innerHTML = `
-    <section class="auth-panel">
-      <p class="auth-kicker">Beta entre amigos</p>
-      <h1>DESVELAR</h1>
-      <p class="auth-lead">Estudos, hábitos e metas em um só lugar.</p>
-      <h2 id="auth-title">Entrar</h2>
+    <section class="auth-panel" aria-labelledby="auth-heading">
+      <header class="auth-brand">
+        <span class="auth-brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" focusable="false">
+            <path d="M5 20c4-7 9-10.5 15-10.5S31 13 35 20c-4 7-9 10.5-15 10.5S9 27 5 20Z" />
+            <circle cx="20" cy="20" r="5.5" />
+            <circle class="auth-brand__glint" cx="22" cy="18" r="1.5" />
+          </svg>
+        </span>
+        <span class="auth-brand__name">DESVELAR</span>
+        <span class="auth-brand__badge">BETA</span>
+      </header>
 
-      <form id="auth-form">
-        <label for="auth-email">E-mail</label>
-        <input id="auth-email" type="email" required autocomplete="email">
+      <div class="auth-intro">
+        <p class="auth-kicker">UM PASSO DE CADA VEZ</p>
+        <h1 id="auth-heading">Seu espaço para avançar.</h1>
+        <p class="auth-lead">Estudos, hábitos, rotina e metas — organizados no seu ritmo.</p>
+      </div>
 
-        <label for="auth-password">Senha</label>
-        <div class="password-field">
-          <input id="auth-password" type="password" required minlength="6"
-            autocomplete="current-password" aria-describedby="auth-message">
-          <button class="password-toggle" type="button" data-password-toggle="auth-password"
-            aria-label="Mostrar senha" aria-controls="auth-password" aria-pressed="false">Mostrar</button>
-        </div>
+      <div class="auth-form-wrap">
+        <h2 id="auth-title">Entrar</h2>
+        <p id="auth-mode-hint" class="auth-mode-hint">Acesse sua conta para continuar.</p>
 
-        <div class="auth-actions">
-          <button id="auth-submit" class="btn pri" type="submit">Entrar</button>
-          <button id="auth-toggle" class="btn sm" type="button">Criar uma conta</button>
-        </div>
-      </form>
+        <form id="auth-form" aria-labelledby="auth-title">
+          <div class="auth-field">
+            <label for="auth-email">E-mail</label>
+            <input id="auth-email" type="email" required autocomplete="email"
+              inputmode="email" autocapitalize="none" spellcheck="false"
+              aria-describedby="auth-message">
+          </div>
 
-      <button id="auth-forgot" class="btn sm" type="button" hidden>Esqueci minha senha</button>
+          <div id="auth-email-confirm-wrap" class="auth-field" hidden>
+            <label for="auth-email-confirm">Confirme seu e-mail</label>
+            <input id="auth-email-confirm" type="email" autocomplete="off"
+              inputmode="email" autocapitalize="none" spellcheck="false"
+              aria-describedby="auth-message">
+          </div>
 
-      <form id="reset-request-form" hidden>
-        <label for="reset-email">E-mail da sua conta</label>
-        <input id="reset-email" type="email" required autocomplete="email">
-        <div class="auth-actions">
-          <button class="btn pri" type="submit">Enviar link de redefinição</button>
-          <button id="reset-back" class="btn sm" type="button">Voltar</button>
-        </div>
-      </form>
+          <div class="auth-field">
+            <label for="auth-password">Senha</label>
+            <div class="password-field">
+              <input id="auth-password" type="password" required minlength="6"
+                autocomplete="current-password" aria-describedby="auth-message">
+              <button class="password-toggle" type="button" data-password-toggle="auth-password"
+                aria-label="Mostrar senha" aria-controls="auth-password" aria-pressed="false">Mostrar</button>
+            </div>
+            <small id="auth-password-hint" class="auth-field-hint" hidden>Use pelo menos 8 caracteres.</small>
+          </div>
 
-      <form id="password-recovery-form" hidden>
-        <label for="new-password">Nova senha</label>
-        <div class="password-field">
-          <input id="new-password" type="password" required minlength="6"
-            autocomplete="new-password">
-          <button class="password-toggle" type="button" data-password-toggle="new-password"
-            aria-label="Mostrar senha" aria-controls="new-password" aria-pressed="false">Mostrar</button>
-        </div>
-        <label for="confirm-password">Confirme a nova senha</label>
-        <div class="password-field">
-          <input id="confirm-password" type="password" required minlength="6"
-            autocomplete="new-password">
-          <button class="password-toggle" type="button" data-password-toggle="confirm-password"
-            aria-label="Mostrar senha" aria-controls="confirm-password" aria-pressed="false">Mostrar</button>
-        </div>
-        <button id="password-recovery-submit" class="btn pri" type="submit">Salvar nova senha</button>
-      </form>
+          <div class="auth-actions">
+            <button id="auth-submit" class="btn pri" type="submit">Entrar</button>
+            <button id="auth-toggle" class="btn sm" type="button">Criar uma conta</button>
+          </div>
+        </form>
 
-      <p id="auth-message" role="status"></p>
-      <p class="auth-note">Cada pessoa deve usar sua própria conta. Estudos, tarefas, hábitos, metas e finanças ficam associados à conta e sincronizam entre navegadores e dispositivos. Evite registrar dados pessoais ou financeiros sensíveis.</p>
+        <button id="auth-resend-confirm" class="btn sm auth-secondary-action" type="button" hidden>
+          Reenviar e-mail de confirmação
+        </button>
+        <button id="auth-forgot" class="btn sm auth-secondary-action" type="button" hidden>Esqueci minha senha</button>
+
+        <form id="reset-request-form" hidden aria-labelledby="auth-title">
+          <div class="auth-field">
+            <label for="reset-email">E-mail da sua conta</label>
+            <input id="reset-email" type="email" required autocomplete="email"
+              inputmode="email" autocapitalize="none" spellcheck="false"
+              aria-describedby="auth-message">
+          </div>
+          <div class="auth-actions">
+            <button class="btn pri" type="submit">Enviar link de redefinição</button>
+            <button id="reset-back" class="btn sm" type="button">Voltar</button>
+          </div>
+        </form>
+
+        <form id="password-recovery-form" hidden aria-labelledby="auth-title">
+          <div class="auth-field">
+            <label for="new-password">Nova senha</label>
+            <div class="password-field">
+              <input id="new-password" type="password" required minlength="8"
+                autocomplete="new-password" aria-describedby="auth-message new-password-hint">
+              <button class="password-toggle" type="button" data-password-toggle="new-password"
+                aria-label="Mostrar senha" aria-controls="new-password" aria-pressed="false">Mostrar</button>
+            </div>
+            <small id="new-password-hint" class="auth-field-hint">Use pelo menos 8 caracteres.</small>
+          </div>
+          <div class="auth-field">
+            <label for="confirm-password">Confirme a nova senha</label>
+            <div class="password-field">
+              <input id="confirm-password" type="password" required minlength="8"
+                autocomplete="new-password" aria-describedby="auth-message">
+              <button class="password-toggle" type="button" data-password-toggle="confirm-password"
+                aria-label="Mostrar senha" aria-controls="confirm-password" aria-pressed="false">Mostrar</button>
+            </div>
+          </div>
+          <button id="password-recovery-submit" class="btn pri" type="submit">Salvar nova senha</button>
+        </form>
+      </div>
+
+      <p id="auth-message" role="status" aria-live="polite"></p>
+      <p class="auth-note">Sua conta mantém seus dados sincronizados entre dispositivos. Evite registrar informações pessoais ou financeiras sensíveis.</p>
     </section>
   `;
 
+  var MIN_PASSWORD_LENGTH = 8;
   var isSignUp = false;
   var form = document.getElementById("auth-form");
   var message = document.getElementById("auth-message");
   var loginPassword = document.getElementById("auth-password");
   var title = document.getElementById("auth-title");
+  var modeHint = document.getElementById("auth-mode-hint");
+  var emailConfirmWrap = document.getElementById("auth-email-confirm-wrap");
+  var emailConfirm = document.getElementById("auth-email-confirm");
+  var passwordHint = document.getElementById("auth-password-hint");
   var submit = document.getElementById("auth-submit");
   var toggle = document.getElementById("auth-toggle");
+  var resendConfirmation = document.getElementById("auth-resend-confirm");
   var forgot = document.getElementById("auth-forgot");
   var resetRequestForm = document.getElementById("reset-request-form");
   var resetBack = document.getElementById("reset-back");
   var passwordRecoveryForm = document.getElementById("password-recovery-form");
   var passwordRecoverySubmit = document.getElementById("password-recovery-submit");
   var appStarted = false;
+  var authRequestInFlight = false;
   var recoveryFlow = isRecoveryRedirect();
   var recoveryVerified = false;
 
@@ -109,18 +160,38 @@
     form.hidden = mode !== "login" && mode !== "signup";
     resetRequestForm.hidden = mode !== "reset";
     passwordRecoveryForm.hidden = mode !== "recovery";
+    resendConfirmation.hidden = true;
+    var signupMode = mode === "signup";
+    emailConfirmWrap.hidden = !signupMode;
+    emailConfirm.required = signupMode;
+    loginPassword.minLength = signupMode ? MIN_PASSWORD_LENGTH : 6;
+    loginPassword.autocomplete = signupMode ? "new-password" : "current-password";
+    loginPassword.setAttribute(
+      "aria-describedby",
+      signupMode ? "auth-message auth-password-hint" : "auth-message",
+    );
+    passwordHint.hidden = !signupMode;
     toggle.hidden = mode !== "login" && mode !== "signup";
     forgot.hidden = mode !== "login";
     title.textContent =
       mode === "signup"
-        ? "Criar conta"
+        ? "Criar sua conta"
         : mode === "reset"
           ? "Recuperar senha"
           : mode === "recovery"
             ? "Definir nova senha"
             : "Entrar";
+    modeHint.textContent =
+      mode === "signup"
+        ? "Crie seu acesso para começar a organizar sua rotina."
+        : mode === "reset"
+          ? "Enviaremos um link para você criar uma nova senha."
+          : mode === "recovery"
+            ? "Escolha uma senha nova para sua conta."
+            : "Acesse sua conta para continuar.";
     form.classList.remove("auth-form--error");
     loginPassword.removeAttribute("aria-invalid");
+    emailConfirm.removeAttribute("aria-invalid");
     setAuthMessage(text || "", "info");
   }
 
@@ -137,6 +208,38 @@
       error.code === "invalid_credentials" ||
       /invalid login credentials/i.test(error.message || "")
     );
+  }
+
+  function isEmailNotConfirmed(error) {
+    return Boolean(
+      error &&
+        (error.code === "email_not_confirmed" ||
+          /email not confirmed/i.test(error.message || "")),
+    );
+  }
+
+  function safeAuthError(error, fallback) {
+    if (
+      error &&
+      [
+        "over_email_send_rate_limit",
+        "over_request_rate_limit",
+        "request_rate_limit_exceeded",
+      ].includes(error.code)
+    ) {
+      return "Muitas tentativas seguidas. Aguarde um pouco e tente novamente.";
+    }
+    if (
+      error &&
+      ["weak_password", "password_too_short"].includes(error.code)
+    ) {
+      return "Use uma senha com pelo menos 8 caracteres.";
+    }
+    return fallback;
+  }
+
+  function authRedirectUrl() {
+    return window.location.origin + window.location.pathname;
   }
 
   function cleanRecoveryUrl() {
@@ -217,14 +320,68 @@
     setAuthMode(isSignUp ? "signup" : "login");
   });
 
-  form.addEventListener("input", function (event) {
-    if (event.target.id !== "auth-email" && event.target.id !== "auth-password") {
+  resendConfirmation.addEventListener("click", async function () {
+    var emailInput = document.getElementById("auth-email");
+    var email = emailInput.value.trim();
+    if (!email || !emailInput.validity.valid) {
+      setAuthMessage(
+        "Digite o mesmo e-mail usado no cadastro para reenviar a confirmação.",
+        "error",
+      );
+      emailInput.focus();
       return;
     }
-    if (!form.classList.contains("auth-form--error")) return;
 
+    resendConfirmation.disabled = true;
+    setAuthMessage("Enviando…", "info");
+
+    try {
+      var result = await window.desvelarSupabase.auth.resend({
+        type: "signup",
+        email: email,
+        options: {
+          emailRedirectTo: authRedirectUrl(),
+        },
+      });
+
+      if (result.error) {
+        setAuthMessage(
+          safeAuthError(
+            result.error,
+            "Não foi possível reenviar agora. Aguarde um pouco e tente novamente.",
+          ),
+          "error",
+        );
+      } else {
+        setAuthMessage(
+          "Se houver um cadastro pendente para esse e-mail, enviaremos uma nova confirmação. Confira a caixa de entrada, spam e quarentena.",
+          "info",
+        );
+      }
+    } catch (error) {
+      setAuthMessage(
+        "Não foi possível reenviar agora. Aguarde um pouco e tente novamente.",
+        "error",
+      );
+    } finally {
+      resendConfirmation.disabled = false;
+    }
+  });
+
+  form.addEventListener("input", function (event) {
+    if (
+      event.target.id !== "auth-email" &&
+      event.target.id !== "auth-email-confirm" &&
+      event.target.id !== "auth-password"
+    ) {
+      return;
+    }
     form.classList.remove("auth-form--error");
     loginPassword.removeAttribute("aria-invalid");
+    emailConfirm.removeAttribute("aria-invalid");
+    if (event.target.id === "auth-email") {
+      resendConfirmation.hidden = true;
+    }
     setAuthMessage("", "info");
   });
 
@@ -258,24 +415,32 @@
     var email = document.getElementById("reset-email").value.trim();
 
     resetSubmit.disabled = true;
-    message.textContent = "Enviando…";
+    setAuthMessage("Enviando…", "info");
 
     try {
       var result = await window.desvelarSupabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname,
+        redirectTo: authRedirectUrl(),
       });
 
       if (result.error) {
-        message.textContent = result.error.message;
+        setAuthMessage(
+          safeAuthError(
+            result.error,
+            "Não foi possível solicitar o link agora. Tente novamente mais tarde.",
+          ),
+          "error",
+        );
       } else {
-        message.textContent =
-          "Se houver uma conta com esse e-mail, enviaremos um link. Confira sua caixa de entrada e spam.";
+        setAuthMessage(
+          "Se houver uma conta com esse e-mail, enviaremos um link. Confira a caixa de entrada e spam.",
+          "info",
+        );
       }
     } catch (error) {
-      message.textContent =
-        error && error.message
-          ? error.message
-          : "Não foi possível enviar o link. Tente novamente.";
+      setAuthMessage(
+        "Não foi possível solicitar o link agora. Tente novamente mais tarde.",
+        "error",
+      );
     } finally {
       resetSubmit.disabled = false;
     }
@@ -287,12 +452,12 @@
     var confirmPassword = document.getElementById("confirm-password").value;
 
     if (newPassword !== confirmPassword) {
-      message.textContent = "As senhas não coincidem.";
+      setAuthMessage("As senhas não coincidem.", "error");
       return;
     }
 
     passwordRecoverySubmit.disabled = true;
-    message.textContent = "Atualizando sua senha…";
+    setAuthMessage("Atualizando sua senha…", "info");
 
     try {
       var result = await window.desvelarSupabase.auth.updateUser({
@@ -300,17 +465,23 @@
       });
 
       if (result.error) {
-        message.textContent = result.error.message;
+        setAuthMessage(
+          safeAuthError(
+            result.error,
+            "Não foi possível atualizar a senha. Solicite um novo link e tente outra vez.",
+          ),
+          "error",
+        );
       } else {
         recoveryFlow = false;
         cleanRecoveryUrl();
         startApp(result.data.user);
       }
     } catch (error) {
-      message.textContent =
-        error && error.message
-          ? error.message
-          : "Não foi possível atualizar a senha. Tente novamente.";
+      setAuthMessage(
+        "Não foi possível atualizar a senha. Solicite um novo link e tente outra vez.",
+        "error",
+      );
     } finally {
       passwordRecoverySubmit.disabled = false;
     }
@@ -318,24 +489,40 @@
 
   form.addEventListener("submit", async function (event) {
     event.preventDefault();
-    if (appStarted) return;
+    if (appStarted || authRequestInFlight) return;
 
+    var signingUp = isSignUp;
+    var email = document.getElementById("auth-email").value.trim();
+    var password = loginPassword.value;
+    if (
+      signingUp &&
+      email.toLowerCase() !== emailConfirm.value.trim().toLowerCase()
+    ) {
+      emailConfirm.setAttribute("aria-invalid", "true");
+      setAuthMessage("Os e-mails não coincidem. Confira os dois campos.", "error");
+      emailConfirm.focus();
+      return;
+    }
+
+    authRequestInFlight = true;
     submit.disabled = true;
     toggle.disabled = true;
+    var authInputs = Array.from(form.querySelectorAll("input"));
+    authInputs.forEach(function (input) {
+      input.disabled = true;
+    });
     form.classList.remove("auth-form--error");
     loginPassword.removeAttribute("aria-invalid");
+    emailConfirm.removeAttribute("aria-invalid");
     setAuthMessage("Aguarde…", "info");
 
-    var email = document.getElementById("auth-email").value.trim();
-    var password = document.getElementById("auth-password").value;
-
     try {
-      var result = isSignUp
+      var result = signingUp
         ? await window.desvelarSupabase.auth.signUp({
             email: email,
             password: password,
             options: {
-              emailRedirectTo: window.location.href,
+              emailRedirectTo: authRedirectUrl(),
             },
           })
         : await window.desvelarSupabase.auth.signInWithPassword({
@@ -344,7 +531,7 @@
           });
 
       if (result.error) {
-        if (!isSignUp && isInvalidCredentials(result.error)) {
+        if (!signingUp && isInvalidCredentials(result.error)) {
           loginPassword.value = "";
           loginPassword.setAttribute("aria-invalid", "true");
           form.classList.add("auth-form--error");
@@ -353,23 +540,52 @@
             "error",
           );
           loginPassword.focus();
+        } else if (!signingUp && isEmailNotConfirmed(result.error)) {
+          resendConfirmation.hidden = false;
+          setAuthMessage(
+            "Este e-mail ainda não foi confirmado. Confira a caixa de entrada, spam e quarentena ou reenvie a confirmação.",
+            "error",
+          );
+        } else if (
+          result.error.code === "weak_password" ||
+          result.error.code === "password_too_short"
+        ) {
+          setAuthMessage(
+            "A senha não atende aos requisitos atuais. Use pelo menos 8 caracteres ou recupere sua senha.",
+            "error",
+          );
         } else {
-          setAuthMessage(result.error.message, "error");
+          setAuthMessage(
+            safeAuthError(
+              result.error,
+              signingUp
+                ? "Não foi possível concluir o cadastro. Confira os dados e tente novamente."
+                : "Não foi possível entrar agora. Confira os dados e tente novamente.",
+            ),
+            "error",
+          );
         }
-      } else if (isSignUp) {
-        message.textContent =
-          "Cadastro enviado. Confira seu e-mail para confirmar a conta.";
+      } else if (signingUp) {
+        resendConfirmation.hidden = false;
+        setAuthMessage(
+          "Se o cadastro puder ser concluído, enviaremos uma confirmação. Se já houver uma conta, entre ou recupere a senha.",
+          "info",
+        );
       } else {
         startApp(result.data.user);
       }
     } catch (error) {
       setAuthMessage(
-        error && error.message
-          ? error.message
-          : "Não foi possível autenticar. Tente novamente.",
+        signingUp
+          ? "Não foi possível concluir o cadastro agora. Tente novamente mais tarde."
+          : "Não foi possível entrar agora. Tente novamente mais tarde.",
         "error",
       );
     } finally {
+      authRequestInFlight = false;
+      authInputs.forEach(function (input) {
+        input.disabled = false;
+      });
       submit.disabled = false;
       toggle.disabled = false;
     }
