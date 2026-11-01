@@ -12,7 +12,7 @@
       options = options || {};
 
       return (
-        "<div><h1>" +
+        '<div><h1 tabindex="-1">' +
         F.esc(title) +
         "</h1>" +
         (sub ? '<p class="sub">' + F.esc(sub) + "</p>" : "") +

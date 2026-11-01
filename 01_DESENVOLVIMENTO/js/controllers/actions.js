@@ -84,25 +84,12 @@
           return;
         }
         dependencies.setUiState({ tab: button.dataset.tab, zen: false });
-        dependencies.render();
+        var focusId = button.dataset.focus || "";
+        dependencies.render({
+          focusHeading: event.detail === 0,
+          focusId: focusId,
+        });
         window.scrollTo(0, 0);
-        if (button.dataset.focus) {
-          var focusId = button.dataset.focus;
-          window.setTimeout(function () {
-            var target = document.getElementById(focusId);
-            if (!target) return;
-
-            target.focus({ preventScroll: true });
-            target.scrollIntoView({
-              behavior:
-                window.matchMedia &&
-                window.matchMedia("(prefers-reduced-motion: reduce)").matches
-                  ? "auto"
-                  : "smooth",
-              block: "center",
-            });
-          }, 0);
-        }
         return;
       }
       if (action === "retry") {

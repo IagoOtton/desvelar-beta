@@ -373,7 +373,31 @@
     },
   });
 
-  function render() {
+  function focusRenderedTarget(options) {
+    if (!options) return;
+
+    var target = options.focusId
+      ? document.getElementById(options.focusId)
+      : null;
+    if (!target && options.focusHeading) {
+      target = document.querySelector("#view h1, #view h2");
+    }
+    if (!target) return;
+
+    target.focus({ preventScroll: true });
+    if (options.focusId && target.id === options.focusId) {
+      target.scrollIntoView({
+        behavior:
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "auto"
+            : "smooth",
+        block: "center",
+      });
+    }
+  }
+
+  function render(options) {
     buildTags();
     document.getElementById("sidenav").innerHTML =
       '<div class="brand">' +
@@ -405,6 +429,7 @@
           document.getElementById("view").innerHTML =
             pageTicker() + html;
           tick();
+          focusRenderedTarget(options);
         }
       })
       .catch(function (error) {
@@ -413,7 +438,8 @@
 
         document.getElementById("view").innerHTML =
           pageTicker() +
-          '<div class="card"><h2>Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
+          '<div class="card"><h2 tabindex="-1">Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
+        focusRenderedTarget(options);
       });
   }
   function toast(msg) {
