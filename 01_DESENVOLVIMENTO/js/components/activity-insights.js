@@ -330,7 +330,13 @@
               (C - len + gap) +
               '" stroke-dashoffset="' +
               -cum +
-              '" transform="rotate(-90 75 75)"/>';
+              '" transform="rotate(-90 75 75)"><title>' +
+              esc(
+                g.label +
+                  ": " +
+                  (small ? BRL(g.m) : fmtM(g.m)),
+              ) +
+              "</title></circle>";
           cum += len;
         });
       return (
@@ -348,11 +354,13 @@
     function heat() {
       var t = today(),
         start = addDays(wkStart(t), -77),
-        c = "";
+        c = "",
+        hasStudy = false;
       for (var i = 0; i < 84; i++) {
         var d = addDays(start, i),
           m = minsOn(d),
           l = m === 0 ? 0 : m < 30 ? 1 : m < 90 ? 2 : m < 180 ? 3 : 4;
+        if (d <= t && m > 0) hasStudy = true;
         c +=
           d > t
             ? '<i class="fut"></i>'
@@ -364,6 +372,10 @@
               fmtM(m) +
               '"></i>';
       }
+      if (!hasStudy)
+        return (
+          '<div class="chart-empty compact" role="status">Registre uma sessão para acompanhar sua constância aqui.</div>'
+        );
       return (
         '<div class="heat" role="img" aria-label="Mapa de estudo das últimas 12 semanas">' +
         c +
@@ -382,5 +394,4 @@
 
   window.DesvelarActivityInsights = Object.freeze({ create: create });
 })();
-
 

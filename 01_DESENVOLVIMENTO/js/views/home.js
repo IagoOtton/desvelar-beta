@@ -16,7 +16,6 @@
       "esc",
       "fmtM",
       "sum",
-      "BRL",
       "chip",
       "tcolor",
       "head",
@@ -27,7 +26,6 @@
       "minsOn",
       "minsRange",
       "pagesRange",
-      "streak",
       "questionTotals",
       "accuracyByTag",
       "delta",
@@ -60,7 +58,6 @@
     var esc = dependencies.esc;
     var fmtM = dependencies.fmtM;
     var sum = dependencies.sum;
-    var BRL = dependencies.BRL;
     var chip = dependencies.chip;
     var tcolor = dependencies.tcolor;
     var dlt = dependencies.delta;
@@ -74,7 +71,6 @@
     var minsOn = dependencies.minsOn;
     var minsRange = dependencies.minsRange;
     var pagesRange = dependencies.pagesRange;
-    var streak = dependencies.streak;
     var qTot = dependencies.questionTotals;
     var accByTag = dependencies.accuracyByTag;
     var gprog = dependencies.goalProgress;
@@ -87,6 +83,46 @@
         dependencies.getUserId(),
       );
       S = dependencies.getState();
+      var hasRecords = !!S.pomoRun || [
+        S.sessions,
+        S.books,
+        S.events,
+        S.tasks,
+        S.questions,
+        S.readlog,
+        S.themes,
+        S.habits,
+        S.txs,
+        S.goals,
+        S.routine,
+      ].some(function (records) {
+        return records.length > 0;
+      });
+      var startActions = [
+        { tab: "estudo", focus: "s-tag", label: "Registrar sessão" },
+        { tab: "foco", label: "Iniciar Pomodoro" },
+        { tab: "metas", focus: "go-title", label: "Criar uma meta" },
+      ].filter(function (action) {
+        return !S.enabledTabs || S.enabledTabs[action.tab] !== false;
+      }).slice(0, 2);
+      if (!startActions.length) {
+        startActions.push({ tab: "sistema", label: "Escolher minhas abas" });
+      }
+      var startActionsHtml = startActions
+        .map(function (action, index) {
+          return (
+            '<button class="btn' +
+            (index === 0 ? " pri" : "") +
+            '" data-a="tab" data-tab="' +
+            esc(action.tab) +
+            '"' +
+            (action.focus ? ' data-focus="' + esc(action.focus) + '"' : "") +
+            ">" +
+            esc(action.label) +
+            "</button>"
+          );
+        })
+        .join("");
       var emptyAction = function (message, label, targetTab, focusId) {
         return (
           '<div class="home-empty"><p class="empty">' +
@@ -171,15 +207,6 @@
         np = S.sessions.filter(function (x) {
           return x.date === t && x.pomo;
         }).length;
-      var ym0 = t.slice(0, 7),
-        mSaldo = sum(
-          S.txs.filter(function (x) {
-            return x.date.slice(0, 7) === ym0;
-          }),
-          function (x) {
-            return x.type === "in" ? x.amount : -x.amount;
-          },
-        );
       var kpis =
         '<div class="kpis">' +
         kpi("Horas · semana", fmtM(wk), dlt(wk, pw), sMin, "vs sem. ant.") +
@@ -192,23 +219,6 @@
         ) +
         kpi("Acerto · semana", a1 == null ? "–" : a1 + "%", dAcc, sQ, "") +
         kpi("Páginas · semana", String(pg), dlt(pg, ppg), sPg, "vs sem. ant.") +
-        kpi(
-          "Saldo do mês",
-          BRL(mSaldo),
-          {
-            t: mSaldo >= 0 ? "▲ positivo" : "▼ negativo",
-            c: mSaldo >= 0 ? "up" : "down",
-          },
-          null,
-          "",
-        ) +
-        kpi(
-          "Sequência",
-          streak() + " d",
-          { t: np + " pomodoro(s) hoje", c: "flat" },
-          null,
-          "",
-        ) +
         "</div>";
       var d30 = [],
         l30 = [];
@@ -237,6 +247,22 @@
           " de " +
           S.pomo.daily +
           " hoje</span></div></div>";
+      }
+      if (!hasRecords) {
+        return (
+          head(
+            hi + (S.name ? ", " + S.name : ""),
+            pd(t).getDate() +
+              " de " +
+              MES[pd(t).getMonth()] +
+              " · semana de " +
+              fmtD(ws),
+          ) +
+          '<section class="card welcome-state"><div class="welcome-kicker">PRIMEIROS PASSOS</div><h2>Seu espaço está pronto</h2><p>Registre uma sessão ou escolha uma ação para começar. Seus indicadores e gráficos aparecem aqui conforme você avança.</p><div class="welcome-actions">' +
+          startActionsHtml +
+          "</div></section>" +
+          groupGoalsHtml
+        );
       }
       var segs = groupMin(ws, we),
         tot = sum(segs, function (g) {
@@ -350,7 +376,7 @@
       if (nrev)
         att.push("<b>" + nrev + "</b> tema(s) difícil(is) esperando revisão.");
       var attention = att.length
-        ? '<div class="card"><h2>Pontos de atenção</h2><div style="display:flex;flex-direction:column;gap:8px">' +
+        ? '<div class="card attention"><h2>Pontos de atenção</h2><div style="display:flex;flex-direction:column;gap:8px">' +
           att
             .map(function (a) {
               return '<div class="note">' + a + "</div>";
@@ -478,6 +504,7 @@
         areaChart(d30, l30, {
           H: 300,
           unit: "h",
+          emptyText: "Registre uma sessão de estudo para ver sua evolução diária.",
           label: "Horas estudadas por dia nos últimos 30 dias",
         }) +
         '<div class="legend"><span><i></i>horas por dia</span><span><i class="ma"></i>média de 7 dias</span></div></div>' +
@@ -505,5 +532,4 @@
 
   window.DesvelarHomeViews = Object.freeze({ create: create });
 })();
-
 

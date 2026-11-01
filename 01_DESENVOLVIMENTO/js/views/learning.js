@@ -418,6 +418,8 @@
         '<div class="card"><h2>Páginas por dia · 14 dias</h2>' +
         dependencies.barChart(d14, {
           label: "Páginas lidas por dia nos últimos 14 dias",
+          unit: "pág.",
+          emptyText: "Registre uma leitura para preencher este gráfico.",
           H: 190,
         }) +
         "</div>" +

@@ -247,6 +247,12 @@
         '<div class="card"><h2>Saídas · 6 meses (R$)</h2>' +
         dependencies.barChart(items, {
           H: 200,
+          formatValue: function (value) {
+            return dependencies.BRL(value);
+          },
+          axisWidth: 138,
+          valueLabels: false,
+          emptyText: "Registre saídas para visualizar os gastos por mês.",
           label: "Saídas por mês nos últimos 6 meses",
         }) +
         "</div></div>" +

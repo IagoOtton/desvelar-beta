@@ -25,16 +25,47 @@
       return 10 * mag;
     }
 
+    function chartValue(value, options) {
+      if (typeof options.formatValue === "function") {
+        return String(options.formatValue(value));
+      }
+      var number = Number(value),
+        digits = Math.round(number) === number ? 0 : 1,
+        formatted = number.toLocaleString("pt-BR", {
+          maximumFractionDigits: digits,
+        });
+      return options.unit ? formatted + " " + options.unit : formatted;
+    }
+
+    function emptyChart(message, compact) {
+      return (
+        '<div class="chart-empty' +
+        (compact ? " compact" : "") +
+        '" role="status">' +
+        F.esc(message || "Ainda não há dados neste período.") +
+        "</div>"
+      );
+    }
+
     function barChart(items, o) {
       o = o || {};
+
+      if (
+        !items.length ||
+        !items.some(function (item) {
+          return item.v > 0;
+        })
+      ) {
+        return emptyChart(o.emptyText);
+      }
 
       var id = "g" + ++chartN,
         W = 640,
         H = o.H || 220,
-        L = 38,
-        R = o.goal ? 46 : 10,
+        L = o.axisWidth || (o.formatValue ? 92 : 46),
+        R = o.goal ? 94 : 12,
         T = 16,
-        B = 28,
+        B = items.length > 10 ? 40 : 34,
         n = items.length;
 
       var mx = Math.max.apply(
@@ -74,8 +105,7 @@
           '" y="' +
           (y(v) + 4) +
           '" text-anchor="end">' +
-          Math.round(v * 10) / 10 +
-          F.esc(o.unit || "") +
+          F.esc(chartValue(v, o)) +
           "</text>";
       }
 
@@ -101,16 +131,18 @@
             id +
             ')" opacity="' +
             (last ? 1 : 0.6) +
-            '"/>';
+            '"><title>' +
+            F.esc(it.l + ": " + chartValue(it.v, o)) +
+            "</title></rect>";
 
-        if (it.v > 0 && n <= 10)
+        if (it.v > 0 && n <= 10 && o.valueLabels !== false)
           s +=
             '<text class="vl" x="' +
             (x + w / 2) +
             '" y="' +
             (y(it.v) - 6) +
             '" text-anchor="middle">' +
-            Math.round(it.v * 10) / 10 +
+            F.esc(chartValue(it.v, o)) +
             "</text>";
 
         if (n <= 10 || i % 2 === (n - 1) % 2)
@@ -138,7 +170,16 @@
           (W - R + 5) +
           '" y="' +
           (y(o.goal) + 4) +
-          '">meta</text>';
+          '">Meta: ' +
+          F.esc(chartValue(o.goal, o)) +
+          "</text>";
+
+      var chartTitle = o.label || "Gráfico",
+        chartDescription = items
+          .map(function (item) {
+            return item.l + ": " + chartValue(item.v, o);
+          })
+          .join("; ");
 
       return (
         '<svg class="ch" viewBox="0 ' +
@@ -147,8 +188,13 @@
         " " +
         H +
         '" role="img" aria-label="' +
-        F.esc(o.label || "Gráfico") +
+        F.esc(chartTitle) +
         '">' +
+        "<title>" +
+        F.esc(chartTitle) +
+        "</title><desc>" +
+        F.esc(chartDescription) +
+        "</desc>" +
         s +
         "</svg>"
       );
@@ -165,6 +211,15 @@
         T = 14,
         B = 26,
         n = vals.length;
+
+      if (
+        !n ||
+        !vals.some(function (value) {
+          return value > 0;
+        })
+      ) {
+        return emptyChart(o.emptyText);
+      }
 
       var mx = Math.max.apply(null, vals.concat([0.5])),
         top = niceTop(mx);
@@ -215,8 +270,7 @@
           '" y="' +
           (y(v) + 4) +
           '" text-anchor="end">' +
-          Math.round(v * 10) / 10 +
-          F.esc(o.unit || "") +
+          F.esc(chartValue(v, o)) +
           "</text>";
       }
 
@@ -257,12 +311,36 @@
             "</text>";
       });
 
+      labels.forEach(function (label, i) {
+        s +=
+          '<circle class="chart-hit" cx="' +
+          x(i) +
+          '" cy="' +
+          y(vals[i]) +
+          '" r="8"><title>' +
+          F.esc(label + ": " + chartValue(vals[i], o)) +
+          "</title></circle>";
+      });
+
       s +=
         '<circle cx="' +
         x(n - 1) +
         '" cy="' +
         y(vals[n - 1]) +
         '" r="4.5" fill="var(--a1)" stroke="var(--surface)" stroke-width="2"/>';
+
+      var maxIndex = vals.indexOf(Math.max.apply(null, vals)),
+        chartTitle = o.label || "Gráfico de área",
+        chartDescription =
+          "Último valor: " +
+          labels[n - 1] +
+          ", " +
+          chartValue(vals[n - 1], o) +
+          ". Maior valor: " +
+          labels[maxIndex] +
+          ", " +
+          chartValue(vals[maxIndex], o) +
+          ". Passe o cursor sobre os pontos para consultar cada dia.";
 
       return (
         '<svg class="ch" viewBox="0 ' +
@@ -271,8 +349,13 @@
         " " +
         H +
         '" role="img" aria-label="' +
-        F.esc(o.label || "Gráfico de área") +
+        F.esc(chartTitle) +
         '">' +
+        "<title>" +
+        F.esc(chartTitle) +
+        "</title><desc>" +
+        F.esc(chartDescription) +
+        "</desc>" +
         s +
         "</svg>"
       );

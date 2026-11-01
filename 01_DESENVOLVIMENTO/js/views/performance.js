@@ -48,6 +48,7 @@
       }
       var acc = dependencies.accByTag(),
         g30 = dependencies.groupMin(dependencies.addDays(t, -29), t),
+        recentMinutes = dependencies.minsRange(dependencies.addDays(ws, -77), t),
         mx = Math.max.apply(
           null,
           g30
@@ -71,12 +72,16 @@
         dependencies.barChart(items, {
           goal: state.goalH,
           unit: "h",
+          emptyText: "Registre sessões para comparar suas horas com a meta semanal.",
           label: "Horas estudadas por semana nas últimas 8 semanas",
         }) +
         "</div>" +
         '<div class="grid"><div class="card"><h2>Constância · 12 semanas</h2>' +
         dependencies.heat() +
-        '<p class="m" style="margin:10px 0 0">Cada quadrado é um dia (segunda a domingo). Quanto mais claro, mais estudo.</p></div>' +
+        (recentMinutes
+          ? '<p class="m" style="margin:10px 0 0">Cada quadrado é um dia (segunda a domingo). Quanto mais claro, mais estudo.</p>'
+          : "") +
+        "</div>" +
         '<div class="card"><h2>Horas por tag · 30 dias</h2>' +
         (g30.length
           ? g30

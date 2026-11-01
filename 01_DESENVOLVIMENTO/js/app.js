@@ -389,8 +389,11 @@
     if (tab !== "foco") zen = false;
     document.body.classList.toggle("zen", zen);
     var currentTab = tab;
+    var pageTicker = function () {
+      return zen || currentTab === "inicio" ? "" : tickerHtml();
+    };
     document.getElementById("view").innerHTML =
-      (zen ? "" : tickerHtml()) +
+      pageTicker() +
       '<div class="card"><p class="m">Carregando...</p></div>';
 
     Promise.resolve()
@@ -400,7 +403,7 @@
       .then(function (html) {
         if (tab === currentTab) {
           document.getElementById("view").innerHTML =
-            (zen ? "" : tickerHtml()) + html;
+            pageTicker() + html;
           tick();
         }
       })
@@ -409,7 +412,7 @@
         if (tab !== currentTab) return;
 
         document.getElementById("view").innerHTML =
-          (zen ? "" : tickerHtml()) +
+          pageTicker() +
           '<div class="card"><h2>Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
       });
   }
@@ -500,7 +503,7 @@
 
     var warning = document.createElement("div");
     warning.style.cssText =
-      "position:fixed;inset:0;z-index:99999;background:#111827;color:white;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px;text-align:center;font-family:Arial,sans-serif;";
+      "position:fixed;inset:0;z-index:99999;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px;text-align:center;font:15px/1.5 var(--body);";
 
     var title = document.createElement("h2");
     title.textContent = "Não foi possível carregar seus dados";
@@ -556,4 +559,3 @@
     cloudSync.handleOnline();
   });
 })();
-
