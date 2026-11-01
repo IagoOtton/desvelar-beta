@@ -26,6 +26,7 @@
     "metas",
     "financas",
     "grupos",
+    "comunidade",
   ];
   var TAGGED = [
     "sessions",

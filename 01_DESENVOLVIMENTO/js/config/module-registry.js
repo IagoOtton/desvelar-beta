@@ -51,6 +51,12 @@
       "Comunidade",
     ],
     [
+      "comunidade",
+      "Comunidade",
+      "M4 5h16v11H8l-4 4zM8 9h8M8 12h5",
+      "Comunidade",
+    ],
+    [
       "sistema",
       "Sistema",
       "M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v3M12 19v3M2 12h3M19 12h3",
@@ -71,6 +77,7 @@
     metas: "Objetivos e etapas para avançar.",
     financas: "Lançamentos, categorias e saldo.",
     grupos: "Metas compartilhadas com outras pessoas.",
+    comunidade: "Publicações de leitores e grupos de leitura.",
   };
 
   function create(moduleIds) {
