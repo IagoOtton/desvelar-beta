@@ -515,6 +515,11 @@
 
   /* ---------- ações ---------- */
   document.addEventListener("click", function (event) {
+    var openMobileMore = document.querySelector("#botnav details.mobile-more[open]");
+    if (openMobileMore && !openMobileMore.contains(event.target)) {
+      openMobileMore.open = false;
+    }
+
     ActionController.handleClick(event).catch(function (error) {
       console.error("Erro ao processar ação:", error);
       toast("Não foi possível concluir esta ação. Tente novamente.");
@@ -527,10 +532,19 @@
     });
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && zen) {
-      zen = false;
-      render();
-      return;
+    if (e.key === "Escape") {
+      var openMobileMore = document.querySelector("#botnav details.mobile-more[open]");
+      if (openMobileMore) {
+        openMobileMore.open = false;
+        var moreSummary = openMobileMore.querySelector("summary");
+        if (moreSummary) moreSummary.focus();
+        return;
+      }
+      if (zen) {
+        zen = false;
+        render();
+        return;
+      }
     }
     if (e.code !== "Space" || tab !== "foco") return;
     var el = e.target,

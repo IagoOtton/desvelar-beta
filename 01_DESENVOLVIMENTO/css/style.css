@@ -1774,23 +1774,88 @@ nav.bottom {
     left: 10px;
     right: 10px;
     bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    align-items: stretch;
+    justify-content: space-between;
     background: var(--surface2);
     border: 1px solid var(--line);
     border-radius: 22px;
-    overflow-x: auto;
+    overflow: visible;
     padding: 4px;
     z-index: 50;
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
   }
+  nav.bottom .nb,
+  nav.bottom .mobile-more {
+    flex: 1 1 0;
+    min-width: 0;
+  }
   nav.bottom .nb {
     flex-direction: column;
-    gap: 2px;
-    font-size: 10.5px;
-    padding: 6px 10px;
-    flex: 1 0 auto;
+    gap: 3px;
+    font-size: 10px;
+    padding: 6px 4px;
     align-items: center;
+    justify-content: center;
     border-radius: 16px;
+  }
+  nav.bottom .nb-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  nav.bottom details.mobile-more {
+    position: relative;
+    display: flex;
+  }
+  nav.bottom details.mobile-more > summary {
+    list-style: none;
+    width: 100%;
+  }
+  nav.bottom details.mobile-more > summary::-webkit-details-marker {
+    display: none;
+  }
+  nav.bottom .mobile-more-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 9px);
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    width: min(280px, calc(100vw - 24px));
+    max-height: min(62vh, 450px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    z-index: 51;
+  }
+  nav.bottom details.mobile-more[open] .mobile-more-menu {
+    display: flex;
+  }
+  nav.bottom .mobile-more-menu .ng {
+    padding: 8px 10px 3px;
+  }
+  nav.bottom .mobile-more-menu .nb {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    text-align: left;
+  }
+  nav.bottom .mobile-more-menu .nb-label {
+    max-width: none;
   }
   #toasts {
     bottom: 90px;
