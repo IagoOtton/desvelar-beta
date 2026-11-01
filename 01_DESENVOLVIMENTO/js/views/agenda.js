@@ -40,6 +40,32 @@
         var taskCount = state.tasks.filter(function (task) {
           return task.due === d && !task.done;
         }).length;
+        var dateLabel = dependencies.pd(d).toLocaleDateString("pt-BR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        var dateDetails = [];
+        if (d === t) dateDetails.push("hoje");
+        if (d === selDay) dateDetails.push("selecionado");
+        if (eventCount) {
+          dateDetails.push(
+            eventCount +
+              (eventCount === 1 ? " compromisso" : " compromissos"),
+          );
+        }
+        if (taskCount) {
+          dateDetails.push(
+            taskCount +
+              (taskCount === 1
+                ? " atividade pendente"
+                : " atividades pendentes"),
+          );
+        }
+        if (dateDetails.length) {
+          dateLabel += ", " + dateDetails.join(", ");
+        }
 
         cells +=
           '<button class="d' +
@@ -49,8 +75,12 @@
           '" data-a="sel" data-d="' +
           d +
           '" aria-label="' +
-          d +
-          '">' +
+          dependencies.esc(dateLabel) +
+          '" aria-pressed="' +
+          (d === selDay ? "true" : "false") +
+          '"' +
+          (d === t ? ' aria-current="date"' : "") +
+          ">" +
           dependencies.pd(d).getDate() +
           '<span class="dots">' +
           (eventCount ? "<i></i>" : "") +
