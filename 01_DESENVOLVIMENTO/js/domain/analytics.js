@@ -169,10 +169,22 @@
       );
     }
 
+    function goalProgress(goal) {
+      var milestones = Array.isArray(goal.ms) ? goal.ms : [];
+      if (milestones.length) {
+        var completed = milestones.filter(function (milestone) {
+          return milestone.done;
+        }).length;
+        return Math.round((completed / milestones.length) * 100);
+      }
+      return Math.max(0, Math.min(100, goal.manual || 0));
+    }
+
     return Object.freeze({
       accuracyByTag: accuracyByTag,
       bookLog: bookLog,
       groupMin: groupMin,
+      goalProgress: goalProgress,
       hasDemoData: hasDemoData,
       minutesInRange: minutesInRange,
       minutesOn: minutesOn,
