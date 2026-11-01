@@ -2112,6 +2112,7 @@ body.zen .cloud-sync-mobile {
     height: 44px;
     border: 0;
     background: transparent;
+    font-size: 0;
   }
 
   button.check::before {
@@ -2136,5 +2137,15 @@ body.zen .cloud-sync-mobile {
   button.check.on::before {
     border-color: transparent;
     background: var(--grad);
+  }
+
+  button.check.on::after {
+    position: absolute;
+    z-index: 1;
+    color: var(--on-a);
+    content: "✓";
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
   }
 }
