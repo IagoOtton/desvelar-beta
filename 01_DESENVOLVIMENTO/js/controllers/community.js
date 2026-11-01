@@ -130,6 +130,13 @@
           return true;
         }
 
+        if (kind === "join-group" && result && !result.data) {
+          dependencies.toast(
+            "Código inválido ou grupo indisponível. Confira o convite; após várias tentativas, aguarde 15 minutos.",
+          );
+          return true;
+        }
+
         var messages = {
           profile: "Perfil salvo.",
           post: "Publicação compartilhada.",

@@ -132,7 +132,7 @@
           "Crie ou entre em grupos e acompanhe objetivos em conjunto.",
         ) +
         '<div class="card"><h2>Criar grupo</h2><p class="m">Depois de criar, compartilhe o código de convite mostrado em Seus grupos.</p><form data-form="group"><label class="f">Nome do grupo<input id="group-name" class="grow" name="name" maxlength="60" required></label><button class="btn pri" type="submit">Criar grupo</button></form></div>' +
-        '<div class="card"><h2>Entrar em grupo</h2><p class="m">Use o código de convite recebido de quem criou o grupo.</p><form data-form="join-group"><label class="f">Código de convite<input id="group-invite-code" class="grow" name="invite_code" maxlength="8" required></label><button class="btn pri" type="submit">Entrar com código</button></form></div>' +
+        '<div class="card"><h2>Entrar em grupo</h2><p class="m">Use o código de convite recebido de quem criou o grupo.</p><form data-form="join-group"><label class="f">Código de convite<input id="group-invite-code" class="grow" name="invite_code" minlength="8" maxlength="16" pattern="([A-Za-z0-9]{8}|[A-Fa-f0-9]{16})" title="Informe um código antigo de 8 caracteres ou um novo código de 16 caracteres hexadecimais" autocomplete="off" autocapitalize="characters" required></label><p class="m">Convites antigos de 8 caracteres continuam válidos.</p><button class="btn pri" type="submit">Entrar com código</button></form></div>' +
         sharedGoalCard +
         '<div class="card"><h2>Objetivos cadastrados</h2>' +
         goalsHtml +
