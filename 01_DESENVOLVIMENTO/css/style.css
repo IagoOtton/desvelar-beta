@@ -2032,3 +2032,35 @@ body.zen .cloud-sync-mobile {
 .group-guide .btn {
   min-height: 44px;
 }
+
+
+.toast-actionable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 10px 8px 14px;
+  border-radius: 16px;
+  pointer-events: auto;
+}
+
+.toast-actionable > span {
+  min-width: 0;
+}
+
+.toast-action {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--bg) 12%, transparent);
+  color: var(--bg);
+  font: 700 12.5px var(--body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.toast-action:hover {
+  background: color-mix(in srgb, var(--bg) 20%, transparent);
+}

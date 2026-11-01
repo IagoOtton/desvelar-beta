@@ -35,6 +35,22 @@
       throw new Error("As dependências das ações não foram informadas.");
     }
 
+    var pendingUndo = null;
+    var undoSequence = 0;
+
+    function restoreAt(list, item, index) {
+      if (
+        !Array.isArray(list) ||
+        list.some(function (current) {
+          return current.id === item.id;
+        })
+      ) {
+        return;
+      }
+
+      list.splice(Math.min(index, list.length), 0, item);
+    }
+
     async function handleClick(event) {
       var button = event.target.closest("[data-a]");
       if (!button) return;
@@ -42,6 +58,8 @@
       var action = button.dataset.a;
       var ui = dependencies.getUiState();
       var message = "";
+      var undoRestore = null;
+      var undoMessage = "";
 
       if (
         action !== "wipe" &&
@@ -49,6 +67,24 @@
         action !== "wipe-cancel"
       ) {
         dependencies.setUiState({ wipeArm: 0 });
+      }
+
+      if (action === "undo-delete") {
+        var undo = pendingUndo;
+        if (!undo || button.dataset.undoToken !== undo.token) return;
+
+        var restoredState = dependencies.stateStore.createDraft();
+        undo.restore(restoredState);
+        var undoSaved = dependencies.stateStore.saveDraft(restoredState);
+        if (!undoSaved) {
+          dependencies.commit("", false);
+          return;
+        }
+
+        pendingUndo = null;
+        window.clearTimeout(undo.timer);
+        dependencies.commit("Exclusão desfeita", true, { focusHeading: true });
+        return;
       }
 
       if (action === "wipe-cancel") {
@@ -214,29 +250,77 @@
         if (rating > 0) message = "foco " + rating + "/5 anotado";
       } else if (action === "del") {
         var collection = button.dataset.k;
-        state[collection] = state[collection].filter(function (item) {
-          return item.id !== button.dataset.id;
+        var collectionItems = state[collection];
+        if (!Array.isArray(collectionItems)) return;
+        var itemIndex = collectionItems.findIndex(function (item) {
+          return item.id === button.dataset.id;
         });
+        if (itemIndex === -1) return;
+
+        var deletedItem = collectionItems[itemIndex];
+        var deletedReadlog = [];
         if (collection === "books") {
-          state.readlog = state.readlog.filter(function (record) {
-            return record.bookId !== button.dataset.id;
-          });
-        }
-      } else if (action === "del-read") {
-        var entry = state.readlog.find(function (record) {
-          return record.id === button.dataset.id;
-        });
-        if (entry) {
-          state.books.forEach(function (book) {
-            if (book.id === entry.bookId && book.read === entry.to) {
-              book.read = entry.from;
+          state.readlog.forEach(function (record, index) {
+            if (record.bookId === deletedItem.id) {
+              deletedReadlog.push({ record: record, index: index });
             }
           });
-          state.readlog = state.readlog.filter(function (record) {
-            return record.id !== entry.id;
-          });
-          message = "leitura desfeita";
         }
+        collectionItems.splice(itemIndex, 1);
+        if (collection === "books") {
+          state.readlog = state.readlog.filter(function (record) {
+            return record.bookId !== deletedItem.id;
+          });
+        }
+
+        undoRestore = function (draft) {
+          restoreAt(draft[collection], deletedItem, itemIndex);
+          deletedReadlog.forEach(function (item) {
+            restoreAt(draft.readlog, item.record, item.index);
+          });
+        };
+        var deleteMessages = {
+          books: "Livro removido.",
+          events: "Compromisso removido.",
+          habits: "Hábito removido.",
+          goals: "Meta removida.",
+          questions: "Registro de questões removido.",
+          readlog: "Registro de leitura removido.",
+          routine: "Item da rotina removido.",
+          sessions: "Sessão removida.",
+          tasks: "Atividade removida.",
+          themes: "Tema removido.",
+          txs: "Lançamento removido.",
+        };
+        undoMessage = deleteMessages[collection] || "Registro removido.";
+      } else if (action === "del-read") {
+        var entryIndex = state.readlog.findIndex(function (record) {
+          return record.id === button.dataset.id;
+        });
+        if (entryIndex === -1) return;
+
+        var entry = state.readlog[entryIndex];
+        var changedBooks = [];
+        state.books.forEach(function (book) {
+          if (book.id === entry.bookId && book.read === entry.to) {
+            changedBooks.push({ id: book.id, previousRead: book.read });
+            book.read = entry.from;
+          }
+        });
+        state.readlog.splice(entryIndex, 1);
+
+        undoRestore = function (draft) {
+          restoreAt(draft.readlog, entry, entryIndex);
+          changedBooks.forEach(function (change) {
+            var book = draft.books.find(function (item) {
+              return item.id === change.id;
+            });
+            if (book && book.read === entry.from) {
+              book.read = change.previousRead;
+            }
+          });
+        };
+        undoMessage = "Registro de leitura removido.";
       } else if (action === "toggle") {
         state.tasks.forEach(function (task) {
           if (task.id === button.dataset.id) {
@@ -271,13 +355,25 @@
           }
         });
       } else if (action === "ms-del") {
-        state.goals.forEach(function (goal) {
-          if (goal.id === button.dataset.g) {
-            goal.ms = goal.ms.filter(function (milestone) {
-              return milestone.id !== button.dataset.id;
-            });
-          }
+        var milestoneGoal = state.goals.find(function (goal) {
+          return goal.id === button.dataset.g;
         });
+        if (!milestoneGoal) return;
+        var milestoneIndex = milestoneGoal.ms.findIndex(function (milestone) {
+          return milestone.id === button.dataset.id;
+        });
+        if (milestoneIndex === -1) return;
+
+        var deletedMilestone = milestoneGoal.ms[milestoneIndex];
+        var milestoneGoalId = milestoneGoal.id;
+        milestoneGoal.ms.splice(milestoneIndex, 1);
+        undoRestore = function (draft) {
+          var goal = draft.goals.find(function (item) {
+            return item.id === milestoneGoalId;
+          });
+          if (goal) restoreAt(goal.ms, deletedMilestone, milestoneIndex);
+        };
+        undoMessage = "Etapa da meta removida.";
       } else if (action === "fin-prev" || action === "fin-next") {
         var monthOffset = action === "fin-prev" ? -1 : 1;
         dependencies.setUiState({
@@ -355,6 +451,27 @@
       }
 
       var saved = dependencies.stateStore.saveDraft(state);
+      if (undoRestore) {
+        dependencies.commit("", saved);
+        if (saved) {
+          if (pendingUndo) window.clearTimeout(pendingUndo.timer);
+          var undoRecord = {
+            token: String(++undoSequence),
+            restore: undoRestore,
+            timer: 0,
+          };
+          pendingUndo = undoRecord;
+          undoRecord.timer = window.setTimeout(function () {
+            if (pendingUndo === undoRecord) pendingUndo = null;
+          }, 5000);
+          dependencies.toast(undoMessage, {
+            type: "undo-delete",
+            token: undoRecord.token,
+            label: "Desfazer",
+          });
+        }
+        return;
+      }
       dependencies.commit(message, saved);
     }
 

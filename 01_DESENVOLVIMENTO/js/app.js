@@ -474,20 +474,41 @@
         focusRenderedTarget(options);
       });
   }
-  function toast(msg) {
+  function toast(msg, action) {
     var el = document.createElement("div");
     el.className = "toast";
-    el.textContent = msg;
+    var text = document.createElement("span");
+    text.textContent = msg;
+    el.appendChild(text);
+
+    var duration = 2400;
+    if (action && action.type === "undo-delete") {
+      el.classList.add("toast-actionable");
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "toast-action";
+      button.dataset.a = "undo-delete";
+      button.dataset.undoToken = action.token;
+      button.textContent = action.label || "Desfazer";
+      button.addEventListener("click", function () {
+        window.setTimeout(function () {
+          el.remove();
+        }, 0);
+      });
+      el.appendChild(button);
+      duration = 5000;
+    }
+
     document.getElementById("toasts").appendChild(el);
     setTimeout(function () {
       el.remove();
-    }, 2400);
+    }, duration);
   }
-  function commit(msg, savedResult) {
+  function commit(msg, savedResult, renderOptions) {
     var saved =
       typeof savedResult === "boolean" ? savedResult : persist();
     saveOk = saved;
-    render();
+    render(renderOptions);
 
     if (!saved) {
       toast("Não foi possível salvar esta alteração. Verifique o armazenamento e tente novamente.");
