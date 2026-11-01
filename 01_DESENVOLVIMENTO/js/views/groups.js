@@ -152,7 +152,7 @@
               .join("")
           : '<p class="m">Você ainda não participa de nenhum grupo.</p>') +
         "</div>"
-      ););
+      );
     }
 
     return Object.freeze({
