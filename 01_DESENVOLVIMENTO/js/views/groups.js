@@ -110,23 +110,30 @@
         goalsHtml = '<p class="m">Nenhum objetivo compartilhado ainda.</p>';
       }
 
+      var sharedGoalCard = groups.length
+        ? '<div class="card"><h2>Objetivos compartilhados</h2><p class="m" id="shared-goal-group-help">Escolha o grupo em que todos acompanharão este objetivo.</p><form data-form="shared-goal"><label class="f">Grupo<select name="group_id" required aria-describedby="shared-goal-group-help"><option value="" disabled selected>Selecione um grupo</option>' +
+          groups
+            .map(function (group) {
+              return (
+                '<option value="' +
+                esc(group.id) +
+                '">' +
+                esc(group.name) +
+                "</option>"
+              );
+            })
+            .join("") +
+          '</select></label><label class="f">Objetivo<input class="grow" name="title" maxlength="100" required></label><label class="f">Descrição<textarea name="description" maxlength="500"></textarea></label><button class="btn pri" type="submit">Criar objetivo</button></form></div>'
+        : '<div class="card"><h2>Objetivos compartilhados</h2><div class="group-guide" role="note"><p>Para criar um objetivo compartilhado, primeiro participe de um grupo. Crie um grupo ou entre usando um código de convite.</p><div class="rowflex"><button class="btn" type="button" data-a="tab" data-tab="grupos" data-focus="group-name">Criar grupo</button><button class="btn" type="button" data-a="tab" data-tab="grupos" data-focus="group-invite-code">Tenho um código</button></div></div></div>';
+
       return (
-        head("Grupos", "Área para compartilhar objetivos com outras pessoas.") +
-        '<div class="card"><h2>Criar grupo</h2><form data-form="group"><label class="f">Nome do grupo<input class="grow" name="name" maxlength="60" required></label><button class="btn pri" type="submit">Criar grupo</button></form></div>' +
-        '<div class="card"><h2>Entrar em grupo</h2><form data-form="join-group"><label class="f">Código de convite<input class="grow" name="invite_code" maxlength="8" required></label><button class="btn pri" type="submit">Entrar com código</button></form></div>' +
-        '<div class="card"><h2>Objetivos compartilhados</h2><form data-form="shared-goal"><label class="f">Grupo<select name="group_id" required>' +
-        groups
-          .map(function (group) {
-            return (
-              '<option value="' +
-              esc(group.id) +
-              '">' +
-              esc(group.name) +
-              "</option>"
-            );
-          })
-          .join("") +
-        '</select></label><label class="f">Objetivo<input class="grow" name="title" maxlength="100" required></label><label class="f">Descrição<textarea name="description" maxlength="500"></textarea></label><button class="btn pri" type="submit">Criar objetivo</button></form></div>' +
+        head(
+          "Grupos",
+          "Crie ou entre em grupos e acompanhe objetivos em conjunto.",
+        ) +
+        '<div class="card"><h2>Criar grupo</h2><p class="m">Depois de criar, compartilhe o código de convite mostrado em Seus grupos.</p><form data-form="group"><label class="f">Nome do grupo<input id="group-name" class="grow" name="name" maxlength="60" required></label><button class="btn pri" type="submit">Criar grupo</button></form></div>' +
+        '<div class="card"><h2>Entrar em grupo</h2><p class="m">Use o código de convite recebido de quem criou o grupo.</p><form data-form="join-group"><label class="f">Código de convite<input id="group-invite-code" class="grow" name="invite_code" maxlength="8" required></label><button class="btn pri" type="submit">Entrar com código</button></form></div>' +
+        sharedGoalCard +
         '<div class="card"><h2>Objetivos cadastrados</h2>' +
         goalsHtml +
         "</div>" +
@@ -145,7 +152,7 @@
               .join("")
           : '<p class="m">Você ainda não participa de nenhum grupo.</p>') +
         "</div>"
-      );
+      ););
     }
 
     return Object.freeze({
