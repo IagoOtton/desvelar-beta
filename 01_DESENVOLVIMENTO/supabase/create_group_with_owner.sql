@@ -1,3 +1,11 @@
+alter table public.groups
+  alter column invite_code set default (
+    upper(
+      substr(replace(pg_catalog.gen_random_uuid()::text, '-', ''), 1, 8) ||
+      substr(replace(pg_catalog.gen_random_uuid()::text, '-', ''), 1, 8)
+    )
+  );
+
 create or replace function public.create_group_with_owner(p_name text)
 returns uuid
 language plpgsql

@@ -322,6 +322,12 @@
           dependencies.toast("Não foi possível entrar: " + joinResult.error.message);
           return;
         }
+        if (!joinResult.data) {
+          dependencies.toast(
+            "Código inválido ou grupo indisponível. Confira o convite; após várias tentativas, aguarde 15 minutos.",
+          );
+          return;
+        }
         state = dependencies.stateStore.createDraft();
         message = "Você entrou no grupo";
       } else if (kind === "shared-goal") {

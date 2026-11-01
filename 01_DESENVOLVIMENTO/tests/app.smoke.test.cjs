@@ -10,6 +10,12 @@ const { chromium } = require("playwright");
 
 const APP_ROOT = path.resolve(__dirname, "..");
 const ENTRY = "/desvelar-v1-corrigido.html";
+const INVITE_MIGRATION = path.join(
+  APP_ROOT,
+  "supabase",
+  "migrations",
+  "20261101134034_secure_group_invites.sql",
+);
 const STORAGE_KEY = "painel-estudos-v2:11111111-1111-4111-8111-111111111111";
 const XSS_PAYLOAD = '"><img src="/missing-image" onerror="window.__testXss = true">';
 const USER = {
@@ -17,6 +23,30 @@ const USER = {
   email: "teste@desvelar.local",
 };
 const GROUP_ID = "22222222-2222-4222-8222-222222222222";
+
+test("migração de convites mantém compatibilidade e protege as tentativas", () => {
+  const migration = fs.readFileSync(INVITE_MIGRATION, "utf8");
+  for (const fragment of [
+    "invite_code ~ '^([A-Z0-9]{8}|[A-F0-9]{16})$'",
+    "pg_advisory_xact_lock",
+    "failed_attempts between 1 and 5",
+    "blocked_until",
+    "interval '15 minutes'",
+    "private.begin_group_invite_join(v_user_id)",
+    "private.record_group_invite_join_failure(v_user_id)",
+  ]) {
+    assert.ok(migration.includes(fragment), `migration should contain ${fragment}`);
+  }
+  assert.match(
+    migration,
+    /revoke all on function public\.join_group_by_invite\(text\)[\s\S]*grant execute on function public\.join_group_by_invite\(text\) to authenticated/i,
+  );
+  assert.match(
+    migration,
+    /revoke all on function public\.join_reader_group\(text\)[\s\S]*grant execute on function public\.join_reader_group\(text\) to authenticated/i,
+  );
+});
+
 const MOCK_SDK = `
 (() => {
   const user = ${JSON.stringify(USER)};
@@ -339,10 +369,16 @@ const MOCK_SDK = `
           groups: {
             id: createdGroupId,
             name: args.p_name,
-            invite_code: "NOVO1234",
+            invite_code: "A1B2C3D4E5F60718",
           },
         });
         return { data: createdGroupId, error: null };
+      }
+      if (name === "join_group_by_invite") {
+        const group = groups.find(
+          (item) => item.groups.invite_code === String(args.p_invite_code).toUpperCase(),
+        );
+        return { data: group ? group.groups.id : null, error: null };
       }
       if (name === "create_reader_group") {
         const groupId = "reader-group-" + (++generatedId);
@@ -350,7 +386,7 @@ const MOCK_SDK = `
           id: groupId,
           name: args.p_name,
           description: args.p_description,
-          invite_code: "NEW12345",
+          invite_code: "A1B2C3D4E5F60718",
           created_by: user.id,
         };
         readerGroups.push(group);
@@ -359,7 +395,7 @@ const MOCK_SDK = `
       }
       if (name === "join_reader_group") {
         const group = readerGroups.find((item) => item.invite_code === args.p_invite_code);
-        if (!group) return { data: null, error: { message: "Código de convite inválido" } };
+        if (!group) return { data: null, error: null };
         if (!readerGroupMembers.some((item) => item.reader_groups.id === group.id)) {
           readerGroupMembers.push({ user_id: user.id, role: "member", joined_at: "2026-02-01T00:00:00.000Z", reader_groups: group });
         }
@@ -1088,7 +1124,7 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
     );
     await page
       .locator("#view .card")
-      .filter({ hasText: "NOVO1234" })
+      .filter({ hasText: "A1B2C3D4E5F60718" })
       .getByText("Grupo novo", { exact: true })
       .waitFor({ state: "visible", timeout: 10_000 });
 
@@ -1630,6 +1666,73 @@ test("entra em grupo de leitura usando código de convite", async () => {
 
     const joinCall = await page.evaluate(() => window.__mockCalls.find((call) => call.type === "rpc" && call.name === "join_reader_group"));
     assert.deepEqual(joinCall.args, { p_invite_code: "JOIN1234" });
+  } finally {
+    await context.close();
+  }
+});
+
+test("aceita códigos antigos e novos e apresenta o erro de convite sem falso sucesso", async () => {
+  const { context, page } = await openApp();
+
+  try {
+    await waitForApp(page);
+    await page.locator('#sidenav [data-tab="comunidade"]').click();
+    const communityCode = page.locator(
+      'form[data-community-form="join-group"] input[name="invite_code"]',
+    );
+    assert.equal(await communityCode.getAttribute("maxlength"), "16");
+    assert.match(await communityCode.getAttribute("pattern"), /\[A-Fa-f0-9\]\{16\}/);
+    assert.equal(
+      await communityCode.evaluate((input) => {
+        input.value = "ABCD1234";
+        return input.checkValidity();
+      }),
+      true,
+    );
+    assert.equal(
+      await communityCode.evaluate((input) => {
+        input.value = "A1B2C3D4E5F60718";
+        return input.checkValidity();
+      }),
+      true,
+    );
+    await communityCode.fill("BADCODE1");
+    await page.locator('form[data-community-form="join-group"] button[type="submit"]').click();
+    await page
+      .getByText(
+        "Código inválido ou grupo indisponível. Confira o convite; após várias tentativas, aguarde 15 minutos.",
+        { exact: true },
+      )
+      .last()
+      .waitFor({ state: "visible" });
+
+    await page.locator('#sidenav [data-tab="grupos"]').click();
+    const groupCode = page.locator('#group-invite-code');
+    assert.equal(await groupCode.getAttribute("maxlength"), "16");
+    assert.match(await groupCode.getAttribute("pattern"), /\[A-Fa-f0-9\]\{16\}/);
+    assert.equal(
+      await groupCode.evaluate((input) => {
+        input.value = "ABCD1234";
+        return input.checkValidity();
+      }),
+      true,
+    );
+    assert.equal(
+      await groupCode.evaluate((input) => {
+        input.value = "A1B2C3D4E5F60718";
+        return input.checkValidity();
+      }),
+      true,
+    );
+    await groupCode.fill("BADCODE1");
+    await page.locator('form[data-form="join-group"] button[type="submit"]').click();
+    await page
+      .getByText(
+        "Código inválido ou grupo indisponível. Confira o convite; após várias tentativas, aguarde 15 minutos.",
+        { exact: true },
+      )
+      .last()
+      .waitFor({ state: "visible" });
   } finally {
     await context.close();
   }
