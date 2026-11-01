@@ -1820,3 +1820,51 @@ nav.bottom {
     animation: none;
   }
 }
+
+
+.cloud-sync-mobile {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 0 14px auto;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.cloud-sync-mobile i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.cloud-sync-mobile[data-state="synced"] i {
+  background: var(--good);
+}
+
+.cloud-sync-mobile[data-state="error"] {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 35%, var(--line));
+}
+
+.cloud-sync-mobile[data-state="error"] i {
+  background: var(--bad);
+}
+
+body.zen .cloud-sync-mobile {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .cloud-sync-mobile {
+    display: flex;
+  }
+}

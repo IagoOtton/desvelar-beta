@@ -278,6 +278,9 @@
 
     return Object.freeze({
       flush: flush,
+      getStatus: function () {
+        return syncState;
+      },
       getStatusLabel: statusLabel,
       handleOnline: handleOnline,
       loadAccountData: loadAccountData,

@@ -58,6 +58,39 @@
     mergeLegacyData: mergeLegacyData,
   });
   var stateStore = null;
+  function compactCloudSyncLabel(state) {
+    if (state === "synced") return "Sincronizado";
+    if (state === "error") return "Sem sincronização";
+    return "Sincronizando…";
+  }
+
+  function updateCloudSyncStatus(label, state) {
+    var status = document.getElementById("cloud-sync-status");
+    if (status) status.textContent = label;
+
+    var mobileStatus = document.getElementById("cloud-sync-mobile-status");
+    if (!mobileStatus) return;
+
+    mobileStatus.dataset.state = state || "syncing";
+    mobileStatus.setAttribute("aria-label", label);
+    var text = mobileStatus.querySelector("span");
+    if (text) text.textContent = compactCloudSyncLabel(state);
+  }
+
+  function cloudSyncMobileStatusHtml() {
+    if (tab === "sistema") return "";
+    var state = cloudSync.getStatus();
+    return (
+      '<div class="cloud-sync-mobile" id="cloud-sync-mobile-status" role="status" aria-live="polite" data-state="' +
+      esc(state) +
+      '" aria-label="' +
+      esc(cloudSync.getStatusLabel()) +
+      '"><i aria-hidden="true"></i><span>' +
+      esc(compactCloudSyncLabel(state)) +
+      "</span></div>"
+    );
+  }
+
   var cloudSync = window.DesvelarCloudSync.create({
     initialSnapshot: window.desvelarCloudBootstrap || {},
     repository: window.desvelarCloudData || null,
@@ -74,9 +107,8 @@
     persist: function () {
       return stateStore ? stateStore.persist() : false;
     },
-    onStatusChange: function (label) {
-      var status = document.getElementById("cloud-sync-status");
-      if (status) status.textContent = label;
+    onStatusChange: function (label, state) {
+      updateCloudSyncStatus(label, state);
     },
     onSyncError: function (message) {
       toast(message);
@@ -417,7 +449,7 @@
       return zen || currentTab === "inicio" ? "" : tickerHtml();
     };
     document.getElementById("view").innerHTML =
-      pageTicker() +
+      pageTicker() + cloudSyncMobileStatusHtml() +
       '<div class="card"><p class="m">Carregando...</p></div>';
 
     Promise.resolve()
@@ -427,7 +459,7 @@
       .then(function (html) {
         if (tab === currentTab) {
           document.getElementById("view").innerHTML =
-            pageTicker() + html;
+            pageTicker() + cloudSyncMobileStatusHtml() + html;
           tick();
           focusRenderedTarget(options);
         }
@@ -437,7 +469,7 @@
         if (tab !== currentTab) return;
 
         document.getElementById("view").innerHTML =
-          pageTicker() +
+          pageTicker() + cloudSyncMobileStatusHtml() +
           '<div class="card"><h2 tabindex="-1">Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
         focusRenderedTarget(options);
       });
