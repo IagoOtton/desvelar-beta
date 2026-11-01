@@ -9,8 +9,7 @@
         return typeof dependencies[key] !== "function";
       }) ||
       !dependencies.auth ||
-      typeof dependencies.auth.signInWithPassword !== "function" ||
-      typeof dependencies.auth.signOut !== "function"
+      typeof dependencies.auth.signInWithPassword !== "function"
     ) {
       throw new Error("As dependências da conta do DESVELAR não foram informadas.");
     }
@@ -63,6 +62,9 @@
           return false;
         }
 
+        if (typeof dependencies.auth.signOut !== "function") {
+          throw new Error("O serviço de autenticação não oferece saída de conta.");
+        }
         var result = await dependencies.auth.signOut();
         if (result.error) throw result.error;
 
