@@ -152,7 +152,7 @@
         (reacted ? "♥" : "♡") +
         '</span> ' +
         reactions.length +
-        " curtidas</button><span class="m">" +
+        ' curtidas</button><span class="m">' +
         comments.length +
         (comments.length === 1 ? " comentário" : " comentários") +
         '</span></div><div class="community-comments-area"><h3>Conversa</h3>' +
