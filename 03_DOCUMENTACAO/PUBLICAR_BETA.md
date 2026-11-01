@@ -73,9 +73,9 @@ O app usa a URL atual da página como destino de confirmação. Por isso, atuali
 
 ## 6. Publicar ou atualizar o beta
 
-O repositório [`IagoOtton/desvelar-beta`](https://github.com/IagoOtton/desvelar-beta) e o GitHub Pages já estão configurados. As alterações em `01_DESENVOLVIMENTO/` são publicadas quando um commit chega à branch `main`; o workflow **Publicar beta no GitHub Pages** monta o site e o publica automaticamente.
+O repositório [`IagoOtton/desvelar-beta`](https://github.com/IagoOtton/desvelar-beta) e o GitHub Pages já estão configurados. Abra uma pull request para `main`: o workflow **Publicar beta no GitHub Pages** executa os testes e monta o site. A publicação acontece depois que a alteração chega à `main`; pull requests não fazem deploy.
 
-Para atualizar o beta, altere os arquivos-fonte em `01_DESENVOLVIMENTO/`, envie as alterações revisadas para `main` e acompanhe a execução em **Actions**. O link atual continua o mesmo: <https://iagootton.github.io/desvelar-beta/>. Não adicione arquivos de dados pessoais, credenciais ou cópias de dados ao repositório.
+Para atualizar o beta, altere os arquivos-fonte em `01_DESENVOLVIMENTO/`, abra uma pull request e confira se os trabalhos `test` e `build` passaram antes de integrar à `main`. Depois acompanhe o trabalho `deploy` em **Actions**. O link atual continua o mesmo: <https://iagootton.github.io/desvelar-beta/>. Não adicione arquivos de dados pessoais, credenciais ou cópias de dados ao repositório.
 
 Se estiver configurando uma cópia local nova, use o repositório existente em vez de criar outro. No GitHub Free, o repositório precisa ser público para essa configuração do Pages; os arquivos-fonte e documentos versionados ficam visíveis no GitHub, mas somente o app corrigido e as pastas `css/` e `js/` são colocados no site.
 
