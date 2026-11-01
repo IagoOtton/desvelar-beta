@@ -395,6 +395,17 @@
           );
         }
         dependencies.setUiState(updates);
+      } else if (action === "cal-today") {
+        var agendaTodayKey = dependencies.today();
+        var agendaTodayDate = dependencies.parseDate(agendaTodayKey);
+        dependencies.setUiState({
+          selDay: agendaTodayKey,
+          calM: new Date(
+            agendaTodayDate.getFullYear(),
+            agendaTodayDate.getMonth(),
+            1,
+          ),
+        });
       } else if (action === "cal-prev" || action === "cal-next") {
         var calendarOffset = action === "cal-prev" ? -1 : 1;
         dependencies.setUiState({

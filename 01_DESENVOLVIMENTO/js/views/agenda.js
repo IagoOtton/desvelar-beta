@@ -108,7 +108,7 @@
         dependencies.months[m] +
         " de " +
         y +
-        '</h2><button class="btn sm" data-a="cal-next" aria-label="Próximo mês">›</button></div>' +
+        '</h2><button class="btn sm" data-a="cal-today" aria-label="Ir para hoje">Hoje</button><button class="btn sm" data-a="cal-next" aria-label="Próximo mês">›</button></div>' +
         '<div class="cal">' +
         dependencies.weekdays
           .map(function (day) {
