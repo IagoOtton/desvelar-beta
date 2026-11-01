@@ -14,6 +14,8 @@ Uma versão de teste do DESVELAR para receber feedback de um pequeno grupo de pe
 - O aplicativo mantém uma cópia local para uso sem conexão e tenta sincronizá-la quando a conexão volta. Confira em **Sistema** se aparece “Sincronizado com sua conta” antes de limpar os dados do navegador ou trocar de dispositivo. O app não oferece exportação/importação manual no momento.
 - Evite registrar informações pessoais, médicas ou financeiras sensíveis durante o beta.
 - Contas e dados dos grupos são tratados pelo Supabase. O texto enviado pelo formulário de feedback também é salvo no Supabase e associado à conta que o enviou.
+- A Comunidade usa um nome de exibição e uma apresentação escolhidos pela pessoa. Publicações ficam visíveis para contas autenticadas; ciclos, indicações e progresso de leitura ficam visíveis às pessoas daquele grupo.
+- Não publique dados pessoais sensíveis na Comunidade. As denúncias ficam registradas no Supabase e precisam ser revisadas pelo responsável do beta.
 - O código do aplicativo usa uma chave pública do Supabase. Ela não é uma senha; o acesso depende das políticas RLS do banco. Nunca coloque chaves `service_role` ou secret keys no frontend.
 
 Use o endereço publicado e entre na sua conta para acessar o progresso sincronizado. Dados que existiam apenas em uma cópia aberta por `file://` ficam isolados pelo navegador e não são transferidos automaticamente para o site.
