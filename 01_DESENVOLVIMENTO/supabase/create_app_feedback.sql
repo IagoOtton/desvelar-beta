@@ -9,6 +9,9 @@ create table if not exists public.app_feedback (
   created_at timestamptz not null default now()
 );
 
+create index if not exists app_feedback_user_id_idx
+  on public.app_feedback (user_id);
+
 alter table public.app_feedback enable row level security;
 
 revoke all privileges on table public.app_feedback from anon, authenticated;
