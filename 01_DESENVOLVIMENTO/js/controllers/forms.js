@@ -81,6 +81,30 @@
       }
     }
 
+    function reportFieldError(form, field, message, clearOnSelector) {
+      if (!field) {
+        dependencies.toast(message);
+        return;
+      }
+
+      field.setCustomValidity(message);
+      field.setAttribute("aria-invalid", "true");
+      field.reportValidity();
+
+      var clearError = function (changeEvent) {
+        var target = changeEvent.target;
+        if (!target.matches || !target.matches(clearOnSelector)) return;
+
+        field.setCustomValidity("");
+        field.removeAttribute("aria-invalid");
+        form.removeEventListener("input", clearError);
+        form.removeEventListener("change", clearError);
+      };
+
+      form.addEventListener("input", clearError);
+      form.addEventListener("change", clearError);
+    }
+
     async function submitForm(form, kind) {
       var values = Object.fromEntries(new FormData(form).entries());
 
@@ -130,7 +154,12 @@
 
         var page = Math.min(book.total, Math.round(Number(values.to)));
         if (!(page > book.read)) {
-          dependencies.toast("Informe uma página maior que " + book.read);
+          reportFieldError(
+            form,
+            form.querySelector('input[name="to"]'),
+            "Informe uma página maior que " + book.read + ".",
+            'input[name="to"]',
+          );
           return;
         }
 
@@ -235,11 +264,21 @@
             return Number(input.value);
           });
         if (!selectedDays.length) {
-          dependencies.toast("Escolha ao menos um dia");
+          reportFieldError(
+            form,
+            form.querySelector('input[name="d"]'),
+            "Escolha ao menos um dia.",
+            'input[name="d"]',
+          );
           return;
         }
         if (values.end <= values.start) {
-          dependencies.toast("O fim precisa ser depois do início");
+          reportFieldError(
+            form,
+            form.querySelector('input[name="end"]'),
+            "O fim precisa ser depois do início.",
+            'input[name="start"], input[name="end"]',
+          );
           return;
         }
 
