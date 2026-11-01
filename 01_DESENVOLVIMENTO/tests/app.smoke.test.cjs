@@ -14,7 +14,7 @@ const INVITE_MIGRATION = path.join(
   APP_ROOT,
   "supabase",
   "migrations",
-  "20261101134034_secure_group_invites.sql",
+  "20261101140613_secure_group_invites.sql",
 );
 const STORAGE_KEY = "painel-estudos-v2:11111111-1111-4111-8111-111111111111";
 const XSS_PAYLOAD = '"><img src="/missing-image" onerror="window.__testXss = true">';
