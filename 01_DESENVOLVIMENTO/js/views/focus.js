@@ -143,14 +143,23 @@
           [15, 3, 10],
         ];
         ctrl =
-          '<div class="qc">' +
+          '<div class="pomo-presets"><div class="hint">Foco · pausa curta · pausa longa (min)</div><div class="qc">' +
           presets
             .map(function (p) {
+              var presetLabel =
+                p[0] +
+                " min de foco, " +
+                p[1] +
+                " min de pausa curta e " +
+                p[2] +
+                " min de pausa longa";
               return (
                 '<button class="qb' +
                 (P.focus === p[0] && P.short === p[1] && P.long === p[2]
                   ? " on"
                   : "") +
+                '" aria-label="' +
+                dependencies.esc(presetLabel) +
                 '" data-a="preset" data-f="' +
                 p[0] +
                 '" data-s="' +
@@ -161,11 +170,15 @@
                 p[0] +
                 " · " +
                 p[1] +
-                "</button>"
+                " · " +
+                p[2] +
+                " min</button>"
               );
             })
             .join("") +
-          "</div>" +
+          '</div><p class="m pomo-cycle-hint">A pausa longa acontece a cada ' +
+          dependencies.esc(P.every) +
+          " blocos de foco.</p></div>" +
           '<div class="pform"><label class="f">O que vai estudar? (tag)<input id="pomo-tag" list="tags" maxlength="30" autocomplete="off" value="' +
           dependencies.esc(P.lastTag) +
           '" placeholder="ex.: Fisiologia, MedEvo, Inglês"></label>' +
@@ -199,8 +212,13 @@
           "</button>" +
           (brk
             ? '<button class="btn" data-a="pomo-skip">Pular pausa</button>'
-            : '<button class="btn" data-a="pomo-plus">+5 min</button><button class="btn" data-a="pomo-stop">Encerrar e salvar</button><button class="btn dng" data-a="pomo-cancel">Descartar</button>') +
-          "</div>";
+            : '<button class="btn" data-a="pomo-plus">+5 min</button><button class="btn" data-a="pomo-stop">Encerrar e salvar</button><button class="btn dng" data-a="pomo-cancel">Descartar sessão</button>') +
+          "</div>" +
+          (brk
+            ? '<p class="m pomo-break-hint">Pausa de ' +
+              Math.round(r.dur / 60) +
+              " min. O bloco de foco anterior foi salvo automaticamente.</p>"
+            : '<p class="m pomo-discard-hint">Encerrar e salvar registra o tempo focado; descartar encerra sem criar uma sessão.</p>");
       }
       var ratePanel = ratePend
         ? '<div class="card rate" style="width:100%"><h2>Como foi seu foco no último bloco?</h2><div class="rowflex" style="justify-content:center">' +
@@ -260,7 +278,7 @@
       return (
         dependencies.head(
           "Pomodoro",
-          "Método Pomodoro: blocos de foco com pausas. Cada bloco concluído é salvo automaticamente nas suas horas de estudo.",
+          "Método Pomodoro: blocos de foco com pausas. Ao concluir, o tempo é salvo automaticamente; se encerrar antes, você pode salvar o tempo focado ou descartar o bloco.",
         ) +
         '<div class="pomo">' +
         main +
@@ -305,15 +323,15 @@
             "</ul>"
           : '<p class="empty">Nenhum bloco concluído hoje. O primeiro leva só um clique.</p>') +
         "</div>" +
-        '<div class="card"><h2>Ajustes do ciclo</h2><form class="row" data-form="pomo"><label class="f">Foco (min)<input id="pm-f" type="number" name="focus" min="1" max="180" value="' +
+        '<div class="card"><h2>Ajustes do ciclo</h2><p class="m">Defina as durações de cada etapa e quantos blocos de foco entram antes da pausa longa.</p><form class="row" data-form="pomo"><label class="f">Foco (min)<input id="pm-f" type="number" name="focus" min="1" max="180" value="' +
         dependencies.esc(P.focus) +
-        '" required></label><label class="f">Pausa curta<input id="pm-s" type="number" name="short" min="1" max="60" value="' +
+        '" required></label><label class="f">Pausa curta (min)<input id="pm-s" type="number" name="short" min="1" max="60" value="' +
         dependencies.esc(P.short) +
-        '" required></label><label class="f">Pausa longa<input id="pm-l" type="number" name="long" min="1" max="90" value="' +
+        '" required></label><label class="f">Pausa longa (min)<input id="pm-l" type="number" name="long" min="1" max="90" value="' +
         dependencies.esc(P.long) +
-        '" required></label><label class="f">Longa a cada<input id="pm-e" type="number" name="every" min="2" max="10" value="' +
+        '" required></label><label class="f">Pausa longa após (blocos)<input id="pm-e" type="number" name="every" min="2" max="10" value="' +
         dependencies.esc(P.every) +
-        '" required></label><label class="f">Meta diária<input id="pm-d" type="number" name="daily" min="1" max="30" value="' +
+        '" required></label><label class="f">Meta diária (blocos de foco)<input id="pm-d" type="number" name="daily" min="1" max="30" value="' +
         dependencies.esc(P.daily) +
         '" required></label><button class="btn" type="submit">Salvar</button></form></div></div></div>'
       );

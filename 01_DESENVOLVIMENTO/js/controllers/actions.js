@@ -231,7 +231,7 @@
         state.pomoRun = null;
       } else if (action === "pomo-cancel") {
         state.pomoRun = null;
-        message = "foco descartado";
+        message = "Sessão de foco descartada sem registro.";
       } else if (action === "preset") {
         var settings = state.pomo;
         settings.focus = Number(button.dataset.f);

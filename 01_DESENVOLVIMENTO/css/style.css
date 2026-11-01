@@ -2064,3 +2064,20 @@ body.zen .cloud-sync-mobile {
 .toast-action:hover {
   background: color-mix(in srgb, var(--bg) 20%, transparent);
 }
+
+
+.pomo-presets {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.pomo-cycle-hint,
+.pomo-break-hint,
+.pomo-discard-hint {
+  max-width: 48ch;
+  margin: 0;
+  line-height: 1.5;
+  text-align: center;
+}
