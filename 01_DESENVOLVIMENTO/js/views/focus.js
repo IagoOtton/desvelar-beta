@@ -218,7 +218,7 @@
             ? '<p class="m pomo-break-hint">Pausa de ' +
               Math.round(r.dur / 60) +
               " min. O bloco de foco anterior foi salvo automaticamente.</p>"
-            : '<p class="m pomo-discard-hint">Encerrar e salvar registra o tempo focado; descartar encerra sem criar uma sessão.</p>");
+            : '<p class="m pomo-discard-hint">Encerrar e salvar registra o tempo focado; descartar encerra sem criar uma sessão.</p>');
       }
       var ratePanel = ratePend
         ? '<div class="card rate" style="width:100%"><h2>Como foi seu foco no último bloco?</h2><div class="rowflex" style="justify-content:center">' +
