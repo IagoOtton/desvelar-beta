@@ -31,7 +31,13 @@
       <main id="view"></main>
     </div>
     <nav class="bottom" id="botnav" aria-label="Seções"></nav>
-    <div id="toasts" aria-live="polite"></div>
+    <div
+      id="toasts"
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+      aria-relevant="additions"
+    ></div>
     <datalist id="tags"></datalist>
     <datalist id="kinds"></datalist>
     <script src="./js/utils/dates.js"></script>
@@ -71,4 +77,3 @@
     <script src="./js/auth.js"></script>
   </body>
 </html>
-
