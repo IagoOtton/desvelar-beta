@@ -456,6 +456,17 @@ textarea:focus {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--a1) 18%, transparent);
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--a1);
+  outline-offset: 3px;
+}
+
 input::placeholder {
   color: var(--muted);
 }
