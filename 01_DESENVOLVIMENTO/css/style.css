@@ -361,6 +361,14 @@ textarea {
   transform: translateY(1px);
 }
 
+.btn:disabled,
+.btn:disabled:hover {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+  filter: none;
+}
+
 .btn.pri {
   background: var(--grad);
   color: var(--on-a);

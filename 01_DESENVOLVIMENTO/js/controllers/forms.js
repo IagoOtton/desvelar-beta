@@ -33,7 +33,55 @@
       if (!form) return;
 
       event.preventDefault();
+      if (form.dataset.submitting === "true") return;
+
       var kind = form.dataset.form;
+      var submitButtons = [].slice.call(
+        form.querySelectorAll('button[type="submit"], input[type="submit"]'),
+      );
+      var originalButtons = submitButtons.map(function (button) {
+        return {
+          button: button,
+          label: button.tagName === "INPUT" ? button.value : button.textContent,
+          disabled: button.disabled,
+        };
+      });
+      var pendingLabels = {
+        feedback: "Enviando…",
+        group: "Criando…",
+        "join-group": "Entrando…",
+      };
+
+      form.dataset.submitting = "true";
+      form.setAttribute("aria-busy", "true");
+      originalButtons.forEach(function (item) {
+        item.button.disabled = true;
+        if (item.button.tagName === "INPUT") {
+          item.button.value = pendingLabels[kind] || "Salvando…";
+        } else {
+          item.button.textContent = pendingLabels[kind] || "Salvando…";
+        }
+      });
+
+      try {
+        await submitForm(form, kind);
+      } finally {
+        if (form.isConnected) {
+          delete form.dataset.submitting;
+          form.removeAttribute("aria-busy");
+          originalButtons.forEach(function (item) {
+            item.button.disabled = item.disabled;
+            if (item.button.tagName === "INPUT") {
+              item.button.value = item.label;
+            } else {
+              item.button.textContent = item.label;
+            }
+          });
+        }
+      }
+    }
+
+    async function submitForm(form, kind) {
       var values = Object.fromEntries(new FormData(form).entries());
 
       if (kind === "feedback") {
