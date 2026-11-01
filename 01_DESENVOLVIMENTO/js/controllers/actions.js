@@ -30,7 +30,6 @@
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
       }) ||
-      !Array.isArray(dependencies.lists) ||
       !Array.isArray(dependencies.moduleIds)
     ) {
       throw new Error("As dependências das ações não foram informadas.");
@@ -322,13 +321,6 @@
             1,
           ),
         });
-      } else if (action === "clear-demo") {
-        dependencies.lists.forEach(function (key) {
-          state[key] = state[key].filter(function (item) {
-            return !item.ex;
-          });
-        });
-        message = "exemplos apagados";
       } else if (action === "wipe") {
         if (!ui.wipeArm) {
           dependencies.setUiState({ wipeArm: 1 });

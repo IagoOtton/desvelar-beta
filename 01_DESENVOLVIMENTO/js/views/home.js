@@ -451,7 +451,7 @@
           );
       return (
         head(
-          hi + ", " + S.name,
+          hi + (S.name ? ", " + S.name : ""),
           pd(t).getDate() +
             " de " +
             MES[pd(t).getMonth()] +

@@ -160,7 +160,6 @@
     getState: function () {
       return S;
     },
-    lists: LISTS,
     tagKey: tkey,
     tagLabel: tlabel,
     sum: sum,
@@ -174,8 +173,6 @@
   var pagesRange = Analytics.pagesInRange;
   var streak = Analytics.streak;
   var qTot = Analytics.questionTotals;
-  var hasDemo = Analytics.hasDemoData;
-  var realCount = Analytics.realCount;
   var bookLog = Analytics.bookLog;
   var gprog = Analytics.goalProgress;
   var pagesRangeBook = Analytics.pagesForBookInRange;
@@ -214,8 +211,6 @@
   function head(title, sub) {
     return Common.head(title, sub, {
       saveOk: saveOk,
-      hasDemo: hasDemo(),
-      realCount: realCount(),
       activeTab: tab,
     });
   }
@@ -359,7 +354,6 @@
         wipeArm = updates.wipeArm;
       }
     },
-    lists: LISTS,
     uid: uid,
     today: today,
     dateKey: ds,

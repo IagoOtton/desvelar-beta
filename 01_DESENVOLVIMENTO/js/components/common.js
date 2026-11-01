@@ -19,9 +19,6 @@
         "</div>" +
         (!options.saveOk
           ? '<div class="banner bad"><span>O navegador não conseguiu salvar esta alteração neste dispositivo. Libere espaço e tente novamente.</span></div>'
-          : "") +
-        (options.hasDemo
-          ? '<div class="banner"><span>Há dados de exemplo na tela. Apague quando quiser começar do zero.</span><button class="btn sm" data-a="clear-demo">Apagar exemplos</button></div>'
           : "")
       );
     }
@@ -55,3 +52,4 @@
     };
   })();
 })();
+

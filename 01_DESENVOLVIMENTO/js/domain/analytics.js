@@ -7,8 +7,7 @@
       !dependencies ||
       required.some(function (key) {
         return typeof dependencies[key] !== "function";
-      }) ||
-      !Array.isArray(dependencies.lists)
+      })
     ) {
       throw new Error("As dependências dos cálculos do DESVELAR não foram informadas.");
     }
@@ -124,24 +123,6 @@
       };
     }
 
-    function hasDemoData() {
-      var state = dependencies.getState();
-      return dependencies.lists.some(function (key) {
-        return state[key].some(function (item) {
-          return item.ex;
-        });
-      });
-    }
-
-    function realCount() {
-      var state = dependencies.getState();
-      return dependencies.sum(dependencies.lists, function (key) {
-        return state[key].filter(function (item) {
-          return !item.ex;
-        }).length;
-      });
-    }
-
     function bookLog(book) {
       var state = dependencies.getState();
       return state.readlog
@@ -185,13 +166,11 @@
       bookLog: bookLog,
       groupMin: groupMin,
       goalProgress: goalProgress,
-      hasDemoData: hasDemoData,
       minutesInRange: minutesInRange,
       minutesOn: minutesOn,
       pagesForBookInRange: pagesForBookInRange,
       pagesInRange: pagesInRange,
       questionTotals: questionTotals,
-      realCount: realCount,
       streak: streak,
     });
   }
