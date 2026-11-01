@@ -51,6 +51,9 @@ const MOCK_SDK = `
       },
       signInWithPassword: async (credentials) => {
         window.__mockCalls.push({ type: "signIn", email: credentials.email });
+        if (window.__testSignInError) {
+          return { data: { user: null }, error: window.__testSignInError };
+        }
         if (credentials.password !== "senha-de-teste") {
           return {
             data: { user: null },
@@ -60,7 +63,38 @@ const MOCK_SDK = `
         window.__testAuthenticated = true;
         return { data: { user }, error: null };
       },
-      signUp: async () => ({ data: { user }, error: null }),
+      signUp: async (credentials) => {
+        window.__mockCalls.push({
+          type: "signUp",
+          email: credentials.email,
+          emailRedirectTo: credentials.options.emailRedirectTo,
+        });
+        return { data: { user }, error: window.__testSignUpError || null };
+      },
+      resend: async (credentials) => {
+        window.__mockCalls.push({
+          type: "resend",
+          email: credentials.email,
+          flow: credentials.type,
+          emailRedirectTo: credentials.options.emailRedirectTo,
+        });
+        return { data: {}, error: window.__testResendError || null };
+      },
+      resetPasswordForEmail: async (email, options) => {
+        window.__mockCalls.push({
+          type: "resetPassword",
+          email,
+          redirectTo: options.redirectTo,
+        });
+        return { data: {}, error: window.__testResetPasswordError || null };
+      },
+      updateUser: async (attributes) => {
+        window.__mockCalls.push({
+          type: "updateUser",
+          passwordLength: (attributes.password || "").length,
+        });
+        return { data: { user }, error: window.__testUpdateUserError || null };
+      },
     },
     from(table) {
       const query = { table, filters: {}, selection: "*", maxRows: null };
@@ -173,6 +207,31 @@ let server;
 let browser;
 let baseUrl;
 
+function browserLaunchOptions() {
+  const options = { headless: true };
+  if (process.platform !== "win32") return options;
+
+  const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+  const programFilesX86 =
+    process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
+  const edgeCandidates = [
+    path.join(programFiles, "Microsoft", "Edge", "Application", "msedge.exe"),
+    path.join(programFilesX86, "Microsoft", "Edge", "Application", "msedge.exe"),
+    path.join(
+      process.env.LOCALAPPDATA || "C:\\Users\\Default\\AppData\\Local",
+      "Microsoft",
+      "Edge",
+      "Application",
+      "msedge.exe",
+    ),
+  ];
+  const edgePath = edgeCandidates.find((candidate) => fs.existsSync(candidate));
+
+  if (edgePath) options.executablePath = edgePath;
+  else options.channel = "msedge";
+  return options;
+}
+
 function mimeType(filePath) {
   const extension = path.extname(filePath).toLowerCase();
   return {
@@ -211,9 +270,7 @@ before(async () => {
   });
   baseUrl = `http://127.0.0.1:${server.address().port}`;
 
-  const launchOptions = { headless: true };
-  if (process.platform === "win32") launchOptions.channel = "msedge";
-  browser = await chromium.launch(launchOptions);
+  browser = await chromium.launch(browserLaunchOptions());
 });
 
 after(async () => {
@@ -227,6 +284,11 @@ async function openApp({
   failSharedGoals = false,
   sharedGoalsResponseError = false,
   legacyData = null,
+  signInError = null,
+  signUpError = null,
+  resendError = null,
+  resetPasswordError = null,
+  updateUserError = null,
 } = {}) {
   const context = await browser.newContext({
     acceptDownloads: true,
@@ -241,12 +303,28 @@ async function openApp({
     window.__testFailRpc = options.failRpc;
     window.__testFailSharedGoals = options.failSharedGoals;
     window.__testSharedGoalsResponseError = options.sharedGoalsResponseError;
+    window.__testSignInError = options.signInError;
+    window.__testSignUpError = options.signUpError;
+    window.__testResendError = options.resendError;
+    window.__testResetPasswordError = options.resetPasswordError;
+    window.__testUpdateUserError = options.updateUserError;
     if (options.legacyData) {
       localStorage.setItem("painel-estudos-v2", JSON.stringify(options.legacyData));
     }
-  }, { authenticated, failRpc, failSharedGoals, sharedGoalsResponseError, legacyData });
+  }, {
+    authenticated,
+    failRpc,
+    failSharedGoals,
+    sharedGoalsResponseError,
+    legacyData,
+    signInError,
+    signUpError,
+    resendError,
+    resetPasswordError,
+    updateUserError,
+  });
   await page.route(
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0",
     (route) =>
       route.fulfill({
         status: 200,
@@ -520,6 +598,239 @@ test("limpa senha incorreta e alterna mostrar e ocultar no login", async () => {
   } finally {
     await context.close();
   }
+});
+
+test("mostra o login responsivo e mantém os campos acessíveis por rótulo", async () => {
+  const { context, page } = await openApp({ authenticated: false });
+
+  try {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("heading", { name: "Seu espaço para avançar." }).waitFor();
+    await page.getByLabel("E-mail", { exact: true }).waitFor({ state: "visible" });
+    await page.getByLabel("Senha", { exact: true }).waitFor({ state: "visible" });
+
+    const layout = await page.evaluate(() => ({
+      viewportWidth: window.innerWidth,
+      documentWidth: document.documentElement.scrollWidth,
+      panelWidth: document.querySelector(".auth-panel").getBoundingClientRect().width,
+    }));
+    assert.equal(layout.documentWidth, layout.viewportWidth);
+    assert.ok(layout.panelWidth <= layout.viewportWidth - 32);
+  } finally {
+    await context.close();
+  }
+});
+
+test("bloqueia cadastro se os e-mails digitados não coincidem", async () => {
+  const { context, page } = await openApp({ authenticated: false });
+
+  try {
+    await page.locator("#auth-toggle").click();
+    await page.locator("#auth-email").fill(USER.email);
+    await page.locator("#auth-email-confirm").fill("outro@desvelar.local");
+    await page.locator("#auth-password").fill("senha-forte-2026");
+    await page.locator("#auth-submit").click();
+
+    await page
+      .getByText("Os e-mails não coincidem. Confira os dois campos.", { exact: true })
+      .waitFor({ state: "visible" });
+    assert.equal(
+      await page.evaluate(() =>
+        window.__mockCalls.some((call) => call.type === "signUp"),
+      ),
+      false,
+    );
+    assert.equal(await page.locator("#auth-email-confirm").getAttribute("aria-invalid"), "true");
+  } finally {
+    await context.close();
+  }
+});
+
+test("exige senha nova de 8 caracteres sem bloquear senhas antigas no login", async () => {
+  const { context, page } = await openApp({ authenticated: false });
+
+  try {
+    await page.locator("#auth-toggle").click();
+    await page.locator("#auth-email").fill(USER.email);
+    await page.locator("#auth-email-confirm").fill(USER.email);
+    await page.locator("#auth-password").fill("1234567");
+    assert.equal(await page.locator("#auth-password").getAttribute("minlength"), "8");
+    await page.locator("#auth-submit").click();
+    assert.equal(
+      await page.evaluate(() =>
+        window.__mockCalls.some((call) => call.type === "signUp"),
+      ),
+      false,
+    );
+
+    await page.locator("#auth-toggle").click();
+    assert.equal(await page.locator("#auth-password").getAttribute("minlength"), "6");
+  } finally {
+    await context.close();
+  }
+});
+
+test("cadastra com redirecionamento estável e permite reenviar a confirmação", async () => {
+  const { context, page } = await openApp({ authenticated: false });
+
+  try {
+    await page.locator("#auth-toggle").click();
+    await page.locator("#auth-email").fill(USER.email);
+    await page.locator("#auth-email-confirm").fill(USER.email);
+    await page.locator("#auth-password").fill("senha-forte-2026");
+    await page.locator("#auth-submit").click();
+
+    await page
+      .getByText(/Se o cadastro puder ser concluído/)
+      .waitFor({ state: "visible" });
+    await page.locator("#auth-resend-confirm").waitFor({ state: "visible" });
+
+    const signUpCall = await page.evaluate(() =>
+      window.__mockCalls.find((call) => call.type === "signUp"),
+    );
+    assert.equal(signUpCall.email, USER.email);
+    assert.equal(
+      signUpCall.emailRedirectTo,
+      new URL(page.url()).origin + new URL(page.url()).pathname,
+    );
+    assert.equal(Object.prototype.hasOwnProperty.call(signUpCall, "password"), false);
+
+    await page.locator("#auth-resend-confirm").click();
+    await page.getByText(/Se houver um cadastro pendente/).waitFor({ state: "visible" });
+    const resendCall = await page.evaluate(() =>
+      window.__mockCalls.find((call) => call.type === "resend"),
+    );
+    assert.deepEqual(
+      { email: resendCall.email, flow: resendCall.flow },
+      { email: USER.email, flow: "signup" },
+    );
+    assert.equal(resendCall.emailRedirectTo, signUpCall.emailRedirectTo);
+  } finally {
+    await context.close();
+  }
+});
+
+test("oferece reenvio quando o login informa e-mail ainda não confirmado", async () => {
+  const { context, page } = await openApp({
+    authenticated: false,
+    signInError: { status: 400, code: "email_not_confirmed", message: "Email not confirmed" },
+  });
+
+  try {
+    await page.locator("#auth-email").fill(USER.email);
+    await page.locator("#auth-password").fill("senha-de-teste");
+    await page.locator("#auth-submit").click();
+    await page.locator("#auth-resend-confirm").waitFor({ state: "visible" });
+    await page.locator("#auth-resend-confirm").click();
+
+    const resendCall = await page.evaluate(() =>
+      window.__mockCalls.find((call) => call.type === "resend"),
+    );
+    assert.equal(resendCall.email, USER.email);
+    assert.equal(resendCall.flow, "signup");
+  } finally {
+    await context.close();
+  }
+});
+
+test("não expõe detalhes do servidor ao falhar cadastro", async () => {
+  const internalMessage = "usuário privado já existente <img src=x onerror=window.__testXss=true>";
+  const { context, page } = await openApp({
+    authenticated: false,
+    signUpError: { status: 422, code: "email_exists", message: internalMessage },
+  });
+
+  try {
+    await page.locator("#auth-toggle").click();
+    await page.locator("#auth-email").fill(USER.email);
+    await page.locator("#auth-email-confirm").fill(USER.email);
+    await page.locator("#auth-password").fill("senha-forte-2026");
+    await page.locator("#auth-submit").click();
+    await page.getByText(/Não foi possível concluir o cadastro/).waitFor({ state: "visible" });
+
+    assert.equal(await page.locator("#auth-message img").count(), 0);
+    assert.equal(await page.evaluate(() => window.__testXss), undefined);
+    assert.equal(
+      await page.locator("#auth-message").evaluate((element) => element.textContent.includes("usuário privado")),
+      false,
+    );
+  } finally {
+    await context.close();
+  }
+});
+
+test("mostra espera amigável para limite de reenvio sem expor o erro bruto", async () => {
+  const { context, page } = await openApp({ authenticated: false });
+
+  try {
+    await page.locator("#auth-toggle").click();
+    await page.locator("#auth-email").fill(USER.email);
+    await page.locator("#auth-email-confirm").fill(USER.email);
+    await page.locator("#auth-password").fill("senha-forte-2026");
+    await page.locator("#auth-submit").click();
+    await page.getByText(/Se o cadastro puder ser concluído/).waitFor({ state: "visible" });
+    await page.evaluate((message) => {
+      window.__testResendError = {
+        status: 429,
+        code: "over_email_send_rate_limit",
+        message,
+      };
+    }, "detalhe interno <img src=x onerror=window.__testXss=true>");
+    await page.locator("#auth-resend-confirm").click();
+    await page
+      .getByText("Muitas tentativas seguidas. Aguarde um pouco e tente novamente.", { exact: true })
+      .waitFor({ state: "visible" });
+    assert.equal(await page.locator("#auth-message img").count(), 0);
+    assert.equal(await page.evaluate(() => window.__testXss), undefined);
+  } finally {
+    await context.close();
+  }
+});
+
+test("pedido de redefinição não revela se a conta existe", async () => {
+  const { context, page } = await openApp({ authenticated: false });
+
+  try {
+    await page.locator("#auth-email").fill(USER.email);
+    await page.locator("#auth-forgot").click();
+    await page.locator("#reset-email").fill(USER.email);
+    await page.locator('#reset-request-form button[type="submit"]').click();
+    await page
+      .getByText(/Se houver uma conta com esse e-mail/)
+      .waitFor({ state: "visible" });
+
+    const resetCall = await page.evaluate(() =>
+      window.__mockCalls.find((call) => call.type === "resetPassword"),
+    );
+    assert.equal(resetCall.email, USER.email);
+    assert.equal(
+      resetCall.redirectTo,
+      new URL(page.url()).origin + new URL(page.url()).pathname,
+    );
+  } finally {
+    await context.close();
+  }
+});
+
+test("configura barreiras estáticas básicas para autenticação", () => {
+  const html = fs.readFileSync(path.join(APP_ROOT, "desvelar-v1-corrigido.html"), "utf8");
+  const client = fs.readFileSync(path.join(APP_ROOT, "js/supabase.js"), "utf8");
+  const userDataSql = fs.readFileSync(
+    path.join(APP_ROOT, "supabase/create_app_user_data.sql"),
+    "utf8",
+  );
+
+  assert.match(html, /Content-Security-Policy/);
+  assert.match(html, /object-src 'none'/);
+  assert.match(html, /supabase-js@2\.118\.0/);
+  assert.match(
+    html,
+    /script-src 'self' https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2\.118\.0/,
+  );
+  assert.doesNotMatch(client, /service_role|sb_secret_/i);
+  assert.match(userDataSql, /enable row level security/i);
+  assert.match(userDataSql, /using \(\(select auth\.uid\(\)\) = user_id\)/i);
+  assert.match(userDataSql, /revoke all on function public\.save_my_app_data/i);
 });
 
 test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar", async () => {
