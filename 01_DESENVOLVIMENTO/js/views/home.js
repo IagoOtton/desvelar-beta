@@ -123,6 +123,53 @@
           );
         })
         .join("");
+      var quickActions = [
+        {
+          tab: "estudo",
+          focus: "s-tag",
+          label: "Estudo",
+          accessibleLabel: "Registrar uma sessão de estudo",
+        },
+        {
+          tab: "tarefas",
+          focus: "k-title",
+          label: "Atividade",
+          accessibleLabel: "Criar uma atividade",
+        },
+        {
+          tab: "agenda",
+          focus: "e-title",
+          label: "Compromisso",
+          accessibleLabel: "Adicionar um compromisso",
+        },
+        {
+          tab: "metas",
+          focus: "go-title",
+          label: "Meta",
+          accessibleLabel: "Criar uma meta",
+        },
+      ].filter(function (action) {
+        return !S.enabledTabs || S.enabledTabs[action.tab] !== false;
+      });
+      var quickActionsHtml = quickActions.length
+        ? '<section class="home-quick-actions" aria-label="Ações rápidas"><div class="home-quick-label">Criar rapidamente</div><div class="home-quick-list">' +
+          quickActions
+            .map(function (action) {
+              return (
+                '<button class="quick-action" data-a="tab" data-tab="' +
+                esc(action.tab) +
+                '" data-focus="' +
+                esc(action.focus) +
+                '" aria-label="' +
+                esc(action.accessibleLabel) +
+                '"><span class="quick-action-icon" aria-hidden="true">+</span><span>' +
+                esc(action.label) +
+                "</span></button>"
+              );
+            })
+            .join("") +
+          "</div></section>"
+        : "";
       var emptyAction = function (message, label, targetTab, focusId) {
         return (
           '<div class="home-empty"><p class="empty">' +
@@ -484,6 +531,7 @@
             " · semana de " +
             fmtD(ws),
         ) +
+        quickActionsHtml +
         kpis +
         '<div class="today-grid"><div class="card"><h2>Atividades pendentes</h2>' +
         tkh +
