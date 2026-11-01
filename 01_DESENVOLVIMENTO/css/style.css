@@ -2081,3 +2081,60 @@ body.zen .cloud-sync-mobile {
   line-height: 1.5;
   text-align: center;
 }
+
+/* Áreas de toque maiores sem aumentar os ícones e círculos visuais. */
+@media (any-pointer: coarse) {
+  button.btn,
+  button.qb,
+  button.ico,
+  button.check,
+  button.toast-action,
+  .cal button.d,
+  nav.bottom .nb,
+  .password-toggle {
+    min-height: 44px;
+  }
+
+  button.btn.sm {
+    min-width: 44px;
+  }
+
+  button.ico {
+    display: inline-grid;
+    min-width: 44px;
+    place-items: center;
+    padding: 0;
+  }
+
+  button.check {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+  }
+
+  button.check::before {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--muted);
+    border-radius: 50%;
+    background: none;
+    content: "";
+  }
+
+  button.check:hover::before {
+    border-color: var(--a1);
+  }
+
+  button.check.on {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  button.check.on::before {
+    border-color: transparent;
+    background: var(--grad);
+  }
+}
