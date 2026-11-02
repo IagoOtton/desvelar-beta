@@ -204,7 +204,7 @@
   var minsRange = Analytics.minutesInRange;
   var pagesRange = Analytics.pagesInRange;
   var streak = Analytics.streak;
-  var qTot = Analytics.questionTotals;
+  var qTotRange = Analytics.questionTotalsInRange;
   var bookLog = Analytics.bookLog;
   var gprog = Analytics.goalProgress;
   var pagesRangeBook = Analytics.pagesForBookInRange;
@@ -287,7 +287,7 @@
       minsRange: minsRange,
       pagesRange: pagesRange,
       streak: streak,
-      questionTotals: qTot,
+      questionTotalsInRange: qTotRange,
       pagesRangeBook: pagesRangeBook,
       bookLog: bookLog,
       goalProgress: gprog,

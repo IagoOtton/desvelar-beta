@@ -16,7 +16,7 @@
       "minsRange",
       "pagesRange",
       "streak",
-      "questionTotals",
+      "questionTotalsInRange",
       "tagKey",
       "tagLabel",
       "tagColor",
@@ -43,7 +43,7 @@
     var minsRange = dependencies.minsRange;
     var pagesRange = dependencies.pagesRange;
     var streak = dependencies.streak;
-    var qTot = dependencies.questionTotals;
+    var qTotRange = dependencies.questionTotalsInRange;
     var tkey = dependencies.tagKey;
     var tlabel = dependencies.tagLabel;
     var tcolor = dependencies.tagColor;
@@ -68,12 +68,8 @@
         pw = minsRange(pws, pwe),
         day = minsOn(t),
         yd = minsOn(addDays(t, -1));
-      var q1 = qTot(function (q) {
-          return q.date >= ws && q.date <= we;
-        }),
-        q0 = qTot(function (q) {
-          return q.date >= pws && q.date <= pwe;
-        });
+      var q1 = qTotRange(ws, we),
+        q0 = qTotRange(pws, pwe);
       var a1 = q1.t ? Math.round((q1.c / q1.t) * 100) : null,
         a0 = q0.t ? Math.round((q0.c / q0.t) * 100) : null;
       var da =

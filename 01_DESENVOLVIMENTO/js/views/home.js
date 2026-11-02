@@ -26,7 +26,7 @@
       "minsOn",
       "minsRange",
       "pagesRange",
-      "questionTotals",
+      "questionTotalsInRange",
       "accuracyByTag",
       "delta",
       "donut",
@@ -71,7 +71,7 @@
     var minsOn = dependencies.minsOn;
     var minsRange = dependencies.minsRange;
     var pagesRange = dependencies.pagesRange;
-    var qTot = dependencies.questionTotals;
+    var qTotRange = dependencies.questionTotalsInRange;
     var accByTag = dependencies.accuracyByTag;
     var gprog = dependencies.goalProgress;
     var phaseName = dependencies.phaseName;
@@ -195,12 +195,8 @@
         pw = minsRange(pws, pwe),
         goal = S.goalH * 60,
         pct = Math.round((wk / goal) * 100);
-      var q1 = qTot(function (q) {
-          return q.date >= ws && q.date <= we;
-        }),
-        q0 = qTot(function (q) {
-          return q.date >= pws && q.date <= pwe;
-        });
+      var q1 = qTotRange(ws, we),
+        q0 = qTotRange(pws, pwe);
       var a1 = q1.t ? Math.round((q1.c / q1.t) * 100) : null,
         a0 = q0.t ? Math.round((q0.c / q0.t) * 100) : null;
       var dAcc =
@@ -224,14 +220,7 @@
           return pagesRange(d, d);
         }),
         sQ = ser(function (d) {
-          return sum(
-            S.questions.filter(function (q) {
-              return q.date === d;
-            }),
-            function (q) {
-              return q.total;
-            },
-          );
+          return qTotRange(d, d).t;
         });
       var ev = S.events
         .filter(function (e) {
