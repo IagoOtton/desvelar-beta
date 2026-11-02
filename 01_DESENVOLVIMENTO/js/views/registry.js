@@ -4,6 +4,7 @@
   function create(dependencies) {
     var required = [
       "stateStore",
+      "studyReviews",
       "date",
       "formatting",
       "tags",
@@ -32,6 +33,7 @@
     }
 
     var stateStore = dependencies.stateStore;
+    var studyReviews = dependencies.studyReviews;
     var date = dependencies.date;
     var formatting = dependencies.formatting;
     var tags = dependencies.tags;
@@ -87,6 +89,7 @@
       pagesRange: analytics.pagesRange,
       streak: analytics.streak,
       questionTotalsInRange: analytics.questionTotalsInRange,
+      isReviewDue: studyReviews.isDue,
       tagKey: tags.key,
       tagLabel: tags.label,
       tagColor: tags.color,
@@ -116,6 +119,7 @@
     });
     var home = window.DesvelarHomeViews.create({
       getState: stateStore.getState,
+      isReviewDue: studyReviews.isDue,
       getUserId: dependencies.getUserId,
       homeGroupGoals: groups.homeGroupGoals,
       today: date.today,
@@ -153,6 +157,7 @@
     });
     var learning = window.DesvelarLearningViews.create({
       getState: stateStore.getState,
+      isReviewDue: studyReviews.isDue,
       today: date.today,
       wkStart: date.wkStart,
       addDays: date.addDays,
@@ -313,5 +318,6 @@
 
   window.DesvelarViewRegistry = Object.freeze({ create: create });
 })();
+
 
 

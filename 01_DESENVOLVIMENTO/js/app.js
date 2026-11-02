@@ -42,6 +42,9 @@
     uid: uid,
     dateKey: ds,
   });
+  var StudyReviewDomain = window.DesvelarStudyReviewDomain.create({
+    addDays: addDays,
+  });
   var zen = false;
   var finM = new Date();
   var S = null,
@@ -262,6 +265,7 @@
   };
   var ViewRegistry = window.DesvelarViewRegistry.create({
     stateStore: stateStore,
+    studyReviews: StudyReviewDomain,
     date: {
       today: today,
       wkStart: wkStart,
@@ -363,6 +367,8 @@
   });
   var ActionController = window.DesvelarActionController.create({
     stateStore: stateStore,
+    isStudyReviewDue: StudyReviewDomain.isDue,
+    scheduleStudyReview: StudyReviewDomain.schedule,
     setTheme: applyTheme,
     verifyPassword: AccountController.verifyPassword,
     signOut: AccountController.signOut,
@@ -701,3 +707,4 @@
     cloudSync.handleOnline();
   });
 })();
+

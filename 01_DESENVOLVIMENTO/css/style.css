@@ -852,6 +852,41 @@ input.grow {
   border-top: 1px solid var(--line);
   min-width: 0;
 }
+.list li.study-review-item {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: 8px;
+}
+.study-review-item .t {
+  margin-bottom: 0;
+}
+.study-review-actions {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 96px;
+}
+.study-review-actions .btn {
+  white-space: nowrap;
+}
+.study-review-note {
+  margin-top: 6px;
+  font: 400 12px/1.45 var(--body);
+}
+.study-review-note summary {
+  width: fit-content;
+  color: var(--a1);
+  cursor: pointer;
+}
+.study-review-note p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+.study-review-guidance {
+  margin: -4px 0 12px;
+  max-width: 680px;
+}
 .list li:first-child {
   border-top: 0;
 }
@@ -3316,3 +3351,4 @@ body.zen .cloud-sync-mobile {
     line-height: 1;
   }
 }
+

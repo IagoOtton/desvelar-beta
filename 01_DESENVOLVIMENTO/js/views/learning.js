@@ -23,6 +23,7 @@
       "topicField",
       "studyTypeField",
       "studyTypeLabel",
+      "isReviewDue",
       "head",
       "sum",
       "tkey",
@@ -64,10 +65,17 @@
           : 0;
       var rev = all
         .filter(function (x) {
-          return x.diff >= 4 && !x.reviewed;
+          return dependencies.isReviewDue(x, t);
         })
         .sort(function (a, b) {
-          return a.date < b.date ? -1 : 1;
+          return (a.nextReview || a.date).localeCompare(b.nextReview || b.date);
+        });
+      var upcoming = all
+        .filter(function (x) {
+          return typeof x.nextReview === "string" && x.nextReview > t;
+        })
+        .sort(function (a, b) {
+          return a.nextReview.localeCompare(b.nextReview);
         });
       var g = {};
       all.forEach(function (x) {
@@ -89,31 +97,52 @@
           return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
         })
         .slice(0, 20);
-      var li = function (x, rv) {
+      var li = function (x, rv, displayDate) {
+        var dateLabel = rv
+          ? x.nextReview && x.nextReview < t
+            ? "Atrasada · " + dependencies.fmtD(x.nextReview)
+            : "Hoje"
+          : dependencies.fmtD(displayDate || x.date);
+        var reviewButtons = rv
+          ? '<div class="study-review-actions" role="group" aria-label="Como você lembrou de ' +
+            dependencies.esc(x.title) +
+            '"><button class="btn sm dng" data-a="th-review" data-id="' +
+            dependencies.esc(x.id) +
+            '" data-result="again">Não lembrei</button><button class="btn sm" data-a="th-review" data-id="' +
+            dependencies.esc(x.id) +
+            '" data-result="effort">Com esforço</button><button class="btn sm pri" data-a="th-review" data-id="' +
+            dependencies.esc(x.id) +
+            '" data-result="easy">Fácil</button></div>'
+          : "";
         return (
-          '<li><span class="m num">' +
-          dependencies.fmtD(x.date) +
+          '<li' +
+          (rv ? ' class="study-review-item"' : "") +
+          '><span class="m num">' +
+          dependencies.esc(dateLabel) +
           '</span><span class="t">' +
           dependencies.esc(x.title) +
           '<div class="m">' +
           dependencies.chip(x.tag) +
-          (x.note ? " · " + dependencies.esc(x.note) : "") +
-          "</div></span>" +
-          diffPill(x.diff) +
-          (rv
-            ? '<button class="btn sm" data-a="th-rev" data-id="' +
-              dependencies.esc(x.id) +
-              '">Revisado</button>'
+          (!rv && x.note ? " · " + dependencies.esc(x.note) : "") +
+          "</div>" +
+          (rv && x.note
+            ? '<details class="study-review-note"><summary>Conferir observação</summary><p>' +
+              dependencies.esc(x.note) +
+              "</p></details>"
             : "") +
+          "</span>" +
+          diffPill(x.diff) +
           '<button class="ico" data-a="del" data-k="themes" data-id="' +
           dependencies.esc(x.id) +
-          '" aria-label="Apagar tema">×</button></li>'
+          '" aria-label="Apagar tema">×</button>' +
+          reviewButtons +
+          "</li>"
         );
       };
       return (
         dependencies.head(
           "Temas estudados",
-          "Anote cada tema estudado, sua matéria e o nível de dificuldade. Os de nota 4 ou 5 entram na fila de revisão.",
+          "Registre o que estudou e transforme temas difíceis em revisões espaçadas, com intervalos que se ajustam ao seu resultado.",
         ) +
         '<div class="tiles"><div class="tile"><div class="l">Temas na semana</div><div class="v num">' +
         wk +
@@ -124,9 +153,11 @@
         '<div class="tile"><div class="l">Dificuldade média</div><div class="v num">' +
         (all.length ? avg.toFixed(1) : "–") +
         '</div><div class="n">de 5</div></div>' +
-        '<div class="tile"><div class="l">Para revisar</div><div class="v num">' +
+        '<div class="tile"><div class="l">Para revisar hoje</div><div class="v num">' +
         rev.length +
-        '</div><div class="n">nota 4 ou 5</div></div></div>' +
+        '</div><div class="n">' +
+        upcoming.length +
+        ' futuras agendadas</div></div></div>' +
         '<div class="card"><h2>Mapa de conhecimento</h2>' +
         dependencies.brainGraph(360) +
         "</div>" +
@@ -154,7 +185,8 @@
         '" required></label>' +
         '<label class="f grow">Observação (opcional)<input id="th-note" class="grow" name="note" maxlength="140" placeholder="ex.: confundo as raízes"></label>' +
         '<button class="btn pri" type="submit">Registrar</button></form></div>' +
-        '<div class="grid"><div class="card"><h2>Fila de revisão</h2>' +
+        '<div class="card"><h2>Revisões para hoje</h2>' +
+        '<p class="m study-review-guidance">Tente explicar o assunto sem consultar suas anotações. Não lembrei: amanhã; com esforço: a partir de 3 dias; fácil: a partir de 7. Intervalos maiores crescem quando você lembra bem.</p>' +
         (rev.length
           ? '<ul class="list">' +
             rev
@@ -163,7 +195,19 @@
               })
               .join("") +
             "</ul>"
-          : '<p class="empty">Nenhum tema difícil pendente.</p>') +
+          : '<p class="empty">Nenhuma revisão pendente. Os temas difíceis entram na fila automaticamente.</p>') +
+        "</div>" +
+        '<div class="grid"><div class="card"><h2>Próximas revisões</h2>' +
+        (upcoming.length
+          ? '<ul class="list">' +
+            upcoming
+              .slice(0, 5)
+              .map(function (x) {
+                return li(x, false, x.nextReview);
+              })
+              .join("") +
+            "</ul>"
+          : '<p class="empty">Você ainda não tem revisões agendadas.</p>') +
         "</div>" +
         '<div class="card"><h2>Dificuldade média por matéria</h2>' +
         (gr.length
@@ -452,3 +496,4 @@
   }
   window.DesvelarLearningViews = Object.freeze({ create: create });
 })();
+

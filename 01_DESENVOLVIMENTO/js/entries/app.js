@@ -3,6 +3,7 @@ import "../utils/formatting.js";
 import "../config/module-registry.js";
 import "../domain/analytics.js";
 import "../domain/pomodoro.js";
+import "../domain/study-reviews.js";
 import "../utils/tags.js";
 import "../components/charts.js";
 import "../components/navigation.js";
@@ -33,3 +34,4 @@ import "../controllers/forms.js";
 import "../controllers/community.js";
 import "../controllers/pomodoro-runtime.js";
 import "../app.js";
+

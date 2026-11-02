@@ -4,6 +4,7 @@
   function create(dependencies) {
     var required = [
       "getState",
+      "isReviewDue",
       "getUserId",
       "homeGroupGoals",
       "today",
@@ -46,6 +47,7 @@
 
     var S = null;
     var today = dependencies.today;
+    var isReviewDue = dependencies.isReviewDue;
     var wkStart = dependencies.wkStart;
     var addDays = dependencies.addDays;
     var pd = dependencies.pd;
@@ -398,10 +400,10 @@
         att.push("Sem leitura há <b>" + daysBetween(lastRead, t) + " dias</b>.");
       if (!day) att.push("Nenhum estudo registrado hoje ainda.");
       var nrev = S.themes.filter(function (x) {
-        return x.diff >= 4 && !x.reviewed;
+        return isReviewDue(x, t);
       }).length;
       if (nrev)
-        att.push("<b>" + nrev + "</b> tema(s) difícil(is) esperando revisão.");
+        att.push("<b>" + nrev + "</b> revisão(ões) de tema pendente(s).");
       var attention = att.length
         ? '<div class="card attention"><h2>Pontos de atenção</h2><div style="display:flex;flex-direction:column;gap:8px">' +
           att
@@ -495,4 +497,5 @@
 
   window.DesvelarHomeViews = Object.freeze({ create: create });
 })();
+
 
