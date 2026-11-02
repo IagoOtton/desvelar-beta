@@ -115,7 +115,7 @@
       if (action === "tab") {
         if (!dependencies.isTabEnabled(button.dataset.tab)) {
           dependencies.toast(
-            "Essa aba está desativada. Você pode reativá-la em Sistema.",
+            "Essa área está desativada. Você pode reativá-la em Configurações.",
           );
           return;
         }

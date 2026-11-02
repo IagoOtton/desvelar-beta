@@ -234,7 +234,14 @@
   function navHtml(heads) {
     var state = stateStore.getState();
     var enabledTabs = state ? state.enabledTabs || {} : {};
-    return N.render(ModuleRegistry.visibleTabs(enabledTabs), tab, heads);
+    var activeNavTab = ["foco", "temas", "desempenho"].indexOf(tab) !== -1
+      ? "estudo"
+      : tab;
+    return N.render(
+      ModuleRegistry.visibleTabs(enabledTabs),
+      activeNavTab,
+      heads,
+    );
   }
 
   var LOGO =
@@ -299,6 +306,9 @@
       ring: ring,
     },
     head: head,
+    getActiveTab: function () {
+      return tab;
+    },
     getUserId: function () {
       return window.desvelarUser.id;
     },
@@ -403,7 +413,12 @@
     commit: commit,
     moduleIds: DataModel.MODULE_IDS,
     isTabEnabled: function (tabId) {
-      if (tabId === "inicio" || tabId === "sistema") return true;
+      if (tabId === "inicio" || tabId === "sistema" || tabId === "grupos") {
+        return true;
+      }
+      if (["foco", "temas", "desempenho"].indexOf(tabId) !== -1) {
+        tabId = "estudo";
+      }
       if (DataModel.MODULE_IDS.indexOf(tabId) === -1) return false;
       var state = stateStore.getState();
       return !state || !state.enabledTabs || state.enabledTabs[tabId] !== false;
@@ -447,7 +462,7 @@
     document.getElementById("sidenav").innerHTML =
       '<div class="brand">' +
       LOGO +
-      '<div><span class="wm">DESVELAR</span><small>second brain · estudos e vida</small></div></div>' +
+      '<div><span class="wm">DESVELAR</span><small>ferramentas pessoais · comunidades</small></div></div>' +
       navHtml(true) +
       '<div class="sync' +
       (saveOk ? "" : " bad") +
@@ -668,7 +683,7 @@
     toast(
       initSaved
         ? "Pomodoro concluído enquanto a aba estava fechada."
-        : "Pomodoro concluído, mas não foi possível salvar os dados. Verifique a sincronização na tela Sistema.",
+        : "Pomodoro concluído, mas não foi possível salvar os dados. Verifique a sincronização em Configurações.",
     );
   }
 

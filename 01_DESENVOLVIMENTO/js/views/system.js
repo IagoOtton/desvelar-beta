@@ -58,21 +58,17 @@
 
       return (
         dependencies.head(
-          "Sistema",
+          "Perfil",
           "Seu progresso acompanha sua conta e sincroniza entre dispositivos.",
         ) +
         '<div class="card"><h2>Sincronização</h2><p id="cloud-sync-status" role="status">' +
         dependencies.esc(dependencies.getCloudSyncStatus()) +
         '</p><p class="m">Use a mesma conta em cada dispositivo. Sem conexão, as alterações ficam guardadas neste navegador e tentam sincronizar quando a conexão voltar.</p></div>' +
         '<div class="card"><h2>Conta</h2><p class="m">Sair encerra sua sessão sem apagar o progresso. O app tenta sincronizar antes de sair; se não conseguir, seus dados permanecem neste navegador.</p><button class="btn" data-a="signout">Sair da conta</button></div>' +
-        '<div class="card"><h2>Perfil</h2><form class="row" data-form="profile"><label class="f grow">Seu nome<input id="p-name" class="grow" name="name" maxlength="30" value="' +
+        '<div class="card"><h2>Perfil</h2><form class="row" data-form="profile"><label class="f grow">Nome completo (privado)<input id="p-name" class="grow" name="name" maxlength="80" value="' +
         dependencies.esc(state.name) +
-        '"></label>' +
-        '<label class="f">Meta semanal (h)<input id="p-goal" type="number" name="h" min="1" max="100" value="' +
-        dependencies.esc(state.goalH) +
-        '" required></label><button class="btn pri" type="submit">Salvar</button></form>' +
-        '<div class="rowflex" style="margin-top:14px"><span class="m">Aparência</span><button class="btn sm" data-a="theme">Alternar claro/escuro</button></div></div>' +
-        '<div class="card"><h2>Personalizar abas</h2><p class="m">Ative as áreas que você quer ver na navegação. Desativar uma aba não apaga seus dados; você pode reativá-la aqui. Início e Sistema permanecem disponíveis.</p>' +
+        '"></label><button class="btn pri" type="submit">Salvar</button></form></div>' +
+        '<div class="card"><h2>Personalizar navegação</h2><p class="m">Escolha as áreas que você quer ver na navegação. Desativar uma área não apaga seus dados; você pode reativá-la aqui. Visão geral e Configurações permanecem disponíveis.</p>' +
         '<div class="module-groups">' +
         moduleSettingsHtml +
         "</div></div>" +

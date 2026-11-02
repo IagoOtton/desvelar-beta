@@ -10,6 +10,7 @@
       "analytics",
       "charts",
       "head",
+      "getActiveTab",
       "getUserId",
       "getFinanceMonth",
       "getCalendar",
@@ -37,6 +38,39 @@
     var analytics = dependencies.analytics;
     var charts = dependencies.charts;
     var head = dependencies.head;
+    var studyTabIds = ["estudo", "foco", "temas", "desempenho"];
+
+    function studyHead(title, subtitle) {
+      var activeTab = dependencies.getActiveTab();
+      var studyNavigation = [
+        ["estudo", "Estudos"],
+        ["foco", "Pomodoro"],
+        ["temas", "Temas"],
+        ["desempenho", "Desempenho"],
+      ];
+      if (studyTabIds.indexOf(activeTab) === -1) {
+        return head(title, subtitle);
+      }
+
+      return (
+        head(title, subtitle) +
+        '<nav class="area-tabs" aria-label="Ferramentas de Estudos">' +
+        studyNavigation
+          .map(function (item) {
+            return (
+              '<button class="area-tab" type="button" data-a="tab" data-tab="' +
+              item[0] +
+              '"' +
+              (activeTab === item[0] ? ' aria-current="page"' : "") +
+              ">" +
+              item[1] +
+              "</button>"
+            );
+          })
+          .join("") +
+        "</nav>"
+      );
+    }
 
     var insights = window.DesvelarActivityInsights.create({
       getState: stateStore.getState,
@@ -123,7 +157,7 @@
       esc: formatting.esc,
       chip: tags.chip,
       tagInput: tags.input,
-      head: head,
+      head: studyHead,
       sum: formatting.sum,
       tkey: tags.key,
       groupMin: analytics.groupMin,
@@ -173,7 +207,7 @@
       sum: formatting.sum,
       minsOn: analytics.minsOn,
       fmtM: formatting.fmtM,
-      head: head,
+      head: studyHead,
     });
     var performance = window.DesvelarPerformanceViews.create({
       getState: stateStore.getState,
@@ -187,7 +221,7 @@
       groupMin: analytics.groupMin,
       barChart: charts.barChart,
       heat: insights.heat,
-      head: head,
+      head: studyHead,
       chip: tags.chip,
       esc: formatting.esc,
       tagInput: tags.input,
@@ -210,24 +244,50 @@
       pd: date.pd,
       esc: formatting.esc,
       head: head,
+      tasksPanel: tasks.tasksPanel,
+      routinePanel: life.routinePanel,
       months: date.MES,
       weekdays: date.DIAS,
     });
 
+    function underConstruction(title, subtitle, message) {
+      return function () {
+        return (
+          head(title, subtitle) +
+          '<div class="card"><p class="eyebrow">EM CONSTRUÇÃO</p><h2>' +
+          formatting.esc(title) +
+          '</h2><p class="m">' +
+          formatting.esc(message) +
+          "</p></div>"
+        );
+      };
+    }
+
     return Object.freeze({
       pages: Object.freeze({
         inicio: home.homePage,
+        agenda: agenda.agendaPage,
+        atividade_fisica: underConstruction(
+          "Atividade física",
+          "Seu espaço pessoal para acompanhar a atividade física.",
+          "Esta ferramenta estará disponível em uma próxima etapa.",
+        ),
         foco: focus.focusPage,
         temas: learning.themesPage,
-        habitos: life.habitsPage,
         financas: life.financePage,
-        metas: life.goalsPage,
-        rotina: life.routinePage,
         estudo: learning.studyPage,
         leitura: learning.readingPage,
-        agenda: agenda.agendaPage,
-        tarefas: tasks.tasksPage,
         desempenho: performance.performancePage,
+        comunidade_estudos: underConstruction(
+          "Comunidade de estudos",
+          "Encontre pessoas que estão aprendendo sobre os mesmos temas.",
+          "Este espaço comunitário estará disponível em uma próxima etapa.",
+        ),
+        comunidade_atividade_fisica: underConstruction(
+          "Comunidade de atividade física",
+          "Acompanhe e compartilhe sua evolução com outras pessoas.",
+          "Este espaço comunitário estará disponível em uma próxima etapa.",
+        ),
         grupos: function () {
           return groups.groupsPage(dependencies.getUserId());
         },

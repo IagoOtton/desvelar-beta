@@ -21,7 +21,6 @@
       "head",
       "areaChart",
       "kpi",
-      "ring",
       "groupMin",
       "minsOn",
       "minsRange",
@@ -31,7 +30,6 @@
       "delta",
       "donut",
       "brainGraph",
-      "goalProgress",
       "phaseName",
       "pomoRemaining",
       "formatClock",
@@ -66,14 +64,12 @@
     var head = dependencies.head;
     var areaChart = dependencies.areaChart;
     var kpi = dependencies.kpi;
-    var ring = dependencies.ring;
     var groupMin = dependencies.groupMin;
     var minsOn = dependencies.minsOn;
     var minsRange = dependencies.minsRange;
     var pagesRange = dependencies.pagesRange;
     var qTotRange = dependencies.questionTotalsInRange;
     var accByTag = dependencies.accuracyByTag;
-    var gprog = dependencies.goalProgress;
     var phaseName = dependencies.phaseName;
     var pomoRem = dependencies.pomoRemaining;
     var fmtClock = dependencies.formatClock;
@@ -83,6 +79,12 @@
         dependencies.getUserId(),
       );
       S = dependencies.getState();
+      var isAreaEnabled = function (tabId) {
+        var areaId = ["foco", "temas", "desempenho"].indexOf(tabId) !== -1
+          ? "estudo"
+          : tabId;
+        return !S.enabledTabs || S.enabledTabs[areaId] !== false;
+      };
       var hasRecords = !!S.pomoRun || [
         S.sessions,
         S.books,
@@ -91,9 +93,7 @@
         S.questions,
         S.readlog,
         S.themes,
-        S.habits,
         S.txs,
-        S.goals,
         S.routine,
       ].some(function (records) {
         return records.length > 0;
@@ -101,9 +101,8 @@
       var startActions = [
         { tab: "estudo", focus: "s-tag", label: "Registrar sessão" },
         { tab: "foco", label: "Iniciar Pomodoro" },
-        { tab: "metas", focus: "go-title", label: "Criar uma meta" },
       ].filter(function (action) {
-        return !S.enabledTabs || S.enabledTabs[action.tab] !== false;
+        return isAreaEnabled(action.tab);
       }).slice(0, 2);
       if (!startActions.length) {
         startActions.push({ tab: "sistema", label: "Escolher minhas abas" });
@@ -131,7 +130,7 @@
           accessibleLabel: "Registrar uma sessão de estudo",
         },
         {
-          tab: "tarefas",
+          tab: "agenda",
           focus: "k-title",
           label: "Atividade",
           accessibleLabel: "Criar uma atividade",
@@ -142,14 +141,8 @@
           label: "Compromisso",
           accessibleLabel: "Adicionar um compromisso",
         },
-        {
-          tab: "metas",
-          focus: "go-title",
-          label: "Meta",
-          accessibleLabel: "Criar uma meta",
-        },
       ].filter(function (action) {
-        return !S.enabledTabs || S.enabledTabs[action.tab] !== false;
+        return isAreaEnabled(action.tab);
       });
       var quickActionsHtml = quickActions.length
         ? '<section class="home-quick-actions" aria-label="Ações rápidas"><div class="home-quick-label">Criar rapidamente</div><div class="home-quick-list">' +
@@ -192,9 +185,7 @@
       var hi = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
       var day = minsOn(t),
         wk = minsRange(ws, we),
-        pw = minsRange(pws, pwe),
-        goal = S.goalH * 60,
-        pct = Math.round((wk / goal) * 100);
+        pw = minsRange(pws, pwe);
       var q1 = qTotRange(ws, we),
         q0 = qTotRange(pws, pwe);
       var a1 = q1.t ? Math.round((q1.c / q1.t) * 100) : null,
@@ -379,7 +370,7 @@
         : emptyAction(
             "Nenhuma atividade pendente.",
             "Criar atividade",
-            "tarefas",
+            "agenda",
             "k-title",
           );
       var att = [],
@@ -451,65 +442,8 @@
         : emptyAction(
             "Nada fixo na rotina de hoje.",
             "Montar rotina",
-            "rotina",
+            "agenda",
             "ro-title",
-          );
-      var hbh = S.habits.length
-        ? '<ul class="list">' +
-          S.habits
-            .map(function (x) {
-              var d = !!x.days[t];
-              return (
-                '<li class="' +
-                (d ? "done" : "") +
-                '"><button class="check' +
-                (d ? " on" : "") +
-                '" data-a="hab-toggle" data-id="' +
-                esc(x.id) +
-                '" data-d="' +
-                t +
-                '" aria-label="Marcar hábito">' +
-                (d ? "✓" : "") +
-                '</button><span class="t">' +
-                esc(x.name) +
-                "</span></li>"
-              );
-            })
-            .join("") +
-          "</ul>"
-        : emptyAction(
-            "Nenhum hábito cadastrado.",
-            "Criar hábito",
-            "habitos",
-            "h-name",
-          );
-      var gl = S.goals
-        .filter(function (g) {
-          return gprog(g) < 100;
-        })
-        .sort(function (a, b) {
-          return (a.due || "9") < (b.due || "9") ? -1 : 1;
-        })
-        .slice(0, 3);
-      var glh = gl.length
-        ? gl
-            .map(function (g) {
-              return (
-                '<div style="margin-bottom:12px"><div class="rowflex" style="justify-content:space-between;flex-wrap:nowrap"><span>' +
-                esc(g.title) +
-                '</span><span class="m num">' +
-                gprog(g) +
-                '%</span></div><div class="bar"><b style="width:' +
-                gprog(g) +
-                '%"></b></div></div>'
-              );
-            })
-            .join("")
-        : emptyAction(
-            "Nenhuma meta em andamento.",
-            "Criar meta",
-            "metas",
-            "go-title",
           );
       return (
         head(
@@ -531,10 +465,6 @@
         attention +
         '</div><div class="grid"><div class="card"><h2>Rotina de hoje</h2>' +
         rth +
-        '</div><div class="card"><h2>Hábitos de hoje</h2>' +
-        hbh +
-        '</div><div class="card"><h2>Metas em andamento</h2>' +
-        glh +
         "</div></div>" +
         groupGoalsHtml +
         '<div class="grid2"><div class="card"><h2>Horas por dia · 30 dias</h2>' +
@@ -545,13 +475,9 @@
           label: "Horas estudadas por dia nos últimos 30 dias",
         }) +
         '<div class="legend"><span><i></i>horas por dia</span><span><i class="ma"></i>média de 7 dias</span></div></div>' +
-        '<div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="card hero">' +
-        ring(pct, pct + "%", "da meta semanal") +
-        '<div><div class="big num">' +
+        '<div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="card"><h2>Estudo nesta semana</h2><div class="big num">' +
         fmtM(wk) +
-        ' <span class="m">de ' +
-        esc(S.goalH) +
-        'h</span></div><div class="m">estudado nesta semana</div></div></div>' +
+        '</div></div>' +
         "</div></div>" +
         '<div class="grid"><div class="card"><h2>Horas por tag · semana</h2><div class="donut">' +
         donut(segs, fmtM(tot), "na semana") +

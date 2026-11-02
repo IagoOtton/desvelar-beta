@@ -70,9 +70,8 @@
         ) +
         '<div class="card"><h2>Horas por semana</h2>' +
         dependencies.barChart(items, {
-          goal: state.goalH,
           unit: "h",
-          emptyText: "Registre sessões para comparar suas horas com a meta semanal.",
+          emptyText: "Registre sessões para comparar suas horas ao longo das semanas.",
           label: "Horas estudadas por semana nas últimas 8 semanas",
         }) +
         "</div>" +

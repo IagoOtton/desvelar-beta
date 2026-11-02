@@ -27,6 +27,9 @@
     "financas",
     "grupos",
     "comunidade",
+    "atividade_fisica",
+    "comunidade_estudos",
+    "comunidade_atividade_fisica",
   ];
   var TAGGED = [
     "sessions",

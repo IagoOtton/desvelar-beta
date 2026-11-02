@@ -17,7 +17,7 @@
       );
     }
 
-    function tasksPage() {
+    function tasksPanel() {
       var state = dependencies.getState();
       var t = dependencies.today();
       var pend = state.tasks
@@ -63,11 +63,8 @@
       };
 
       return (
-        dependencies.head(
-          "Atividades",
-          "Resumos, listas, objetivos de PBL e tudo que tem prazo.",
-        ) +
-        '<div class="card"><h2>Nova atividade</h2><form class="row" data-form="task"><label class="f grow">O que fazer<input id="k-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Resumo de farmacocinética"></label>' +
+        '<section class="agenda-panel" aria-labelledby="agenda-tasks-title"><div class="rowflex" style="justify-content:space-between"><div><h2 id="agenda-tasks-title">Tarefas</h2><p class="m">Organize atividades e acompanhe os prazos.</p></div></div>' +
+        '<div class="card"><h3>Nova tarefa</h3><form class="row" data-form="task"><label class="f grow">O que fazer<input id="k-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Resumo de farmacocinética"></label>' +
         '<label class="f grow">Tag' +
         dependencies.tagInput("k-tag", "ex.: Farmacologia") +
         '</label><label class="f">Prazo<input id="k-due" type="date" name="due"></label><button class="btn pri" type="submit">Adicionar</button></form></div>' +
@@ -86,11 +83,20 @@
             done.map(renderTask).join("") +
             "</ul>"
           : '<p class="empty">Nenhuma concluída ainda.</p>') +
-        "</div></div>"
+        "</div></div></section>"
       );
     }
 
-    return Object.freeze({ tasksPage: tasksPage });
+    function tasksPage() {
+      return (
+        dependencies.head(
+          "Atividades",
+          "Resumos, listas, objetivos de PBL e tudo que tem prazo.",
+        ) + tasksPanel()
+      );
+    }
+
+    return Object.freeze({ tasksPage: tasksPage, tasksPanel: tasksPanel });
   }
 
   window.DesvelarTaskViews = Object.freeze({ create: create });

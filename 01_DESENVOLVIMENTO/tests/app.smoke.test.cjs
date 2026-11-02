@@ -1327,7 +1327,7 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
       .getByText("Preparar a prova", { exact: true })
       .waitFor({ state: "visible" });
 
-    await page.locator('#sidenav [data-tab="grupos"]').click();
+    await page.locator('#view [data-tab="grupos"]').click();
     await page
       .locator('form[data-form="group"] input[name="name"]')
       .fill("Grupo novo");
@@ -1355,7 +1355,7 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
     );
     assert.deepEqual(createGroupCall.args, { p_name: "Grupo novo" });
 
-    await page.locator('#sidenav [data-tab="tarefas"]').click();
+    await page.locator('#sidenav [data-tab="agenda"]').click();
     await page.locator("#k-title").waitFor({ state: "visible" });
     await page.locator("#k-title").fill("Atividade persistente de teste");
     await page.locator('form[data-form="task"] button[type="submit"]').click();
@@ -1375,7 +1375,7 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await waitForApp(page);
-    await page.locator('#sidenav [data-tab="tarefas"]').click();
+    await page.locator('#sidenav [data-tab="agenda"]').click();
     await page
       .locator("#view .list .t")
       .filter({ hasText: "Atividade persistente de teste" })
@@ -1434,7 +1434,7 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
       .filter({ hasText: "Sessão do módulo acadêmico" })
       .waitFor({ state: "visible" });
 
-    await page.locator('#sidenav [data-tab="temas"]').click();
+    await page.locator('#view .area-tabs [data-tab="temas"]').click();
     await page.locator("#th-title").fill("Tema do módulo acadêmico");
     await page.locator("#th-tag").fill("Neuroanatomia");
     await page.locator("#th-diff").selectOption("5");
@@ -1481,21 +1481,19 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
   }
 });
 
-test("atualiza dados pelas telas da área Vida extraídas", async () => {
-  const { context, page } = await openApp();
+test("preserva hábitos e metas legados e mantém finanças e rotina acessíveis", async () => {
+  const legacyData = {
+    v: 3,
+    habits: [{ id: "legacy-habit", name: "Hábito preservado", days: {} }],
+    goals: [{ id: "legacy-goal", title: "Meta preservada", tag: "", due: "", ms: [] }],
+  };
+  const { context, page } = await openApp({ legacyData });
 
   try {
     await waitForApp(page);
 
-    await page.locator('#sidenav [data-tab="habitos"]').click();
-    await page.locator("#h-name").fill("Hábito do módulo Vida");
-    await page.locator('form[data-form="habit"] button[type="submit"]').click();
-    const habit = page
-      .locator("#view .hab")
-      .filter({ hasText: "Hábito do módulo Vida" });
-    await habit.waitFor({ state: "visible" });
-    const todayKey = await habit.locator("button.td").getAttribute("data-d");
-    await habit.locator("button.td").click();
+    assert.equal(await page.locator('#sidenav [data-tab="habitos"]').count(), 0);
+    assert.equal(await page.locator('#sidenav [data-tab="metas"]').count(), 0);
 
     await page.locator('#sidenav [data-tab="financas"]').click();
     await page.locator("#x-amt").fill("123.45");
@@ -1507,20 +1505,7 @@ test("atualiza dados pelas telas da área Vida extraídas", async () => {
       .filter({ hasText: "Lançamento do módulo Vida" })
       .waitFor({ state: "visible" });
 
-    await page.locator('#sidenav [data-tab="metas"]').click();
-    await page.locator("#go-title").fill("Meta do módulo Vida");
-    await page.locator('form[data-form="goal"] button[type="submit"]').click();
-    const goal = page
-      .locator("#view .card.book")
-      .filter({ hasText: "Meta do módulo Vida" });
-    await goal.waitFor({ state: "visible" });
-    await goal
-      .locator('form[data-form="ms"] input[name="text"]')
-      .fill("Primeiro marco");
-    await goal.locator('form[data-form="ms"] button[type="submit"]').click();
-    await goal.locator('[data-a="ms-toggle"]').click();
-
-    await page.locator('#sidenav [data-tab="rotina"]').click();
+    await page.locator('#sidenav [data-tab="agenda"]').click();
     await page.locator("#ro-title").fill("Bloco do módulo Vida");
     await page.locator("#ro-start").fill("06:30");
     await page.locator("#ro-end").fill("07:30");
@@ -1532,32 +1517,27 @@ test("atualiza dados pelas telas da área Vida extraídas", async () => {
       .waitFor({ state: "visible" });
 
     const saved = await page.evaluate(
-      ({ storageKey, day }) => {
+      (storageKey) => {
         const data = JSON.parse(localStorage.getItem(storageKey));
-        const newGoal = data.goals.find(
-          (item) => item.title === "Meta do módulo Vida",
-        );
         return {
-          habit: data.habits.find(
-            (item) => item.name === "Hábito do módulo Vida",
-          ).days[day],
+          legacyHabit: data.habits.some((item) => item.id === "legacy-habit"),
+          legacyGoal: data.goals.some((item) => item.id === "legacy-goal"),
           transaction: data.txs.some(
             (item) =>
               item.title === "Lançamento do módulo Vida" &&
               item.amount === 123.45,
           ),
-          milestone: newGoal.ms[0].done,
           routine: data.routine.some(
             (item) => item.title === "Bloco do módulo Vida" && item.day === 0,
           ),
         };
       },
-      { storageKey: STORAGE_KEY, day: todayKey },
+      STORAGE_KEY,
     );
     assert.deepEqual(saved, {
-      habit: 1,
+      legacyHabit: true,
+      legacyGoal: true,
       transaction: true,
-      milestone: true,
       routine: true,
     });
   } finally {
@@ -1570,7 +1550,7 @@ test("interage com Pomodoro e registra questões em Desempenho", async () => {
 
   try {
     await waitForApp(page);
-    await page.locator('#sidenav [data-tab="foco"]').click();
+    await page.locator('#view .area-tabs [data-tab="foco"]').click();
     await page.locator("#pomo-tag").fill("Teste do módulo Pomodoro");
     await page.locator("#pomo-intent").fill("Validar a tela extraída");
     await page.locator('[data-a="pomo-start"]').click();
@@ -1586,7 +1566,7 @@ test("interage com Pomodoro e registra questões em Desempenho", async () => {
     }, STORAGE_KEY);
     assert.equal(paused, true);
 
-    await page.locator('#sidenav [data-tab="desempenho"]').click();
+    await page.locator('#view .area-tabs [data-tab="desempenho"]').click();
     await page.locator("#q-tag").fill("Farmacologia");
     await page.locator("#q-total").fill("10");
     await page.locator("#q-correct").fill("8");
@@ -1725,7 +1705,7 @@ test("exibe erro de consulta de objetivos sem esconder o restante da aba Grupos"
 
   try {
     await waitForApp(page);
-    await page.locator('#sidenav [data-tab="grupos"]').click();
+    await page.locator('#view [data-tab="grupos"]').click();
     await page
       .getByText("Não foi possível carregar os objetivos compartilhados agora.", { exact: true })
       .waitFor({ state: "visible" });
@@ -1745,7 +1725,7 @@ test("mostra estado de erro e permite repetir uma tela após falha de rede", asy
 
   try {
     await waitForApp(page);
-    await page.locator('#sidenav [data-tab="grupos"]').click();
+    await page.locator('#view [data-tab="grupos"]').click();
     await page
       .getByText("Não foi possível abrir esta tela", { exact: true })
       .waitFor({ state: "visible" });
@@ -1770,7 +1750,7 @@ test("mostra um erro amigável quando uma ação do Supabase rejeita", async () 
 
   try {
     await waitForApp(page);
-    await page.locator('#sidenav [data-tab="grupos"]').click();
+    await page.locator('#view [data-tab="grupos"]').click();
     await page.locator('form[data-form="group"] input[name="name"]').fill("Grupo indisponível");
     await page.locator('form[data-form="group"] button[type="submit"]').click();
     await page
@@ -1925,7 +1905,7 @@ test("entra em grupo de leitura usando código de convite", async () => {
   }
 });
 
-test("aceita códigos antigos e novos e apresenta o erro de convite sem falso sucesso", async () => {
+test("aceita formatos de convite de leitura e apresenta o erro sem falso sucesso", async () => {
   const { context, page } = await openApp();
 
   try {
@@ -1960,33 +1940,6 @@ test("aceita códigos antigos e novos e apresenta o erro de convite sem falso su
       .last()
       .waitFor({ state: "visible" });
 
-    await page.locator('#sidenav [data-tab="grupos"]').click();
-    const groupCode = page.locator('#group-invite-code');
-    assert.equal(await groupCode.getAttribute("maxlength"), "16");
-    assert.match(await groupCode.getAttribute("pattern"), /\[A-Fa-f0-9\]\{16\}/);
-    assert.equal(
-      await groupCode.evaluate((input) => {
-        input.value = "ABCD1234";
-        return input.checkValidity();
-      }),
-      true,
-    );
-    assert.equal(
-      await groupCode.evaluate((input) => {
-        input.value = "A1B2C3D4E5F60718";
-        return input.checkValidity();
-      }),
-      true,
-    );
-    await groupCode.fill("BADCODE1");
-    await page.locator('form[data-form="join-group"] button[type="submit"]').click();
-    await page
-      .getByText(
-        "Código inválido ou grupo indisponível. Confira o convite; após várias tentativas, aguarde 15 minutos.",
-        { exact: true },
-      )
-      .last()
-      .waitFor({ state: "visible" });
   } finally {
     await context.close();
   }

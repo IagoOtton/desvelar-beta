@@ -12,6 +12,8 @@
       typeof dependencies.pd !== "function" ||
       typeof dependencies.esc !== "function" ||
       typeof dependencies.head !== "function" ||
+      typeof dependencies.tasksPanel !== "function" ||
+      typeof dependencies.routinePanel !== "function" ||
       !Array.isArray(dependencies.months) ||
       !Array.isArray(dependencies.weekdays)
     ) {
@@ -158,7 +160,9 @@
         '<form class="row" data-form="event" style="margin-top:14px"><label class="f grow">Novo compromisso<input id="e-title" class="grow" name="title" maxlength="100" required placeholder="ex.: Prova de patologia"></label>' +
         '<label class="f">Hora<input id="e-time" type="time" name="time"></label>' +
         '<label class="f grow">Tipo (opcional)<input id="e-kind" name="kind" list="kinds" maxlength="30" autocomplete="off" placeholder="ex.: Aula, Prova"></label>' +
-        '<button class="btn pri" type="submit">Adicionar</button></form></div></div>'
+        '<button class="btn pri" type="submit">Adicionar</button></form></div></div>' +
+        dependencies.tasksPanel() +
+        dependencies.routinePanel()
       );
     }
 
