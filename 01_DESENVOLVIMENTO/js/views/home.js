@@ -273,7 +273,7 @@
           np +
           " de " +
           S.pomo.daily +
-          " hoje</span></div></div>";
+          " blocos hoje</span></div></div>";
       }
       if (!hasRecords) {
         return (

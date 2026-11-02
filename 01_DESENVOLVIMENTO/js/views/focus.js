@@ -227,7 +227,7 @@
             ? '<p class="m pomo-break-hint">Pausa de ' +
               Math.round(r.dur / 60) +
               " min. O bloco de foco anterior foi salvo automaticamente.</p>"
-            : '<p class="m pomo-discard-hint">Encerrar e salvar registra o tempo focado; descartar encerra sem criar uma sessão.</p>');
+            : '<p class="m pomo-discard-hint">Encerrar e salvar registra o tempo focado como bloco incompleto; descartar encerra sem criar uma sessão.</p>');
       }
       var ratePanel = ratePend
         ? '<div class="card rate" style="width:100%"><h2>Como foi seu foco no último bloco?</h2><div class="rowflex" style="justify-content:center">' +
@@ -287,11 +287,11 @@
       return (
         dependencies.head(
           "Pomodoro",
-          "Método Pomodoro: blocos de foco com pausas. Ao concluir, o tempo é salvo automaticamente; se encerrar antes, você pode salvar o tempo focado ou descartar o bloco.",
+          "Método Pomodoro: blocos de foco com pausas. Ao concluir, o bloco é salvo automaticamente; se encerrar antes, você pode salvar o tempo focado como bloco incompleto ou descartar a sessão.",
         ) +
         '<div class="pomo">' +
         main +
-        '<div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="kpis"><div class="kpi"><span class="l">Pomodoros hoje</span><span class="v">' +
+        '<div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="kpis"><div class="kpi"><span class="l">Blocos de foco hoje</span><span class="v">' +
         blocks.length +
         '<span class="m"> / ' +
         dependencies.esc(P.daily) +
@@ -317,6 +317,9 @@
                   (x.note && x.note !== "Pomodoro"
                     ? '<div class="m">' + dependencies.esc(x.note) + "</div>"
                     : "") +
+                  (x.incomplete
+                    ? '<span class="session-status session-status--incomplete">Bloco incompleto</span>'
+                    : "") +
                   "</span>" +
                   (x.rate
                     ? '<span class="m num">foco ' + dependencies.esc(x.rate) + "/5</span>"
@@ -330,7 +333,7 @@
               })
               .join("") +
             "</ul>"
-          : '<p class="empty">Nenhum bloco concluído hoje. O primeiro leva só um clique.</p>') +
+          : '<p class="empty">Nenhum bloco registrado hoje. O primeiro leva só um clique.</p>') +
         "</div>" +
         '<div class="card"><h2>Ajustes do ciclo</h2><p class="m">Defina as durações de cada etapa e quantos blocos de foco entram antes da pausa longa.</p><form class="row" data-form="pomo"><label class="f">Foco (min)<input id="pm-f" type="number" name="focus" min="1" max="180" value="' +
         dependencies.esc(P.focus) +
