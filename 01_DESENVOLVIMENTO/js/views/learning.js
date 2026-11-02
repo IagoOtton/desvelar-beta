@@ -267,6 +267,7 @@
                     ? '<div class="m">Tipo: ' + dependencies.esc(dependencies.studyTypeLabel(x.studyType)) + "</div>"
                     : "") +
                   (x.note ? '<div class="m">' + dependencies.esc(x.note) + "</div>" : "") +
+                  (x.incomplete ? '<span class="session-status session-status--incomplete">Bloco incompleto</span>' : "") +
                   '</span><span class="num">' +
                   dependencies.fmtM(x.min) +
                   '</span><button class="ico" data-a="del" data-k="sessions" data-id="' +

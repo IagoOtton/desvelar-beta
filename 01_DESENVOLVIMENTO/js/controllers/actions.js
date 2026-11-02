@@ -225,11 +225,13 @@
             min: minutes,
             tag: stoppedRun.tag,
             note: stoppedRun.intent || "Pomodoro interrompido",
+            pomo: 1,
+            incomplete: true,
           });
           var stoppedSession = state.sessions[state.sessions.length - 1];
           if (stoppedRun.topic) stoppedSession.topic = stoppedRun.topic;
           if (stoppedRun.studyType) stoppedSession.studyType = stoppedRun.studyType;
-          message = "salvo: " + minutes + " min";
+          message = "Bloco incompleto salvo: " + minutes + " min";
         } else {
           message = "menos de 1 min, nada salvo";
         }

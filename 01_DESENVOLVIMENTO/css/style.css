@@ -1348,6 +1348,20 @@ svg.ch .chart-hit {
   color: var(--a1);
   border: 1px solid color-mix(in srgb, var(--a1) 25%, var(--line));
 }
+.session-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 6px;
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface));
+  color: var(--warn);
+  font: 600 11px/1.4 var(--body);
+  letter-spacing: 0.01em;
+}
 .stats {
   display: flex;
   gap: 24px;
