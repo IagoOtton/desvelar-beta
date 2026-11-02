@@ -129,13 +129,17 @@
       var tag = (values.tag || "").trim();
 
       if (kind === "session") {
-        state.sessions.push({
+        var session = {
           id: dependencies.uid(),
           date: values.date,
           min: Number(values.min),
           tag: tag,
           note: (values.note || "").trim(),
-        });
+        };
+        var sessionTopic = (values.topic || "").trim();
+        if (sessionTopic) session.topic = sessionTopic;
+        if (values.studyType) session.studyType = values.studyType;
+        state.sessions.push(session);
         message = "sessão registrada";
       } else if (kind === "book") {
         state.books.push({
@@ -194,13 +198,17 @@
       } else if (kind === "question") {
         var total = Number(values.total);
         var correct = Math.min(total, Number(values.correct));
-        state.questions.push({
+        var questionRecord = {
           id: dependencies.uid(),
           date: values.date,
           tag: tag,
+          studyType: "questions",
           total: total,
           correct: correct,
-        });
+        };
+        var questionTopic = (values.topic || "").trim();
+        if (questionTopic) questionRecord.topic = questionTopic;
+        state.questions.push(questionRecord);
       } else if (kind === "theme") {
         state.themes.push({
           id: dependencies.uid(),

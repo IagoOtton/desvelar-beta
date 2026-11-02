@@ -17,6 +17,7 @@
       "chip",
       "esc",
       "tagInput",
+      "topicField",
       "sum",
     ];
     if (!dependencies || required.some(function (key) {
@@ -66,7 +67,7 @@
       return (
         dependencies.head(
           "Desempenho",
-          "Registre aqui as questões do MedEvo e veja horas, constância e acerto por tag.",
+          "Registre suas questões por matéria e assunto para acompanhar horas, constância e acertos.",
         ) +
         '<div class="card"><h2>Horas por semana</h2>' +
         dependencies.barChart(items, {
@@ -81,7 +82,7 @@
           ? '<p class="m" style="margin:10px 0 0">Cada quadrado é um dia (segunda a domingo). Quanto mais claro, mais estudo.</p>'
           : "") +
         "</div>" +
-        '<div class="card"><h2>Horas por tag · 30 dias</h2>' +
+        '<div class="card"><h2>Horas por matéria · 30 dias</h2>' +
         (g30.length
           ? g30
               .slice(0, 8)
@@ -104,7 +105,7 @@
               "s-tag",
             )) +
         "</div></div>" +
-        '<div class="grid"><div class="card"><h2>Acerto por tag</h2>' +
+        '<div class="grid"><div class="card"><h2>Acerto por matéria</h2>' +
         (acc.length
           ? acc
               .map(function (r) {
@@ -123,15 +124,16 @@
               })
               .join("")
           : emptyAction(
-              "Registre questões para ver o acerto por tag.",
+              "Registre questões para ver o acerto por matéria.",
               "Registrar questões",
               "desempenho",
               "q-tag",
             )) +
         "</div>" +
-        '<div class="card"><h2>Registrar questões</h2><form class="row" data-form="question"><label class="f grow">Tag' +
+        '<div class="card"><h2>Registrar questões</h2><form class="row" data-form="question"><label class="f grow">Matéria' +
         dependencies.tagInput("q-tag", "ex.: Fisiologia") +
         "</label>" +
+        dependencies.topicField("q-topic", "ex.: Ciclo cardíaco") +
         '<label class="f">Feitas<input id="q-total" type="number" name="total" min="1" max="500" required></label><label class="f">Acertos<input id="q-correct" type="number" name="correct" min="0" max="500" required></label>' +
         '<label class="f">Data<input id="q-date" type="date" name="date" value="' +
         t +
@@ -145,6 +147,7 @@
                   dependencies.fmtD(q.date) +
                   '</span><span class="t">' +
                   dependencies.chip(q.tag) +
+                  (q.topic ? '<div class="m">Assunto: ' + dependencies.esc(q.topic) + "</div>" : "") +
                   '</span><span class="num">' +
                   dependencies.esc(q.correct) +
                   "/" +
