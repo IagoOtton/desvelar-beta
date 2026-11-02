@@ -479,8 +479,14 @@
     if (tab !== "foco") zen = false;
     document.body.classList.toggle("zen", zen);
     var currentTab = tab;
+    var isStudyTab =
+      ["estudo", "foco", "temas", "erros", "desempenho"].indexOf(
+        currentTab,
+      ) !== -1;
     var pageTicker = function () {
-      return zen || currentTab === "inicio" ? "" : tickerHtml();
+      return zen || currentTab === "inicio" || isStudyTab
+        ? ""
+        : tickerHtml();
     };
     document.getElementById("view").innerHTML =
       pageTicker() + cloudSyncMobileStatusHtml() +
@@ -494,6 +500,17 @@
         if (tab === currentTab) {
           document.getElementById("view").innerHTML =
             pageTicker() + cloudSyncMobileStatusHtml() + html;
+          if (isStudyTab) {
+            var studyMobileBrand = document.querySelector(
+              "#view .study-mobile-brand",
+            );
+            var mobileSyncStatus = document.getElementById(
+              "cloud-sync-mobile-status",
+            );
+            if (studyMobileBrand && mobileSyncStatus) {
+              studyMobileBrand.appendChild(mobileSyncStatus);
+            }
+          }
           var areaTabs = document.querySelector("#view .area-tabs");
           if (options && Number.isFinite(options.areaScrollLeft)) {
             if (areaTabs) areaTabs.scrollLeft = options.areaScrollLeft;

@@ -141,9 +141,9 @@
       var ctrl;
       if (!r) {
         var presets = [
+          [15, 3, 10],
           [25, 5, 15],
           [50, 10, 20],
-          [15, 3, 10],
         ];
         ctrl =
           '<div class="pomo-presets"><div class="hint">Foco · pausa curta · pausa longa (min)</div><div class="qc">' +
@@ -185,8 +185,6 @@
           '<div class="pform"><label class="f">Matéria<input id="pomo-tag" list="tags" maxlength="30" autocomplete="off" value="' +
           dependencies.esc(P.lastTag) +
           '" placeholder="ex.: Biologia, Inglês, História"></label>' +
-          dependencies.topicField("pomo-topic", "ex.: Ciclo cardíaco") +
-          dependencies.studyTypeField("pomo-type") +
           '<div class="qc" style="justify-content:flex-start">' +
           recentTags(state)
             .map(function (x) {
@@ -199,6 +197,10 @@
               );
             })
             .join("") +
+          "</div>" +
+          '<div class="pomo-topic-type-fields">' +
+          dependencies.topicField("pomo-topic", "ex.: Ciclo cardíaco") +
+          dependencies.studyTypeField("pomo-type") +
           "</div>" +
           '<label class="f">Intenção do bloco (opcional)<input id="pomo-intent" maxlength="80" autocomplete="off" placeholder="ex.: terminar 30 questões de cardio"></label></div>' +
           '<button class="go" data-a="pomo-start">▶ Iniciar foco de ' +
@@ -257,7 +259,7 @@
         "</div>" +
         '<button class="btn sm" data-a="zen">' +
         (isZen ? "Sair (Esc)" : "Tela cheia") +
-        "</button></div>" +
+        '</button></div><div class="pomo-stage"><div class="pomo-clock-column">' +
         '<div class="dial' +
         (running ? " run" : "") +
         '">' +
@@ -268,11 +270,12 @@
         blocks.length +
         " de " +
         dependencies.esc(P.daily) +
-        " hoje</span></div></div>" +
+        ' hoje</span></div></div><div class="hint pomo-keyboard-hint"><kbd>Espaço</kbd> inicia ou pausa</div></div>' +
+        '<div class="pomo-controls">' +
         ctrl +
         ratePanel +
-        '<div class="hint pomo-keyboard-hint"><kbd>Espaço</kbd> inicia ou pausa</div></div>';
-      if (isZen) return '<div class="zenwrap">' + main + "</div>";
+        "</div></div></div>";
+      if (isZen) return '<div class="zenwrap pomo-zen-page">' + main + "</div>";
       var rated = state.sessions
           .filter(function (x) {
             return x.rate;
@@ -284,14 +287,8 @@
             }) / rated.length
           : 0;
       var dpct = Math.min(100, Math.round((blocks.length / P.daily) * 100));
-      return (
-        dependencies.head(
-          "Pomodoro",
-          "Método Pomodoro: blocos de foco com pausas. Ao concluir, o bloco é salvo automaticamente; se encerrar antes, você pode salvar o tempo focado como bloco incompleto ou descartar a sessão.",
-        ) +
-        '<div class="pomo">' +
-        main +
-        '<div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="kpis"><div class="kpi"><span class="l">Blocos de foco hoje</span><span class="v">' +
+      var kpisHtml =
+        '<div class="kpis pomo-kpis"><div class="kpi"><span class="l">Blocos de foco hoje</span><span class="v">' +
         blocks.length +
         '<span class="m"> / ' +
         dependencies.esc(P.daily) +
@@ -303,8 +300,9 @@
         '</span><span class="d flat">todas as sessões</span></div>' +
         '<div class="kpi"><span class="l">Qualidade do foco</span><span class="v">' +
         (rated.length ? avgR.toFixed(1) : "–") +
-        '<span class="m"> / 5</span></span><span class="d flat">média dos últimos blocos</span></div></div>' +
-        '<div class="card"><h2>Blocos de hoje</h2>' +
+        '<span class="m"> / 5</span></span><span class="d flat">média dos últimos blocos</span></div></div>';
+      var blocksHtml =
+        '<section class="card pomo-blocks-card"><h2>Blocos de hoje</h2>' +
         (blocks.length
           ? '<ul class="list">' +
             blocks
@@ -334,8 +332,9 @@
               .join("") +
             "</ul>"
           : '<p class="empty">Nenhum bloco registrado hoje. O primeiro leva só um clique.</p>') +
-        "</div>" +
-        '<div class="card"><h2>Ajustes do ciclo</h2><p class="m">Defina as durações de cada etapa e quantos blocos de foco entram antes da pausa longa.</p><form class="row" data-form="pomo"><label class="f">Foco (min)<input id="pm-f" type="number" name="focus" min="1" max="180" value="' +
+        "</section>";
+      var settingsHtml =
+        '<details class="card pomo-settings-card pomo-settings-disclosure"><summary class="pomo-settings-summary"><h2>Ajustes do ciclo</h2><span class="pomo-settings-chevron" aria-hidden="true">⌄</span></summary><div class="pomo-settings-content"><p class="m">Defina as durações de cada etapa e quantos blocos de foco entram antes da pausa longa.</p><form class="row pomo-settings-form" data-form="pomo"><label class="f">Foco (min)<input id="pm-f" type="number" name="focus" min="1" max="180" value="' +
         dependencies.esc(P.focus) +
         '" required></label><label class="f">Pausa curta (min)<input id="pm-s" type="number" name="short" min="1" max="60" value="' +
         dependencies.esc(P.short) +
@@ -345,7 +344,20 @@
         dependencies.esc(P.every) +
         '" required></label><label class="f">Meta diária (blocos de foco)<input id="pm-d" type="number" name="daily" min="1" max="30" value="' +
         dependencies.esc(P.daily) +
-        '" required></label><button class="btn" type="submit">Salvar</button></form></div></div></div>'
+        '" required></label><button class="btn" type="submit">Salvar</button></form></div></details>';
+      return (
+        dependencies.head(
+          "Pomodoro",
+          "Método Pomodoro: blocos de foco com pausas. Ao concluir, o bloco é salvo automaticamente; se encerrar antes, você pode salvar o tempo focado como bloco incompleto ou descartar a sessão.",
+        ) +
+        '<div class="pomo-page">' +
+        kpisHtml +
+        '<div class="pomo-layout">' +
+        main +
+        '<aside class="pomo-aside">' +
+        settingsHtml +
+        blocksHtml +
+        "</aside></div></div>"
       );
     }
 

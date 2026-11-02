@@ -55,11 +55,13 @@
         return head(title, subtitle);
       }
 
-      return (
-        '<header class="study-heading"><div class="study-heading-kicker">Aprender · praticar · revisar</div>' +
-        '<span class="study-heading-illustration" aria-hidden="true"><svg viewBox="0 0 164 120" fill="none"><path class="study-book-page" d="M82 29C62 15 39 13 16 21v65c25-8 47-5 66 9V29Z"/><path class="study-book-page" d="M82 29c20-14 43-16 66-8v65c-25-8-47-5-66 9V29Z"/><path class="study-book-spine" d="M82 29v66"/><path class="study-book-lines" d="M28 39c15-4 29-2 42 4M28 54c15-4 29-2 42 4m24-15c13-6 27-8 42-4m-42 19c13-6 27-8 42-4"/></svg></span>' +
+      var pageHeader =
+        '<header class="study-heading study-heading--notebook"><div class="study-mobile-brand"><span class="study-mobile-brand-mark" aria-hidden="true">D</span><span>DESVELAR</span></div><p class="study-breadcrumb">Pessoal <span>/</span> Estudos</p>' +
         head(title, subtitle) +
-        "</header>" +
+        "</header>";
+
+      return (
+        pageHeader +
         '<nav class="area-tabs" aria-label="Ferramentas de Estudos">' +
         studyNavigation
           .map(function (item) {
