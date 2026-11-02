@@ -52,6 +52,35 @@
       return message ? fallback + " " + message : fallback;
     }
 
+    function validateProgress(data) {
+      var hasPercent = data.percent !== "";
+      var hasPages = data.pages !== "";
+      var hasTotalPages = data.total_pages !== "";
+      var percent = hasPercent ? Number(data.percent) : null;
+      var pages = hasPages ? Number(data.pages) : null;
+      var totalPages = hasTotalPages ? Number(data.total_pages) : null;
+
+      if (!hasPercent && !hasPages && !hasTotalPages) {
+        return "Informe um percentual ou as páginas lidas e o total do livro.";
+      }
+      if (hasPercent && (!Number.isInteger(percent) || percent < 0 || percent > 100)) {
+        return "O percentual precisa ser um número inteiro entre 0 e 100.";
+      }
+      if (hasPages !== hasTotalPages) {
+        return "Informe as páginas lidas e o total de páginas juntos.";
+      }
+      if (hasPages && (!Number.isInteger(pages) || pages < 0)) {
+        return "As páginas lidas precisam ser um número inteiro igual ou maior que zero.";
+      }
+      if (hasTotalPages && (!Number.isInteger(totalPages) || totalPages < 1)) {
+        return "O total precisa ser um número inteiro maior que zero.";
+      }
+      if (hasPages && pages > totalPages) {
+        return "As páginas lidas não podem passar do total do livro.";
+      }
+      return "";
+    }
+
     async function submit(event) {
       var form = event.target.closest("form[data-community-form]");
       if (!form) return false;
@@ -101,16 +130,9 @@
             isbn: data.isbn,
           });
         } else if (kind === "progress") {
-          if (data.percent === "" && (data.pages === "" || data.total_pages === "")) {
-            dependencies.toast("Informe um percentual ou as páginas lidas e o total do livro.");
-            return true;
-          }
-          if (data.pages !== "" && data.total_pages === "") {
-            dependencies.toast("Informe o total de páginas do livro.");
-            return true;
-          }
-          if (data.pages !== "" && Number(data.pages) > Number(data.total_pages)) {
-            dependencies.toast("As páginas lidas não podem passar do total do livro.");
+          var progressError = validateProgress(data);
+          if (progressError) {
+            dependencies.toast(progressError);
             return true;
           }
           result = await repository.addProgress(userId, {
