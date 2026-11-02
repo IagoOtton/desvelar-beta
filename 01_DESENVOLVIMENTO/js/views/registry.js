@@ -40,7 +40,7 @@
     var analytics = dependencies.analytics;
     var charts = dependencies.charts;
     var head = dependencies.head;
-    var studyTabIds = ["estudo", "foco", "temas", "desempenho"];
+    var studyTabIds = ["estudo", "foco", "temas", "erros", "desempenho"];
 
     function studyHead(title, subtitle) {
       var activeTab = dependencies.getActiveTab();
@@ -48,6 +48,7 @@
         ["estudo", "Estudos"],
         ["foco", "Pomodoro"],
         ["temas", "Temas"],
+        ["erros", "Erros"],
         ["desempenho", "Desempenho"],
       ];
       if (studyTabIds.indexOf(activeTab) === -1) {
@@ -292,6 +293,7 @@
         temas: learning.themesPage,
         financas: life.financePage,
         estudo: learning.studyPage,
+        erros: learning.mistakesPage,
         leitura: learning.readingPage,
         desempenho: performance.performancePage,
         comunidade_estudos: underConstruction(
@@ -318,6 +320,7 @@
 
   window.DesvelarViewRegistry = Object.freeze({ create: create });
 })();
+
 
 
 

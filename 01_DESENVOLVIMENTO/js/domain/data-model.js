@@ -6,6 +6,7 @@
     "events",
     "tasks",
     "questions",
+    "mistakes",
     "readlog",
     "themes",
     "habits",
@@ -36,6 +37,7 @@
     "books",
     "tasks",
     "questions",
+    "mistakes",
     "themes",
     "txs",
     "goals",
@@ -61,6 +63,7 @@
       events: [],
       tasks: [],
       questions: [],
+      mistakes: [],
       readlog: [],
       themes: [],
       habits: [],
@@ -103,11 +106,13 @@
     // Valida as coleções e seus registros.
     LISTS.forEach(function (k) {
       if (o[k] === undefined) {
-        if (typeof o.v === "number" && o.v >= 4) {
+        if (k === "mistakes") {
+          o[k] = [];
+        } else if (typeof o.v === "number" && o.v >= 4) {
           throw new Error("Coleção ausente em dados da versão atual: " + k);
+        } else {
+          o[k] = [];
         }
-
-        o[k] = [];
       }
 
       if (!Array.isArray(o[k])) {
@@ -206,8 +211,35 @@
       }
     }
 
+    function normalizeMistake(mistake) {
+      mistake.question =
+        typeof mistake.question === "string"
+          ? mistake.question.trim().slice(0, 1000)
+          : "";
+      mistake.reason =
+        typeof mistake.reason === "string"
+          ? mistake.reason.trim().slice(0, 600)
+          : "";
+      mistake.answer =
+        typeof mistake.answer === "string"
+          ? mistake.answer.trim().slice(0, 1600)
+          : "";
+      mistake.tag =
+        typeof mistake.tag === "string" ? mistake.tag.trim().slice(0, 80) : "";
+      mistake.topic =
+        typeof mistake.topic === "string"
+          ? mistake.topic.trim().slice(0, 100)
+          : "";
+      mistake.date = normalizeReviewDate(mistake.date);
+      mistake.resolved = mistake.resolved === true;
+      if (mistake.resolvedAt !== undefined) {
+        mistake.resolvedAt = normalizeReviewDate(mistake.resolvedAt);
+      }
+    }
+
     o.sessions.forEach(normalizeStudyMetadata);
     o.questions.forEach(normalizeStudyMetadata);
+    o.mistakes.forEach(normalizeMistake);
     o.themes.forEach(normalizeStudyReviewMetadata);
 
     delete o.timer;
@@ -458,5 +490,6 @@
     mergeForSync: mergeForSync,
   });
 })();
+
 
 

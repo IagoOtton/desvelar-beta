@@ -422,7 +422,7 @@
       if (tabId === "inicio" || tabId === "sistema" || tabId === "grupos") {
         return true;
       }
-      if (["foco", "temas", "desempenho"].indexOf(tabId) !== -1) {
+      if (["foco", "temas", "erros", "desempenho"].indexOf(tabId) !== -1) {
         tabId = "estudo";
       }
       if (DataModel.MODULE_IDS.indexOf(tabId) === -1) return false;
@@ -707,4 +707,5 @@
     cloudSync.handleOnline();
   });
 })();
+
 

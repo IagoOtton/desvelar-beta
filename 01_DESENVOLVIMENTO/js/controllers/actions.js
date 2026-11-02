@@ -293,6 +293,7 @@
           events: "Compromisso removido.",
           habits: "Hábito removido.",
           goals: "Meta removida.",
+          mistakes: "Erro removido do caderno.",
           questions: "Registro de questões removido.",
           readlog: "Registro de leitura removido.",
           routine: "Item da rotina removido.",
@@ -375,6 +376,20 @@
               : "em " + reviewSchedule.intervalDays + " dias");
         } else {
           message = "Essa revisão já não está pendente.";
+        }
+      } else if (action === "mistake-resolve" || action === "mistake-reopen") {
+        var mistake = state.mistakes.find(function (item) {
+          return item.id === button.dataset.id;
+        });
+        if (!mistake) return;
+
+        mistake.resolved = action === "mistake-resolve";
+        if (mistake.resolved) {
+          mistake.resolvedAt = dependencies.today();
+          message = "Erro marcado como entendido.";
+        } else {
+          delete mistake.resolvedAt;
+          message = "Erro voltou para a fila de revisão.";
         }
       } else if (action === "ms-toggle") {
         state.goals.forEach(function (goal) {
@@ -523,5 +538,6 @@
 
   window.DesvelarActionController = Object.freeze({ create: create });
 })();
+
 
 

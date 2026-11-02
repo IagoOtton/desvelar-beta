@@ -327,6 +327,106 @@
     }
 
 
+    function mistakesPage() {
+      var state = dependencies.getState();
+      var today = dependencies.today();
+      var mistakes = state.mistakes || [];
+      var pending = mistakes
+        .filter(function (item) {
+          return !item.resolved;
+        })
+        .sort(function (a, b) {
+          return (b.date || "").localeCompare(a.date || "");
+        });
+      var resolved = mistakes
+        .filter(function (item) {
+          return item.resolved;
+        })
+        .sort(function (a, b) {
+          return (b.resolvedAt || b.date || "").localeCompare(
+            a.resolvedAt || a.date || "",
+          );
+        });
+
+      function mistakeCard(item, isResolved) {
+        return (
+          '<article class="study-mistake"><div class="study-mistake-meta"><span class="m num">' +
+          (item.date ? dependencies.fmtD(item.date) : "Sem data") +
+          "</span>" +
+          dependencies.chip(item.tag) +
+          (item.topic
+            ? '<span class="m">' + dependencies.esc(item.topic) + "</span>"
+            : "") +
+          (isResolved && item.resolvedAt
+            ? '<span class="m">Entendido em ' +
+              dependencies.fmtD(item.resolvedAt) +
+              "</span>"
+            : "") +
+          '</div><p class="study-mistake-question">' +
+          dependencies.esc(item.question) +
+          '</p><details class="study-mistake-details"><summary>Conferir minha reflexão e a resposta</summary><div class="study-mistake-explanation"><p><strong>O que me levou ao erro</strong><span>' +
+          dependencies.esc(item.reason) +
+          '</span></p><p><strong>Resposta correta e explicação</strong><span>' +
+          dependencies.esc(item.answer) +
+          '</span></p></div></details><div class="study-mistake-actions"><button class="btn sm ' +
+          (isResolved ? "" : "pri") +
+          '" data-a="' +
+          (isResolved ? "mistake-reopen" : "mistake-resolve") +
+          '" data-id="' +
+          dependencies.esc(item.id) +
+          '">' +
+          (isResolved ? "Revisar novamente" : "Marcar como entendido") +
+          '</button><button class="ico" data-a="del" data-k="mistakes" data-id="' +
+          dependencies.esc(item.id) +
+          '" aria-label="Excluir erro">×</button></div></article>'
+        );
+      }
+
+      return (
+        dependencies.head(
+          "Caderno de erros",
+          "Transforme questões erradas em pontos claros para revisar e aprender.",
+        ) +
+        '<div class="tiles"><div class="tile"><div class="l">Para revisar</div><div class="v num">' +
+        pending.length +
+        '</div><div class="n">erros em aberto</div></div><div class="tile"><div class="l">Já entendi</div><div class="v num">' +
+        resolved.length +
+        '</div><div class="n">erros resolvidos</div></div></div>' +
+        '<div class="card"><p class="m study-mistake-guidance">Registre o enunciado, o que te confundiu e a explicação correta. Na revisão, tente responder antes de abrir a solução.</p><h2>Adicionar um erro</h2><form class="row study-mistake-form" data-form="mistake"><label class="f grow">Questão ou ponto que errei<textarea name="question" maxlength="1000" required placeholder="Escreva a questão ou o conceito que você errou"></textarea></label>' +
+        '<div class="study-mistake-fields">' +
+        dependencies.tagInput("mistake-tag", "ex.: Biologia") +
+        dependencies.topicField("mistake-topic", "ex.: Mitose") +
+        '</div><label class="f grow">O que me levou ao erro?<textarea name="reason" maxlength="600" required placeholder="ex.: confundi a metáfase com a anáfase"></textarea></label><label class="f grow">Resposta correta e explicação<textarea name="answer" maxlength="1600" required placeholder="Registre o raciocínio que ajuda você a acertar na próxima vez"></textarea></label><label class="f">Data<input type="date" name="date" value="' +
+        today +
+        '" required></label><button class="btn pri" type="submit">Salvar no caderno</button></form></div>' +
+        '<div class="grid study-mistake-columns"><div class="card"><h2>Revisões pendentes (' +
+        pending.length +
+        ")</h2>" +
+        (pending.length
+          ? '<div class="study-mistake-list">' +
+            pending
+              .map(function (item) {
+                return mistakeCard(item, false);
+              })
+              .join("") +
+            "</div>"
+          : '<p class="empty">Nenhum erro pendente. Quando errar uma questão, registre aqui para revisar depois.</p>') +
+        '</div><div class="card"><h2>Revisados (' +
+        resolved.length +
+        ")</h2>" +
+        (resolved.length
+          ? '<div class="study-mistake-list">' +
+            resolved
+              .map(function (item) {
+                return mistakeCard(item, true);
+              })
+              .join("") +
+            "</div>"
+          : '<p class="empty">Os erros que você marcar como entendidos aparecerão aqui.</p>') +
+        "</div></div>"
+      );
+    }
+
     function readingPage() {
       var state = dependencies.getState();
       var t = dependencies.today(),
@@ -491,9 +591,11 @@
     return Object.freeze({
       themesPage: themesPage,
       studyPage: studyPage,
+      mistakesPage: mistakesPage,
       readingPage: readingPage,
     });
   }
   window.DesvelarLearningViews = Object.freeze({ create: create });
 })();
+
 
