@@ -209,6 +209,20 @@
         var questionTopic = (values.topic || "").trim();
         if (questionTopic) questionRecord.topic = questionTopic;
         state.questions.push(questionRecord);
+      } else if (kind === "mistake") {
+        var mistakeTopic = (values.topic || "").trim();
+        var mistakeRecord = {
+          id: dependencies.uid(),
+          date: values.date,
+          question: (values.question || "").trim(),
+          reason: (values.reason || "").trim(),
+          answer: (values.answer || "").trim(),
+          tag: tag,
+          resolved: false,
+        };
+        if (mistakeTopic) mistakeRecord.topic = mistakeTopic;
+        state.mistakes.push(mistakeRecord);
+        message = "erro adicionado ao caderno";
       } else if (kind === "theme") {
         state.themes.push({
           id: dependencies.uid(),
@@ -377,4 +391,5 @@
 
   window.DesvelarFormController = Object.freeze({ create: create });
 })();
+
 
