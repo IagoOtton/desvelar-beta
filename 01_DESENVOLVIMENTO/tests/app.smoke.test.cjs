@@ -742,6 +742,130 @@ test("mescla alterações simultâneas preservando inclusões remotas e locais",
   );
 });
 
+test("preserva edição quando o outro dispositivo exclui o mesmo registro", () => {
+  const context = { window: {} };
+  const source = fs.readFileSync(
+    path.join(APP_ROOT, "js/domain/data-model.js"),
+    "utf8",
+  );
+  vm.runInNewContext(source, context);
+
+  const base = { tasks: [{ id: "shared-task", title: "Versão original" }] };
+  const localEdit = { tasks: [{ id: "shared-task", title: "Editada neste aparelho" }] };
+  const remoteEdit = { tasks: [{ id: "shared-task", title: "Editada no outro aparelho" }] };
+  const deleted = { tasks: [] };
+
+  const localDeleteRemoteEdit = context.window.DesvelarDataModel.mergeForSync(
+    base,
+    deleted,
+    remoteEdit,
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(localDeleteRemoteEdit.tasks)),
+    remoteEdit.tasks,
+  );
+
+  const localEditRemoteDelete = context.window.DesvelarDataModel.mergeForSync(
+    base,
+    localEdit,
+    deleted,
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(localEditRemoteDelete.tasks)),
+    localEdit.tasks,
+  );
+
+  const localDeleteRemoteUnchanged = context.window.DesvelarDataModel.mergeForSync(
+    base,
+    deleted,
+    base,
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(localDeleteRemoteUnchanged.tasks)), []);
+
+  const localUnchangedRemoteDelete = context.window.DesvelarDataModel.mergeForSync(
+    base,
+    base,
+    deleted,
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(localUnchangedRemoteDelete.tasks)), []);
+});
+
+test("reenvia para a nuvem a edição remota em conflito com uma exclusão local", async () => {
+  const context = {
+    window: {
+      DesvelarUtils: { today: () => "2026-01-01", addDays: () => "2026-01-01" },
+      DesvelarFormatting: { uid: () => "generated-id" },
+    },
+  };
+  vm.runInNewContext(
+    fs.readFileSync(path.join(APP_ROOT, "js/domain/data-model.js"), "utf8"),
+    context,
+  );
+  vm.runInNewContext(
+    fs.readFileSync(path.join(APP_ROOT, "js/repositories/cloud-data.js"), "utf8"),
+    context,
+  );
+
+  const base = { tasks: [{ id: "shared-task", title: "Versão original" }] };
+  const remote = { tasks: [{ id: "shared-task", title: "Editada no outro aparelho" }] };
+  const rpcCalls = [];
+  const client = {
+    from(table) {
+      assert.equal(table, "app_user_data");
+      return {
+        select() {
+          return this;
+        },
+        eq(column, userId) {
+          assert.equal(column, "user_id");
+          assert.equal(userId, "test-user");
+          return this;
+        },
+        maybeSingle() {
+          return Promise.resolve({
+            data: { data: base, revision: 4, updated_at: "2026-01-01T00:00:00Z" },
+            error: null,
+          });
+        },
+      };
+    },
+    rpc(name, args) {
+      assert.equal(name, "save_my_app_data");
+      rpcCalls.push(args);
+      if (rpcCalls.length === 1) {
+        return Promise.resolve({
+          data: { ok: false, data: remote, revision: 5 },
+          error: null,
+        });
+      }
+      return Promise.resolve({
+        data: {
+          ok: true,
+          data: args.p_data,
+          revision: 6,
+          updated_at: "2026-01-01T00:01:00Z",
+        },
+        error: null,
+      });
+    },
+  };
+
+  const repository = context.window.DesvelarCloudDataRepository.create({
+    client,
+    userId: "test-user",
+    mergeForSync: context.window.DesvelarDataModel.mergeForSync,
+  });
+  await repository.load();
+  const result = await repository.save({ tasks: [] });
+
+  assert.equal(result.ok, true);
+  assert.equal(rpcCalls.length, 2);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(rpcCalls[1].p_data.tasks)),
+    remote.tasks,
+  );
+});
+
 test("centraliza rascunhos, persistência e rollback no store", () => {
   const context = { window: {} };
   const source = fs.readFileSync(
