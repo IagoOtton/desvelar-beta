@@ -1572,8 +1572,13 @@ test("interage com Pomodoro e registra questões em Desempenho", async () => {
     await page.locator("#q-total").fill("10");
     await page.locator("#q-correct").fill("8");
     await page.locator('form[data-form="question"] button[type="submit"]').click();
-    await page
-      .locator('#view form[data-form="question"] ~ ul.list li > .t')
+    const recentQuestions = page
+      .locator("#view .card")
+      .filter({
+        has: page.getByRole("heading", { name: "Questões recentes", exact: true }),
+      });
+    await recentQuestions
+      .locator("ul.list li > .t")
       .filter({ hasText: "Farmacologia" })
       .last()
       .waitFor({ state: "visible" });

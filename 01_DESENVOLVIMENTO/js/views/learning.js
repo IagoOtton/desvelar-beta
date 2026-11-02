@@ -144,23 +144,6 @@
           "Temas estudados",
           "Registre o que estudou e transforme temas difíceis em revisões espaçadas, com intervalos que se ajustam ao seu resultado.",
         ) +
-        '<div class="tiles"><div class="tile"><div class="l">Temas na semana</div><div class="v num">' +
-        wk +
-        '</div><div class="n">estudados</div></div>' +
-        '<div class="tile"><div class="l">Total registrado</div><div class="v num">' +
-        all.length +
-        '</div><div class="n">temas</div></div>' +
-        '<div class="tile"><div class="l">Dificuldade média</div><div class="v num">' +
-        (all.length ? avg.toFixed(1) : "–") +
-        '</div><div class="n">de 5</div></div>' +
-        '<div class="tile"><div class="l">Para revisar hoje</div><div class="v num">' +
-        rev.length +
-        '</div><div class="n">' +
-        upcoming.length +
-        ' futuras agendadas</div></div></div>' +
-        '<div class="card"><h2>Mapa de conhecimento</h2>' +
-        dependencies.brainGraph(360) +
-        "</div>" +
         '<div class="card"><h2>Registrar tema</h2><form class="row" data-form="theme"><label class="f grow">Assunto<input id="th-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Ciclo cardíaco"></label>' +
         '<label class="f grow">Matéria' +
         dependencies.tagInput("th-tag", "ex.: Fisiologia") +
@@ -185,6 +168,23 @@
         '" required></label>' +
         '<label class="f grow">Observação (opcional)<input id="th-note" class="grow" name="note" maxlength="140" placeholder="ex.: confundo as raízes"></label>' +
         '<button class="btn pri" type="submit">Registrar</button></form></div>' +
+        '<div class="tiles"><div class="tile"><div class="l">Temas na semana</div><div class="v num">' +
+        wk +
+        '</div><div class="n">estudados</div></div>' +
+        '<div class="tile"><div class="l">Total registrado</div><div class="v num">' +
+        all.length +
+        '</div><div class="n">temas</div></div>' +
+        '<div class="tile"><div class="l">Dificuldade média</div><div class="v num">' +
+        (all.length ? avg.toFixed(1) : "–") +
+        '</div><div class="n">de 5</div></div>' +
+        '<div class="tile"><div class="l">Para revisar hoje</div><div class="v num">' +
+        rev.length +
+        '</div><div class="n">' +
+        upcoming.length +
+        ' futuras agendadas</div></div></div>' +
+        '<div class="card"><h2>Mapa de conhecimento</h2>' +
+        dependencies.brainGraph(360) +
+        "</div>" +
         '<div class="card"><h2>Revisões para hoje</h2>' +
         '<p class="m study-review-guidance">Tente explicar o assunto sem consultar suas anotações. Não lembrei: amanhã; com esforço: a partir de 3 dias; fácil: a partir de 7. Intervalos maiores crescem quando você lembra bem.</p>' +
         (rev.length
