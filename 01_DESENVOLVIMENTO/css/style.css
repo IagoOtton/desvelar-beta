@@ -97,6 +97,7 @@
 }
 html {
   background: var(--bg);
+  scrollbar-gutter: stable;
 }
 body {
   margin: 0;
@@ -143,17 +144,20 @@ body::before {
   display: grid;
   grid-template-columns: 208px minmax(0, 1fr);
   gap: 28px;
-  max-width: 1160px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding-block: 22px;
 }
 nav.side {
-  position: sticky;
+  position: fixed;
   top: 22px;
+  left: max(16px, env(safe-area-inset-left, 0px));
+  width: 208px;
   align-self: start;
   display: flex;
   flex-direction: column;
   gap: 3px;
+  z-index: 20;
 }
 .brand {
   display: flex;
@@ -240,6 +244,11 @@ main {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+@media (min-width: 861px) {
+  .shell > main {
+    grid-column: 2;
+  }
 }
 h1 {
   font: 600 28px/1.15 var(--display);
@@ -1718,6 +1727,10 @@ svg.graph .pulse {
 body.zen .shell {
   grid-template-columns: minmax(0, 1fr);
   max-width: 720px;
+  margin-inline: auto;
+}
+body.zen .shell > main {
+  grid-column: auto;
 }
 body.zen nav.side,
 body.zen nav.bottom {
@@ -1765,6 +1778,7 @@ body.zen nav.bottom {
 }
 nav.side {
   max-height: calc(100vh - 44px);
+  max-height: calc(100dvh - 44px);
   overflow-y: auto;
   scrollbar-width: thin;
 }
