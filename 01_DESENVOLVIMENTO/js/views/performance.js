@@ -64,11 +64,43 @@
           return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
         })
         .slice(0, 8);
+      var questionForm =
+        '<div class="card"><h2>Registrar questões</h2><form class="row" data-form="question"><label class="f grow">Matéria' +
+        dependencies.tagInput("q-tag", "ex.: Fisiologia") +
+        "</label>" +
+        dependencies.topicField("q-topic", "ex.: Ciclo cardíaco") +
+        '<label class="f">Feitas<input id="q-total" type="number" name="total" min="1" max="500" required></label><label class="f">Acertos<input id="q-correct" type="number" name="correct" min="0" max="500" required></label>' +
+        '<label class="f">Data<input id="q-date" type="date" name="date" value="' +
+        t +
+        '" required></label><button class="btn pri" type="submit">Registrar</button></form></div>';
+      var recentQuestions = rq.length
+        ? '<div class="card"><h2>Questões recentes</h2><ul class="list">' +
+            rq
+              .map(function (q) {
+                return (
+                  '<li><span class="m num">' +
+                  dependencies.fmtD(q.date) +
+                  '</span><span class="t">' +
+                  dependencies.chip(q.tag) +
+                  (q.topic ? '<div class="m">Assunto: ' + dependencies.esc(q.topic) + "</div>" : "") +
+                  '</span><span class="num">' +
+                  dependencies.esc(q.correct) +
+                  "/" +
+                  dependencies.esc(q.total) +
+                  '</span><button class="ico" data-a="del" data-k="questions" data-id="' +
+                  dependencies.esc(q.id) +
+                  '" aria-label="Apagar registro">×</button></li>'
+                );
+              })
+              .join("") +
+            "</ul></div>"
+        : "";
       return (
         dependencies.head(
           "Desempenho",
           "Registre suas questões por matéria e assunto para acompanhar horas, constância e acertos.",
         ) +
+        questionForm +
         '<div class="card"><h2>Horas por semana</h2>' +
         dependencies.barChart(items, {
           unit: "h",
@@ -129,38 +161,8 @@
               "desempenho",
               "q-tag",
             )) +
-        "</div>" +
-        '<div class="card"><h2>Registrar questões</h2><form class="row" data-form="question"><label class="f grow">Matéria' +
-        dependencies.tagInput("q-tag", "ex.: Fisiologia") +
-        "</label>" +
-        dependencies.topicField("q-topic", "ex.: Ciclo cardíaco") +
-        '<label class="f">Feitas<input id="q-total" type="number" name="total" min="1" max="500" required></label><label class="f">Acertos<input id="q-correct" type="number" name="correct" min="0" max="500" required></label>' +
-        '<label class="f">Data<input id="q-date" type="date" name="date" value="' +
-        t +
-        '" required></label><button class="btn pri" type="submit">Registrar</button></form>' +
-        (rq.length
-          ? '<ul class="list" style="margin-top:12px">' +
-            rq
-              .map(function (q) {
-                return (
-                  '<li><span class="m num">' +
-                  dependencies.fmtD(q.date) +
-                  '</span><span class="t">' +
-                  dependencies.chip(q.tag) +
-                  (q.topic ? '<div class="m">Assunto: ' + dependencies.esc(q.topic) + "</div>" : "") +
-                  '</span><span class="num">' +
-                  dependencies.esc(q.correct) +
-                  "/" +
-                  dependencies.esc(q.total) +
-                  '</span><button class="ico" data-a="del" data-k="questions" data-id="' +
-                  dependencies.esc(q.id) +
-                  '" aria-label="Apagar registro">×</button></li>'
-                );
-              })
-              .join("") +
-            "</ul>"
-          : "") +
-        "</div></div>"
+        "</div></div>" +
+        recentQuestions
       );
     }
 

@@ -494,6 +494,25 @@
         if (tab === currentTab) {
           document.getElementById("view").innerHTML =
             pageTicker() + cloudSyncMobileStatusHtml() + html;
+          var areaTabs = document.querySelector("#view .area-tabs");
+          if (options && Number.isFinite(options.areaScrollLeft)) {
+            if (areaTabs) areaTabs.scrollLeft = options.areaScrollLeft;
+          } else if (areaTabs) {
+            var activeAreaTab = areaTabs.querySelector('[aria-current="page"]');
+            if (activeAreaTab) {
+              var tabsRect = areaTabs.getBoundingClientRect();
+              var activeTabRect = activeAreaTab.getBoundingClientRect();
+              var centeredScroll =
+                areaTabs.scrollLeft +
+                activeTabRect.left -
+                tabsRect.left -
+                (areaTabs.clientWidth - activeTabRect.width) / 2;
+              areaTabs.scrollLeft = Math.max(
+                0,
+                Math.min(centeredScroll, areaTabs.scrollWidth - areaTabs.clientWidth),
+              );
+            }
+          }
           tick();
           focusRenderedTarget(options);
         }

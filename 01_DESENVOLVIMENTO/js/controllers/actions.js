@@ -121,11 +121,18 @@
           );
           return;
         }
+        var currentAreaTabs =
+          button.closest(".area-tabs") ||
+          document.querySelector("#view .area-tabs");
+        var areaScrollLeft = currentAreaTabs
+          ? currentAreaTabs.scrollLeft
+          : null;
         dependencies.setUiState({ tab: button.dataset.tab, zen: false });
         var focusId = button.dataset.focus || "";
         dependencies.render({
           focusHeading: event.detail === 0,
           focusId: focusId,
+          areaScrollLeft: areaScrollLeft,
         });
         window.scrollTo(0, 0);
         return;

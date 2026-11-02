@@ -271,7 +271,7 @@
         " hoje</span></div></div>" +
         ctrl +
         ratePanel +
-        '<div class="hint"><kbd>Espaço</kbd> inicia ou pausa</div></div>';
+        '<div class="hint pomo-keyboard-hint"><kbd>Espaço</kbd> inicia ou pausa</div></div>';
       if (isZen) return '<div class="zenwrap">' + main + "</div>";
       var rated = state.sessions
           .filter(function (x) {
