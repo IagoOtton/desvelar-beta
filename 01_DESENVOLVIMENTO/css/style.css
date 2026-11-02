@@ -97,7 +97,6 @@
 }
 html {
   background: var(--bg);
-  scrollbar-gutter: stable;
 }
 body {
   margin: 0;
@@ -246,6 +245,9 @@ main {
   gap: var(--space-4);
 }
 @media (min-width: 861px) {
+  html {
+    scrollbar-gutter: stable;
+  }
   .shell > main {
     grid-column: 2;
   }
