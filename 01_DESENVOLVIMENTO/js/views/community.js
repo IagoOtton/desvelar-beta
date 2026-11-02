@@ -83,9 +83,12 @@
       if (!profile) {
         return '<section id="community-composer" class="community-compose"><div class="community-compose-prompt"><span class="community-compose-mark" aria-hidden="true">✦</span><div><p class="eyebrow">SUA PRÓXIMA CONVERSA</p><h2>O que você está lendo?</h2></div></div><p class="empty">Crie seu perfil de leitor para compartilhar uma leitura.</p><a class="btn" href="#community-profile">Montar meu perfil</a></section>';
       }
+      var displayName = typeof profile.display_name === "string"
+        ? profile.display_name.trim()
+        : "";
       return (
         '<section id="community-composer" class="community-compose"><div class="community-compose-prompt"><span class="community-compose-mark" aria-hidden="true">' +
-        esc(profile.display_name.slice(0, 1).toLocaleUpperCase("pt-BR")) +
+        esc(displayName ? displayName.slice(0, 1).toLocaleUpperCase("pt-BR") : "✦") +
         '</span><div><p class="eyebrow">A CONVERSA COMEÇA COM VOCÊ</p><h2>O que a leitura despertou?</h2></div></div><form data-community-form="post" class="community-post-form"><label class="sr-only" for="community-post-body">Escreva para a comunidade</label><textarea id="community-post-body" name="body" maxlength="1500" rows="3" placeholder="Compartilhe uma descoberta, uma pergunta ou uma ideia que ficou com você…" required></textarea><div class="community-book-fields"><label class="f">Livro relacionado <span class="m">opcional</span><input class="grow" name="book_title" maxlength="160" placeholder="Título"></label><label class="f">Autor <span class="m">opcional</span><input class="grow" name="book_author" maxlength="120" placeholder="Nome do autor"></label></div><div class="rowflex community-submit-row"><span class="m">Uma boa conversa pode começar por uma página.</span><button class="btn pri" type="submit">Compartilhar</button></div></form></section>'
       );
     }
