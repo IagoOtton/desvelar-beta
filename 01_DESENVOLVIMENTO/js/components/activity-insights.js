@@ -163,7 +163,7 @@
         .slice(0, 7);
       if (!arr.length)
         return (
-          '<div class="home-empty"><p class="empty">Registre uma sessão com tag para começar seu mapa de conhecimento.</p><button class="btn sm" data-a="tab" data-tab="estudo" data-focus="s-tag">Registrar sessão</button></div>'
+          '<div class="home-empty"><p class="empty">Registre uma sessão com matéria para começar seu mapa de conhecimento.</p><button class="btn sm" data-a="tab" data-tab="estudo" data-focus="s-tag">Registrar sessão</button></div>'
         );
       var rx = W * 0.3,
         ry = H * 0.29,
@@ -289,7 +289,7 @@
         W +
         " " +
         H +
-        '" role="img" aria-label="Mapa de conhecimento: tags e temas estudados"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs>' +
+        '" role="img" aria-label="Mapa de conhecimento: matérias e temas estudados"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs>' +
         lines +
         nodes +
         labels +

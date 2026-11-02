@@ -91,6 +91,10 @@
       tagLabel: tags.label,
       tagColor: tags.color,
     });
+    var studyFields = window.DesvelarStudyFields.create({
+      getState: stateStore.getState,
+      esc: formatting.esc,
+    });
     var groups = window.DesvelarGroupViews.create({
       head: head,
       esc: formatting.esc,
@@ -157,6 +161,9 @@
       esc: formatting.esc,
       chip: tags.chip,
       tagInput: tags.input,
+      topicField: studyFields.topicField,
+      studyTypeField: studyFields.typeField,
+      studyTypeLabel: studyFields.typeLabel,
       head: studyHead,
       sum: formatting.sum,
       tkey: tags.key,
@@ -204,6 +211,9 @@
       fmtClock: dependencies.formatClock,
       esc: formatting.esc,
       chip: tags.chip,
+      topicField: studyFields.topicField,
+      studyTypeField: studyFields.typeField,
+      studyTypeLabel: studyFields.typeLabel,
       sum: formatting.sum,
       minsOn: analytics.minsOn,
       fmtM: formatting.fmtM,
@@ -225,6 +235,7 @@
       chip: tags.chip,
       esc: formatting.esc,
       tagInput: tags.input,
+      topicField: studyFields.topicField,
       sum: formatting.sum,
     });
     var system = window.DesvelarSystemViews.create({

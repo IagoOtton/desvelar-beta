@@ -26,7 +26,7 @@
             : "Pausa longa";
     }
 
-    function start(state, tag, intent, atMs) {
+    function start(state, tag, intent, atMs, topic, studyType) {
       var duration = state.pomo.focus * 60;
       state.pomo.lastTag = tag;
       state.pomoRun = {
@@ -37,6 +37,8 @@
         end: atMs + duration * 1000,
         startedAt: atMs,
       };
+      if (topic) state.pomoRun.topic = topic;
+      if (studyType) state.pomoRun.studyType = studyType;
     }
 
     function pause(state, atMs) {
@@ -56,14 +58,17 @@
 
       if (run.phase === "focus") {
         var sessionId = dependencies.uid();
-        state.sessions.push({
+        var session = {
           id: sessionId,
           date: dependencies.dateKey(new Date(run.startedAt)),
           min: Math.round(run.dur / 60),
           tag: run.tag,
           note: run.intent || "Pomodoro",
           pomo: 1,
-        });
+        };
+        if (run.topic) session.topic = run.topic;
+        if (run.studyType) session.studyType = run.studyType;
+        state.sessions.push(session);
         settings.rateId = sessionId;
 
         var isLongBreak = settings.cycle >= settings.every;
@@ -76,6 +81,8 @@
           end: atMs + duration * 1000,
           startedAt: atMs,
         };
+        if (run.topic) state.pomoRun.topic = run.topic;
+        if (run.studyType) state.pomoRun.studyType = run.studyType;
       } else {
         settings.cycle = run.phase === "long" ? 1 : settings.cycle + 1;
         state.pomoRun = null;

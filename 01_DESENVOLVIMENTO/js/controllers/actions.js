@@ -199,6 +199,8 @@
           (document.getElementById("pomo-tag").value || "").trim(),
           ((document.getElementById("pomo-intent") || {}).value || "").trim(),
           state,
+          ((document.getElementById("pomo-topic") || {}).value || "").trim(),
+          ((document.getElementById("pomo-type") || {}).value || ""),
         );
       } else if (action === "pomo-pause") {
         dependencies.pomoPause(state);
@@ -224,6 +226,9 @@
             tag: stoppedRun.tag,
             note: stoppedRun.intent || "Pomodoro interrompido",
           });
+          var stoppedSession = state.sessions[state.sessions.length - 1];
+          if (stoppedRun.topic) stoppedSession.topic = stoppedRun.topic;
+          if (stoppedRun.studyType) stoppedSession.studyType = stoppedRun.studyType;
           message = "salvo: " + minutes + " min";
         } else {
           message = "menos de 1 min, nada salvo";

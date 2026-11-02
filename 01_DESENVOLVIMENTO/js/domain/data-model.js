@@ -50,6 +50,7 @@
     pbl: "PBL / Tutoria",
     out: "Outros",
   };
+  var STUDY_TYPES = ["theory", "questions", "class", "review", "other"];
   function emptyState() {
     return {
       v: 5,
@@ -157,6 +158,21 @@
       });
     });
 
+    function normalizeStudyMetadata(item) {
+      if (item.topic !== undefined) {
+        item.topic =
+          typeof item.topic === "string" ? item.topic.trim().slice(0, 100) : "";
+      }
+      if (item.studyType !== undefined) {
+        item.studyType = STUDY_TYPES.indexOf(item.studyType) !== -1
+          ? item.studyType
+          : "";
+      }
+    }
+
+    o.sessions.forEach(normalizeStudyMetadata);
+    o.questions.forEach(normalizeStudyMetadata);
+
     delete o.timer;
 
     if (["dark", "light", "system"].indexOf(o.theme) === -1) {
@@ -194,6 +210,7 @@
     ) {
       throw new Error("Sessão do Pomodoro inválida");
     }
+    if (o.pomoRun) normalizeStudyMetadata(o.pomoRun);
 
     delete o.subjects;
     delete o.ach;

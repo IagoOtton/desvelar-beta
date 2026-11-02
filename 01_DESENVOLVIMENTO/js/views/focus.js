@@ -12,6 +12,9 @@
       "fmtClock",
       "esc",
       "chip",
+      "topicField",
+      "studyTypeField",
+      "studyTypeLabel",
       "sum",
       "minsOn",
       "fmtM",
@@ -179,9 +182,11 @@
           '</div><p class="m pomo-cycle-hint">A pausa longa acontece a cada ' +
           dependencies.esc(P.every) +
           " blocos de foco.</p></div>" +
-          '<div class="pform"><label class="f">O que vai estudar? (tag)<input id="pomo-tag" list="tags" maxlength="30" autocomplete="off" value="' +
+          '<div class="pform"><label class="f">Matéria<input id="pomo-tag" list="tags" maxlength="30" autocomplete="off" value="' +
           dependencies.esc(P.lastTag) +
-          '" placeholder="ex.: Fisiologia, MedEvo, Inglês"></label>' +
+          '" placeholder="ex.: Biologia, Inglês, História"></label>' +
+          dependencies.topicField("pomo-topic", "ex.: Ciclo cardíaco") +
+          dependencies.studyTypeField("pomo-type") +
           '<div class="qc" style="justify-content:flex-start">' +
           recentTags(state)
             .map(function (x) {
@@ -201,9 +206,13 @@
           " min</button>";
       } else {
         ctrl =
-          (r.tag || r.intent
+          (r.tag || r.topic || r.studyType || r.intent
             ? '<div style="display:flex;flex-direction:column;gap:6px;align-items:center">' +
               (r.tag ? dependencies.chip(r.tag) : "") +
+              (r.topic ? '<span class="m">Assunto: ' + dependencies.esc(r.topic) + "</span>" : "") +
+              (dependencies.studyTypeLabel(r.studyType)
+                ? '<span class="m">Tipo: ' + dependencies.esc(dependencies.studyTypeLabel(r.studyType)) + "</span>"
+                : "") +
               (r.intent ? '<span class="m">' + dependencies.esc(r.intent) + "</span>" : "") +
               "</div>"
             : "") +

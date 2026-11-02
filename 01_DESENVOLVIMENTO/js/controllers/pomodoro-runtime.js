@@ -33,8 +33,15 @@
     function pomoComplete(atMs, targetState) {
       PomodoroDomain.complete(targetState || dependencies.getState(), atMs);
     }
-    function pomoStart(tag, intent, targetState) {
-      PomodoroDomain.start(targetState || dependencies.getState(), tag, intent, Date.now());
+    function pomoStart(tag, intent, targetState, topic, studyType) {
+      PomodoroDomain.start(
+        targetState || dependencies.getState(),
+        tag,
+        intent,
+        Date.now(),
+        topic,
+        studyType,
+      );
       try {
         if (window.Notification && Notification.permission === "default")
           Notification.requestPermission();

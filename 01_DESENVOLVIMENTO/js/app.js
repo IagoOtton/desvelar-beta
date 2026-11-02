@@ -624,10 +624,15 @@
     e.preventDefault();
     if (!S.pomoRun) {
       var ti = document.getElementById("pomo-tag"),
-        ii = document.getElementById("pomo-intent");
+        ii = document.getElementById("pomo-intent"),
+        topicInput = document.getElementById("pomo-topic"),
+        typeInput = document.getElementById("pomo-type");
       pomoStart(
         ti ? ti.value.trim() : S.pomo.lastTag,
         ii ? ii.value.trim() : "",
+        undefined,
+        topicInput ? topicInput.value.trim() : "",
+        typeInput ? typeInput.value : "",
       );
     } else pomoPause();
     commit();

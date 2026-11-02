@@ -313,7 +313,7 @@
             .join("") +
           "</div>"
         : emptyAction(
-            "Registre uma sessão para ver a divisão por tag.",
+            "Registre uma sessão para ver a divisão por matéria.",
             "Registrar sessão",
             "estudo",
             "s-tag",
@@ -479,7 +479,7 @@
         fmtM(wk) +
         '</div></div>' +
         "</div></div>" +
-        '<div class="grid"><div class="card"><h2>Horas por tag · semana</h2><div class="donut">' +
+        '<div class="grid"><div class="card"><h2>Horas por matéria · semana</h2><div class="donut">' +
         donut(segs, fmtM(tot), "na semana") +
         leg +
         '</div></div><div class="card"><h2>Mapa de conhecimento</h2>' +

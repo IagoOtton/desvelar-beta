@@ -20,6 +20,9 @@
       "esc",
       "chip",
       "tagInput",
+      "topicField",
+      "studyTypeField",
+      "studyTypeLabel",
       "head",
       "sum",
       "tkey",
@@ -110,7 +113,7 @@
       return (
         dependencies.head(
           "Temas estudados",
-          "Anote cada tema que você estudou no MedEvo e quão difícil ele foi. Os de nota 4 ou 5 entram na fila de revisão.",
+          "Anote cada tema estudado, sua matéria e o nível de dificuldade. Os de nota 4 ou 5 entram na fila de revisão.",
         ) +
         '<div class="tiles"><div class="tile"><div class="l">Temas na semana</div><div class="v num">' +
         wk +
@@ -127,8 +130,8 @@
         '<div class="card"><h2>Mapa de conhecimento</h2>' +
         dependencies.brainGraph(360) +
         "</div>" +
-        '<div class="card"><h2>Registrar tema</h2><form class="row" data-form="theme"><label class="f grow">Tema<input id="th-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Ciclo cardíaco"></label>' +
-        '<label class="f grow">Tag' +
+        '<div class="card"><h2>Registrar tema</h2><form class="row" data-form="theme"><label class="f grow">Assunto<input id="th-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Ciclo cardíaco"></label>' +
+        '<label class="f grow">Matéria' +
         dependencies.tagInput("th-tag", "ex.: Fisiologia") +
         "</label>" +
         '<label class="f">Dificuldade<select id="th-diff" name="diff">' +
@@ -162,7 +165,7 @@
             "</ul>"
           : '<p class="empty">Nenhum tema difícil pendente.</p>') +
         "</div>" +
-        '<div class="card"><h2>Dificuldade média por tag</h2>' +
+        '<div class="card"><h2>Dificuldade média por matéria</h2>' +
         (gr.length
           ? gr
               .map(function (r) {
@@ -217,20 +220,22 @@
         .slice(0, 25);
       return (
         dependencies.head(
-          "Horas de estudo",
-          "Registre cada bloco de estudo. O cronômetro do Início também grava aqui.",
+          "Estudos",
+          "Registre sessões, assuntos e tipos de estudo. O Pomodoro salva os blocos automaticamente.",
         ) +
         '<div class="card"><h2>Registrar sessão</h2><form class="row" data-form="session">' +
-        '<label class="f grow">Tag' +
+        '<label class="f grow">Matéria' +
         dependencies.tagInput("s-tag", "ex.: Fisiologia, Inglês") +
         "</label>" +
+        dependencies.topicField("s-topic", "ex.: Ciclo cardíaco") +
+        dependencies.studyTypeField("s-type") +
         '<label class="f">Minutos<input id="s-min" type="number" name="min" min="1" max="720" value="60" required></label>' +
         '<label class="f">Data<input id="s-date" type="date" name="date" value="' +
         t +
         '" required></label>' +
-        '<label class="f grow">Assunto (opcional)<input id="s-note" class="grow" name="note" maxlength="120" placeholder="ex.: ciclo cardíaco"></label>' +
+        '<label class="f grow">Anotação (opcional)<input id="s-note" class="grow" name="note" maxlength="120" placeholder="ex.: ponto que quero lembrar"></label>' +
         '<button class="btn pri" type="submit">Registrar</button></form></div>' +
-        '<div class="grid"><div class="card"><h2>Semana por tag</h2>' +
+        '<div class="grid"><div class="card"><h2>Semana por matéria</h2>' +
         (g.length
           ? g
               .map(function (r) {
@@ -257,6 +262,10 @@
                   dependencies.fmtD(x.date) +
                   '</span><span class="t">' +
                   dependencies.chip(x.tag) +
+                  (x.topic ? '<div class="m">Assunto: ' + dependencies.esc(x.topic) + "</div>" : "") +
+                  (dependencies.studyTypeLabel(x.studyType)
+                    ? '<div class="m">Tipo: ' + dependencies.esc(dependencies.studyTypeLabel(x.studyType)) + "</div>"
+                    : "") +
                   (x.note ? '<div class="m">' + dependencies.esc(x.note) + "</div>" : "") +
                   '</span><span class="num">' +
                   dependencies.fmtM(x.min) +

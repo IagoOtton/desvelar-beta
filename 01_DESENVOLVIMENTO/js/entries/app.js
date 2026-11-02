@@ -9,6 +9,7 @@ import "../components/navigation.js";
 import "../components/common.js";
 import "../components/tag-catalog.js";
 import "../components/activity-insights.js";
+import "../components/study-fields.js";
 import "../repositories/groups.js";
 import "../repositories/feedback.js";
 import "../repositories/community.js";
