@@ -26,6 +26,10 @@ O build usa esbuild para minificar o JavaScript e o CSS, gerar nomes de arquivo 
 | `config/` | Metadados estáticos usados para montar navegação e personalização. |
 | `app.js` | Ponto de composição: cria serviços, injeta dependências, conecta ações, renderiza e inicia o aplicativo. |
 
+## Cálculos derivados
+
+`domain/analytics.js` monta índices de sessões, leituras e questões sob demanda para o snapshot de estado atual. Os índices ficam em memória e são descartados quando o `stateStore` publica um novo snapshot. Use funções por intervalo de datas para os indicadores de período; cálculos com filtros arbitrários continuam percorrendo os registros. Não altere o estado publicado diretamente, pois isso impede a invalidação dos índices.
+
 ## Ao adicionar uma funcionalidade
 
 - Coloque cálculo independente de interface em `domain/`.
