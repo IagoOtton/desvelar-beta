@@ -2578,6 +2578,12 @@ body.zen .cloud-sync-mobile {
   min-width: 0;
 }
 
+.community-feed-more {
+  display: flex;
+  justify-content: center;
+  padding-top: 16px;
+}
+
 .community-feed-count {
   flex: 0 0 auto;
   padding: 7px 12px;
@@ -2980,6 +2986,10 @@ body.zen .cloud-sync-mobile {
 .community-comments-area {
   display: grid;
   gap: 10px;
+}
+
+.community-load-comments {
+  justify-self: start;
 }
 
 .community-comments-area h3 {

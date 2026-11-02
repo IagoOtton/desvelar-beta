@@ -237,6 +237,12 @@ const MOCK_SDK = `
               error: null,
             });
           }
+          if (table === "community_posts") {
+            return Promise.resolve({
+              data: communityPosts.find((post) => post.id === query.filters.id) || null,
+              error: null,
+            });
+          }
           if (table !== "app_user_data") {
             return Promise.resolve({ data: null, error: null });
           }
@@ -339,6 +345,96 @@ const MOCK_SDK = `
     async rpc(name, args) {
       window.__mockCalls.push({ type: "rpc", name, args });
       if (window.__testFailRpc) throw new Error("Erro de RPC simulado");
+      if (name === "get_community_post_stats") {
+        return {
+          data: args.p_post_ids.map((postId) => {
+            const post = communityPosts.find((item) => item.id === postId);
+            return {
+              post_id: postId,
+              comment_count: post ? post.community_post_comments.length : 0,
+              reaction_count: post ? post.community_post_reactions.length : 0,
+              reacted_by_user: Boolean(
+                post && post.community_post_reactions.some((item) => item.user_id === user.id),
+              ),
+            };
+          }),
+          error: null,
+        };
+      }
+      if (name === "get_reader_group_cycle_summaries") {
+        const groupedCycles = readerGroupCycles.filter((cycle) =>
+          args.p_group_ids.includes(cycle.group_id),
+        );
+        const totalByGroup = groupedCycles.reduce((totals, cycle) => {
+          totals[cycle.group_id] = (totals[cycle.group_id] || 0) + 1;
+          return totals;
+        }, {});
+        const recentByGroup = new Map();
+        groupedCycles
+          .slice()
+          .sort((a, b) => String(b.cycle_month).localeCompare(String(a.cycle_month)))
+          .forEach((cycle) => {
+            const groupCycles = recentByGroup.get(cycle.group_id) || [];
+            if (groupCycles.length < args.p_cycles_per_group) groupCycles.push(cycle);
+            recentByGroup.set(cycle.group_id, groupCycles);
+          });
+        return {
+          data: Array.from(recentByGroup.values()).flat().map((cycle) => {
+            return {
+              ...cycle,
+              candidate_count: cycle.status === "nominations"
+                ? readerBookCandidates.filter((candidate) => candidate.cycle_id === cycle.id).length
+                : 0,
+              progress_count: cycle.status === "reading"
+                ? readerProgress.filter((entry) => entry.cycle_id === cycle.id).length
+                : 0,
+              total_cycle_count: totalByGroup[cycle.group_id] || 0,
+            };
+          }),
+          error: null,
+        };
+      }
+      if (name === "get_reader_group_cycle_details") {
+        const cycle = readerGroupCycles.find((item) => item.id === args.p_cycle_id);
+        if (!cycle) return { data: [], error: null };
+        const candidates = cycle.status === "nominations"
+          ? readerBookCandidates
+            .filter((candidate) => candidate.cycle_id === cycle.id)
+            .map((candidate) => ({
+              id: candidate.id,
+              cycle_id: candidate.cycle_id,
+              title: candidate.title,
+              author: candidate.author,
+              isbn: candidate.isbn,
+              nominated_at: candidate.nominated_at,
+              nomination_count: readerNominations.filter(
+                (nomination) => nomination.candidate_id === candidate.id,
+              ).length,
+            }))
+          : [];
+        const allProgress = cycle.status === "reading"
+          ? readerProgress
+            .filter((entry) => entry.cycle_id === cycle.id)
+            .slice()
+            .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+          : [];
+        return {
+          data: [{
+            cycle_id: cycle.id,
+            candidates,
+            progress: allProgress.slice(0, 8).map((entry) => ({
+              ...entry,
+              reader_profiles: {
+                display_name: readerProfiles.find((profile) => profile.user_id === entry.user_id)?.display_name
+                  || communityProfile?.display_name
+                  || "Leitor",
+              },
+            })),
+            progress_count: allProgress.length,
+          }],
+          error: null,
+        };
+      }
       if (name === "save_my_app_data") {
         if (args.p_expected_revision !== accountRevision) {
           return {
@@ -1746,6 +1842,8 @@ test("cria grupo de leitura, abre ciclo, recebe indicação, sorteia e salva pro
     await group.locator("details.community-open-cycle > summary").click();
     await group.locator('form[data-community-form="open-cycle"] button[type="submit"]').click();
     await group.getByText("Indicações abertas", { exact: true }).waitFor({ state: "visible" });
+    await group.locator('[data-community-action="load-cycle-details"]').click();
+    await group.locator('form[data-community-form="nominate"]').waitFor({ state: "visible" });
 
     await group.locator('form[data-community-form="nominate"] input[name="title"]').fill("O planeta azul");
     await group.locator('form[data-community-form="nominate"] input[name="author"]').fill("L. Leitora");

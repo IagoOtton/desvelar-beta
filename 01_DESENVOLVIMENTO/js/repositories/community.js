@@ -12,21 +12,213 @@
     return result && Array.isArray(result.data) ? result.data : [];
   }
 
+  var FEED_PAGE_SIZE = 20;
+  var COMMENT_PREVIEW_SIZE = 3;
+  var COMMENT_PAGE_SIZE = 10;
+  var feedCache = null;
+  var pageCache = null;
+  var activeUserId = null;
+  var expandedCycles = Object.create(null);
+  var cycleDetailsById = Object.create(null);
+  var cycleDetailErrors = Object.create(null);
+
+  function compareCreatedAtAscending(left, right) {
+    var dateComparison = String(left.created_at).localeCompare(String(right.created_at));
+    return dateComparison || String(left.id).localeCompare(String(right.id));
+  }
+
+  function cursorFilter(cursor) {
+    var createdAt = String(cursor && cursor.created_at || "");
+    var id = String(cursor && cursor.id || "");
+    if (
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(createdAt) ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    ) {
+      throw new Error("Não foi possível continuar a paginação da comunidade.");
+    }
+    return "created_at.lt." + createdAt + ",and(created_at.eq." + createdAt + ",id.lt." + id + ")";
+  }
+
+  function applyPostStats(posts, stats) {
+    var statsByPost = Object.create(null);
+    rows(stats).forEach(function (entry) {
+      statsByPost[entry.post_id] = entry;
+    });
+    posts.forEach(function (post) {
+      post.community_post_comments = Array.isArray(post.community_post_comments)
+        ? post.community_post_comments.slice().sort(compareCreatedAtAscending)
+        : [];
+      var postStats = statsByPost[post.id];
+      post.comment_count = postStats ? Number(postStats.comment_count) : post.community_post_comments.length;
+      post.reaction_count = postStats ? Number(postStats.reaction_count) : 0;
+      post.reacted_by_user = Boolean(postStats && postStats.reacted_by_user);
+    });
+  }
+
+  async function readPostPage(client, cursor, pageSize) {
+    var query = client
+      .from("community_posts")
+      .select(
+        "id, author_id, body, book_title, book_author, created_at, reader_profiles(display_name), community_post_comments(id, author_id, body, created_at, reader_profiles(display_name))",
+      )
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .order("created_at", {
+        ascending: false,
+        referencedTable: "community_post_comments",
+      })
+      .limit(COMMENT_PREVIEW_SIZE, { referencedTable: "community_post_comments" })
+      .limit(pageSize + 1);
+
+    if (cursor) query = query.or(cursorFilter(cursor));
+
+    var postResult = await query;
+    if (postResult.error) {
+      return { posts: [], hasMore: false, cursor: cursor || null, error: postResult.error, statsError: null };
+    }
+
+    var fetchedPosts = rows(postResult);
+    var hasMore = fetchedPosts.length > pageSize;
+    var posts = fetchedPosts.slice(0, pageSize);
+    var statsResult = posts.length
+      ? await client.rpc("get_community_post_stats", {
+          p_post_ids: posts.map(function (post) { return post.id; }),
+        })
+      : { data: [], error: null };
+    applyPostStats(posts, statsResult.data);
+
+    return {
+      posts: posts,
+      hasMore: hasMore,
+      cursor: posts.length
+        ? { created_at: posts[posts.length - 1].created_at, id: posts[posts.length - 1].id }
+        : cursor || null,
+      error: null,
+      statsError: statsResult.error || null,
+    };
+  }
+
+  function emptyFeedCache(userId, result) {
+    return {
+      userId: userId,
+      posts: result.posts,
+      hasMore: result.hasMore,
+      cursor: result.cursor,
+      postsError: result.error,
+      statsError: result.statsError,
+    };
+  }
+
+  async function ensureFeed(client, userId) {
+    if (feedCache && feedCache.userId === userId) {
+      return feedCache;
+    }
+    var result = await readPostPage(client, null, FEED_PAGE_SIZE);
+    feedCache = emptyFeedCache(userId, result);
+    return feedCache;
+  }
+
+  function dashboardData(result) {
+    var cycles = [];
+    rows(result).forEach(function (row) {
+      var cycle = {
+        id: row.id,
+        group_id: row.group_id,
+        cycle_month: row.cycle_month,
+        status: row.status,
+        selected_title: row.selected_title,
+        selected_author: row.selected_author,
+        selected_isbn: row.selected_isbn,
+        opened_by: row.opened_by,
+        selected_by: row.selected_by,
+        selected_at: row.selected_at,
+        candidate_count: Number(row.candidate_count || 0),
+        progress_count: Number(row.progress_count || 0),
+        total_cycle_count: Number(row.total_cycle_count || 0),
+      };
+      cycles.push(cycle);
+    });
+    return { cycles: cycles };
+  }
+
+  function detailData(result) {
+    var row = rows(result)[0];
+    if (!row) return null;
+    return {
+      candidates: Array.isArray(row.candidates) ? row.candidates : [],
+      progress: Array.isArray(row.progress) ? row.progress : [],
+      progress_count: Number(row.progress_count || 0),
+    };
+  }
+
+  async function readCycleDetails(client, cycleId) {
+    try {
+      var result = await client.rpc("get_reader_group_cycle_details", {
+        p_cycle_id: cycleId,
+      });
+      if (result.error) return { error: result.error };
+      var details = detailData(result);
+      if (!details) return { error: new Error("Os detalhes deste ciclo não estão disponíveis.") };
+      cycleDetailsById[cycleId] = details;
+      delete cycleDetailErrors[cycleId];
+      return { data: details, error: null };
+    } catch (error) {
+      return { error: error };
+    }
+  }
+
+  async function loadExpandedCycleDetails(client, cycles) {
+    var expanded = cycles.filter(function (cycle) {
+      return expandedCycles[cycle.id] && !cycleDetailsById[cycle.id];
+    });
+    await Promise.all(expanded.map(async function (cycle) {
+      var result = await readCycleDetails(client, cycle.id);
+      if (result.error) cycleDetailErrors[cycle.id] = result.error;
+    }));
+  }
+
+  function pageData(userId, currentFeed, cachedPage) {
+    return {
+      profile: cachedPage.profile,
+      posts: currentFeed.posts,
+      hasMorePosts: currentFeed.hasMore,
+      groups: cachedPage.groups,
+      cycles: cachedPage.cycles,
+      cycleDetails: cycleDetailsById,
+      cycleDetailErrors: cycleDetailErrors,
+      errors: {
+        profile: cachedPage.errors.profile,
+        posts: currentFeed.postsError || null,
+        postStats: currentFeed.statsError || null,
+        groups: cachedPage.errors.groups,
+        cycles: cachedPage.errors.cycles,
+        related: null,
+      },
+    };
+  }
+
   async function loadPage(userId) {
     var client = getClient();
+    if (activeUserId !== userId) {
+      activeUserId = userId;
+      feedCache = null;
+      pageCache = null;
+      expandedCycles = Object.create(null);
+      cycleDetailsById = Object.create(null);
+      cycleDetailErrors = Object.create(null);
+    }
+    var feedPromise = ensureFeed(client, userId);
+    if (pageCache && pageCache.userId === userId) {
+      return pageData(userId, await feedPromise, pageCache);
+    }
+
     var initial = await Promise.all([
       client
         .from("reader_profiles")
         .select("user_id, display_name, bio")
         .eq("user_id", userId)
         .maybeSingle(),
-      client
-        .from("community_posts")
-        .select(
-          "id, author_id, body, book_title, book_author, created_at, reader_profiles(display_name), community_post_comments(id, author_id, body, created_at, reader_profiles(display_name)), community_post_reactions(user_id)",
-        )
-        .order("created_at", { ascending: false })
-        .limit(30),
+      feedPromise,
       client
         .from("reader_group_members")
         .select("role, joined_at, reader_groups(id, name, description, invite_code, created_by)")
@@ -34,7 +226,7 @@
     ]);
 
     var profileResult = initial[0];
-    var postResult = initial[1];
+    var currentFeed = initial[1];
     var memberResult = initial[2];
     var groups = rows(memberResult)
       .map(function (membership) {
@@ -46,82 +238,137 @@
       })
       .filter(Boolean);
     var groupIds = groups.map(function (group) { return group.id; });
-    var cycles = [];
-    var candidates = [];
-    var nominations = [];
-    var progress = [];
-    var cycleError = null;
-    var relatedError = null;
-
+    var dashboardResult = { data: [], error: null };
     if (groupIds.length) {
-      var cycleResult = await client
-        .from("reader_group_cycles")
-        .select("id, group_id, cycle_month, status, selected_title, selected_author, selected_isbn, opened_by, selected_by, selected_at")
-        .in("group_id", groupIds)
-        .order("cycle_month", { ascending: false });
-      cycleError = cycleResult.error || null;
-      cycles = rows(cycleResult);
-
-      var cycleIds = cycles.map(function (cycle) { return cycle.id; });
-      if (cycleIds.length) {
-        var related = await Promise.all([
-          client
-            .from("reader_group_book_candidates")
-            .select("id, cycle_id, title, author, isbn, nominated_at")
-            .in("cycle_id", cycleIds)
-            .order("nominated_at", { ascending: true }),
-          client
-            .from("reader_group_nominations")
-            .select("candidate_id, cycle_id, user_id, created_at")
-            .in("cycle_id", cycleIds),
-          client
-            .from("reader_group_progress_updates")
-            .select("id, cycle_id, user_id, percent_complete, pages_read, total_pages, note, created_at")
-            .in("cycle_id", cycleIds)
-            .order("created_at", { ascending: false }),
-        ]);
-        candidates = rows(related[0]);
-        nominations = rows(related[1]);
-        progress = rows(related[2]);
-        relatedError = related[0].error || related[1].error || related[2].error || null;
-        if (progress.length) {
-          var progressUserIds = Array.from(new Set(progress.map(function (entry) {
-            return entry.user_id;
-          })));
-          var progressProfilesResult = await client
-            .from("reader_profiles")
-            .select("user_id, display_name")
-            .in("user_id", progressUserIds);
-          relatedError = relatedError || progressProfilesResult.error || null;
-          var profileNames = Object.create(null);
-          rows(progressProfilesResult).forEach(function (profile) {
-            profileNames[profile.user_id] = profile.display_name;
-          });
-          progress.forEach(function (entry) {
-            entry.reader_profiles = {
-              display_name: profileNames[entry.user_id] || "Leitor",
-            };
-          });
-        }
-      }
+      dashboardResult = await client.rpc("get_reader_group_cycle_summaries", {
+        p_group_ids: groupIds,
+        p_cycles_per_group: 6,
+      });
     }
-
-    return {
+    var dashboard = dashboardData(dashboardResult);
+    if (!dashboardResult.error) {
+      await loadExpandedCycleDetails(client, dashboard.cycles);
+    }
+    var cachedPage = {
+      userId: userId,
       profile: profileResult.data || null,
-      posts: rows(postResult),
       groups: groups,
-      cycles: cycles,
-      candidates: candidates,
-      nominations: nominations,
-      progress: progress,
+      cycles: dashboard.cycles,
       errors: {
         profile: profileResult.error || null,
-        posts: postResult.error || null,
         groups: memberResult.error || null,
-        cycles: cycleError,
-        related: relatedError,
+        cycles: dashboardResult.error || null,
       },
     };
+    if (!cachedPage.errors.profile && !cachedPage.errors.groups && !cachedPage.errors.cycles) {
+      pageCache = cachedPage;
+    }
+    return pageData(userId, currentFeed, cachedPage);
+  }
+
+  async function loadCycleDetails(userId, cycleId) {
+    if (!pageCache || pageCache.userId !== userId) await loadPage(userId);
+    var cycleExists = pageCache && pageCache.cycles.some(function (cycle) {
+      return cycle.id === cycleId;
+    });
+    if (!cycleExists) return { error: new Error("Este ciclo não está disponível no grupo.") };
+    expandedCycles[cycleId] = true;
+    if (cycleDetailsById[cycleId]) return { data: cycleDetailsById[cycleId], error: null };
+    var result = await readCycleDetails(getClient(), cycleId);
+    if (result.error) cycleDetailErrors[cycleId] = result.error;
+    return result;
+  }
+
+  async function loadMorePosts(userId) {
+    var client = getClient();
+    var currentFeed = await ensureFeed(client, userId);
+    if (currentFeed.postsError) return { error: currentFeed.postsError };
+    if (!currentFeed.hasMore || !currentFeed.cursor) return { data: false, error: null };
+
+    var result = await readPostPage(client, currentFeed.cursor, FEED_PAGE_SIZE);
+    if (result.error) return { error: result.error };
+    currentFeed.posts = currentFeed.posts.concat(result.posts);
+    currentFeed.hasMore = result.hasMore;
+    currentFeed.cursor = result.cursor;
+    currentFeed.statsError = result.statsError || currentFeed.statsError;
+    return { data: true, error: null };
+  }
+
+  async function loadOlderComments(userId, postId) {
+    var client = getClient();
+    var currentFeed = await ensureFeed(client, userId);
+    var post = currentFeed.posts.find(function (item) { return item.id === postId; });
+    if (!post) return { error: new Error("Esta publicação não está carregada.") };
+
+    var comments = post.community_post_comments || [];
+    var remaining = Math.max(0, Number(post.comment_count || 0) - comments.length);
+    if (!remaining || !comments.length) return { data: false, error: null };
+
+    var oldest = comments[0];
+    var query = client
+      .from("community_post_comments")
+      .select("id, post_id, author_id, body, created_at, reader_profiles(display_name)")
+      .eq("post_id", postId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(Math.min(COMMENT_PAGE_SIZE, remaining));
+    query = query.or(cursorFilter(oldest));
+    var result = await query;
+    if (result.error) return { error: result.error };
+
+    var older = rows(result).sort(function (left, right) {
+      return -compareCreatedAtAscending(left, right);
+    });
+    older.reverse();
+    post.community_post_comments = older.concat(comments);
+    return { data: older.length > 0, error: null };
+  }
+
+  async function refreshPost(userId, postId) {
+    var client = getClient();
+    var currentFeed = await ensureFeed(client, userId);
+    var index = currentFeed.posts.findIndex(function (item) { return item.id === postId; });
+    if (index < 0) return { error: new Error("Esta publicação não está carregada.") };
+
+    var result = await client
+      .from("community_posts")
+      .select(
+        "id, author_id, body, book_title, book_author, created_at, reader_profiles(display_name), community_post_comments(id, post_id, author_id, body, created_at, reader_profiles(display_name))",
+      )
+      .eq("id", postId)
+      .order("created_at", {
+        ascending: false,
+        referencedTable: "community_post_comments",
+      })
+      .limit(COMMENT_PREVIEW_SIZE, { referencedTable: "community_post_comments" })
+      .maybeSingle();
+    if (result.error || !result.data) return { error: result.error || new Error("A publicação não foi encontrada.") };
+
+    var statsResult = await client.rpc("get_community_post_stats", { p_post_ids: [postId] });
+    if (statsResult.error) return { error: statsResult.error };
+
+    var refreshed = result.data;
+    applyPostStats([refreshed], statsResult.data);
+    var previousComments = currentFeed.posts[index].community_post_comments || [];
+    var mergedComments = Object.create(null);
+    previousComments.concat(refreshed.community_post_comments).forEach(function (comment) {
+      mergedComments[comment.id] = comment;
+    });
+    refreshed.community_post_comments = Object.keys(mergedComments)
+      .map(function (id) { return mergedComments[id]; })
+      .sort(compareCreatedAtAscending);
+    currentFeed.posts[index] = refreshed;
+    return { data: refreshed, error: null };
+  }
+
+  function invalidateFeed() {
+    feedCache = null;
+  }
+
+  function invalidatePage() {
+    pageCache = null;
+    cycleDetailsById = Object.create(null);
+    cycleDetailErrors = Object.create(null);
   }
 
   function saveProfile(userId, values) {
@@ -218,6 +465,12 @@
 
   window.DesvelarCommunityRepository = Object.freeze({
     loadPage: loadPage,
+    loadMorePosts: loadMorePosts,
+    loadOlderComments: loadOlderComments,
+    loadCycleDetails: loadCycleDetails,
+    refreshPost: refreshPost,
+    invalidateFeed: invalidateFeed,
+    invalidatePage: invalidatePage,
     saveProfile: saveProfile,
     createPost: createPost,
     addComment: addComment,
