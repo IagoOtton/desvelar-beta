@@ -247,15 +247,15 @@
       var t = dependencies.today(),
         ws = dependencies.wkStart(t),
         we = dependencies.addDays(ws, 6),
-        g = dependencies.groupMin(ws, we),
-        tot = Math.max.apply(
-          null,
-          g
-            .map(function (r) {
-              return r.m;
-            })
-            .concat([1]),
-        );
+        g = dependencies.groupMin(ws, we);
+      var tot = Math.max.apply(
+        null,
+        g
+          .map(function (r) {
+            return r.m;
+          })
+          .concat([1]),
+      );
       var rec = state.sessions
         .slice()
         .sort(function (a, b) {
@@ -265,56 +265,72 @@
       return (
         dependencies.head(
           "Estudos",
-          "Registre sessões, assuntos e tipos de estudo. O Pomodoro salva os blocos automaticamente.",
+          "Todo bloco conta. Continue de onde parou.",
         ) +
-        '<div class="card"><h2>Registrar sessão</h2><form class="row" data-form="session">' +
+        '<div class="study-overview"><div class="study-overview-primary">' +
+        '<section class="card study-session-form-card"><p class="study-eyebrow">Nova sessão</p><h2>O que você vai estudar?</h2><p class="study-card-description">Guarde matéria, assunto e tempo em um só lugar.</p><form class="row study-session-form" data-form="session">' +
         '<label class="f grow">Matéria' +
-        dependencies.tagInput("s-tag", "ex.: Fisiologia, Inglês") +
+        dependencies.tagInput("s-tag", "ex.: Biologia, Inglês") +
         "</label>" +
-        dependencies.topicField("s-topic", "ex.: Ciclo cardíaco") +
-        dependencies.studyTypeField("s-type") +
+        dependencies
+          .topicField("s-topic", "ex.: Ciclo celular")
+          .replace("Assunto (opcional)", "Assunto") +
+        dependencies
+          .studyTypeField("s-type")
+          .replace("Tipo (opcional)", "Tipo de estudo") +
         '<label class="f">Minutos<input id="s-min" type="number" name="min" min="1" max="720" value="60" required></label>' +
         '<label class="f">Data<input id="s-date" type="date" name="date" value="' +
         t +
         '" required></label>' +
-        '<label class="f grow">Anotação (opcional)<input id="s-note" class="grow" name="note" maxlength="120" placeholder="ex.: ponto que quero lembrar"></label>' +
-        '<button class="btn pri" type="submit">Registrar</button></form></div>' +
-        '<div class="grid"><div class="card"><h2>Semana por matéria</h2>' +
+        '<label class="f grow">Anotação (opcional)<input id="s-note" class="grow" name="note" maxlength="120" placeholder="Ponto que quero lembrar"></label>' +
+        '<button class="btn pri" type="submit">Registrar sessão</button></form></section>' +
+        '<section class="card study-weekly-card"><h2><span class="study-week-title-desktop">Semana por matéria</span><span class="study-week-title-mobile">Esta semana</span></h2>' +
+        '<div class="study-week-rows">' +
         (g.length
           ? g
               .map(function (r) {
                 return (
-                  '<div class="acc"><span>' +
+                  '<div class="study-week-row"><div class="study-week-label">' +
                   dependencies.chip(r.k) +
-                  '</span><div class="bar"><b style="width:' +
-                  Math.round((r.m / tot) * 100) +
-                  '%"></b></div><span class="m num">' +
+                  '<span class="m num">' +
                   dependencies.fmtM(r.m) +
-                  "</span></div>"
+                  '</span></div><div class="bar"><b style="width:' +
+                  Math.round((r.m / tot) * 100) +
+                  '%"></b></div></div>'
                 );
               })
               .join("")
           : '<p class="empty">Nada registrado nesta semana.</p>') +
-        "</div>" +
-        '<div class="card"><h2>Últimas sessões</h2>' +
+        '</div><p class="study-week-caption">Minutos registrados nesta semana</p></section></div>' +
+        '<section class="card study-history-card"><header class="study-history-header"><h2>Últimas sessões</h2><span class="study-eyebrow">Histórico recente</span></header>' +
         (rec.length
-          ? '<ul class="list">' +
+          ? '<ul class="list study-session-list">' +
             rec
               .map(function (x) {
+                var studyType = dependencies.studyTypeLabel(x.studyType);
                 return (
-                  '<li><span class="m num">' +
+                  '<li class="study-session-row"><span class="study-session-date m num">' +
                   dependencies.fmtD(x.date) +
-                  '</span><span class="t">' +
-                  dependencies.chip(x.tag) +
-                  (x.topic ? '<div class="m">Assunto: ' + dependencies.esc(x.topic) + "</div>" : "") +
-                  (dependencies.studyTypeLabel(x.studyType)
-                    ? '<div class="m">Tipo: ' + dependencies.esc(dependencies.studyTypeLabel(x.studyType)) + "</div>"
+                  '</span><span class="t study-session-content"><strong class="study-session-subject">' +
+                  dependencies.esc(x.tag || "Estudo") +
+                  '</strong>' +
+                  (x.topic
+                    ? '<span class="study-session-topic">' + dependencies.esc(x.topic) + "</span>"
                     : "") +
-                  (x.note ? '<div class="m">' + dependencies.esc(x.note) + "</div>" : "") +
-                  (x.incomplete ? '<span class="session-status session-status--incomplete">Bloco incompleto</span>' : "") +
-                  '</span><span class="num">' +
+                  (studyType || x.note
+                    ? '<span class="study-session-extra">' +
+                      (studyType ? dependencies.esc(studyType) : "") +
+                      (studyType && x.note ? " · " : "") +
+                      (x.note ? dependencies.esc(x.note) : "") +
+                      "</span>"
+                    : "") +
+                  '</span>' +
+                  (x.incomplete
+                    ? '<span class="session-status session-status--incomplete">Bloco incompleto</span>'
+                    : '<span class="study-session-status-spacer" aria-hidden="true"></span>') +
+                  '<span class="study-session-duration num">' +
                   dependencies.fmtM(x.min) +
-                  '</span><button class="ico" data-a="del" data-k="sessions" data-id="' +
+                  '</span><button class="ico study-session-delete" data-a="del" data-k="sessions" data-id="' +
                   dependencies.esc(x.id) +
                   '" aria-label="Apagar sessão">×</button></li>'
                 );
@@ -322,7 +338,7 @@
               .join("") +
             "</ul>"
           : '<p class="empty">Nenhuma sessão ainda.</p>') +
-        "</div></div>"
+        "</section></div>"
       );
     }
 
