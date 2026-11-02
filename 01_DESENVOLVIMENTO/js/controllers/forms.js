@@ -218,6 +218,9 @@
           diff: Number(values.diff),
           note: (values.note || "").trim(),
           reviewed: false,
+          nextReview: Number(values.diff) >= 4 ? values.date : "",
+          reviewCount: 0,
+          reviewIntervalDays: 0,
         });
         message = "tema registrado";
       } else if (kind === "habit") {
@@ -374,3 +377,4 @@
 
   window.DesvelarFormController = Object.freeze({ create: create });
 })();
+

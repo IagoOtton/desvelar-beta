@@ -17,6 +17,7 @@
       "pagesRange",
       "streak",
       "questionTotalsInRange",
+      "isReviewDue",
       "tagKey",
       "tagLabel",
       "tagColor",
@@ -96,7 +97,7 @@
           return x.date === t && x.pomo;
         }).length,
         rev = S.themes.filter(function (x) {
-          return x.diff >= 4 && !x.reviewed;
+          return dependencies.isReviewDue(x, t);
         }).length;
       var it = [
         ["HORAS·SEM", fmtM(wk), dlt(wk, pw)],
@@ -110,7 +111,7 @@
           BRL(sd),
           { t: sd >= 0 ? "▲" : "▼", c: sd >= 0 ? "up" : "down" },
         ],
-        ["REVISÃO", String(rev), { t: "temas", c: rev ? "down" : "up" }],
+        ["REVISÃO", String(rev), { t: "para hoje", c: rev ? "down" : "up" }],
       ];
       var half = it
         .map(function (i) {
@@ -212,6 +213,7 @@
             .slice(0, 6),
           m = th.length;
         th.forEach(function (x, j) {
+          var reviewDue = dependencies.isReviewDue(x, today());
           var aj = a + (m > 1 ? -0.55 + (1.1 * j) / (m - 1) : 0),
             r = hr + 22 + (j % 2) * 14,
             tx = hx + r * Math.cos(aj),
@@ -234,13 +236,17 @@
             '" r="5" style="fill:' +
             dc(x.diff) +
             '" opacity="' +
-            (x.reviewed ? 0.3 : 1) +
+            (x.reviewed && !reviewDue ? 0.3 : 1) +
             '"><title>' +
             esc(x.title) +
             " · dificuldade " +
             esc(x.diff) +
             "/5" +
-            (x.reviewed ? " · revisado" : "") +
+            (reviewDue
+              ? " · revisão pendente"
+              : x.reviewed
+                ? " · próxima revisão agendada"
+                : "") +
             "</title></circle>";
         });
         nodes +=
@@ -390,4 +396,5 @@
 
   window.DesvelarActivityInsights = Object.freeze({ create: create });
 })();
+
 

@@ -13,6 +13,8 @@
       "today",
       "dateKey",
       "parseDate",
+      "isStudyReviewDue",
+      "scheduleStudyReview",
       "pomoRem",
       "pomoStart",
       "pomoPause",
@@ -346,11 +348,34 @@
           }
 
         });
-      } else if (action === "th-rev") {
-        state.themes.forEach(function (theme) {
-          if (theme.id === button.dataset.id) theme.reviewed = true;
+      } else if (action === "th-review") {
+        var reviewTheme = state.themes.find(function (theme) {
+          return theme.id === button.dataset.id;
         });
-        message = "tema revisado";
+        if (
+          reviewTheme &&
+          dependencies.isStudyReviewDue(reviewTheme, dependencies.today())
+        ) {
+          var reviewSchedule = dependencies.scheduleStudyReview(
+            reviewTheme,
+            button.dataset.result,
+            dependencies.today(),
+          );
+          var reviewResultLabels = {
+            again: "não lembrei",
+            effort: "com esforço",
+            easy: "fácil",
+          };
+          message =
+            "Revisão registrada: " +
+            reviewResultLabels[button.dataset.result] +
+            ". Próxima revisão " +
+            (reviewSchedule.intervalDays === 1
+              ? "amanhã"
+              : "em " + reviewSchedule.intervalDays + " dias");
+        } else {
+          message = "Essa revisão já não está pendente.";
+        }
       } else if (action === "ms-toggle") {
         state.goals.forEach(function (goal) {
           if (goal.id === button.dataset.g) {
@@ -498,4 +523,5 @@
 
   window.DesvelarActionController = Object.freeze({ create: create });
 })();
+
 

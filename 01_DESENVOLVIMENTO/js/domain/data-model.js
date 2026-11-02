@@ -170,8 +170,45 @@
       }
     }
 
+    function normalizeReviewDate(value) {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return "";
+      }
+      var date = new Date(value + "T00:00:00Z");
+      return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+        ? value
+        : "";
+    }
+
+    function normalizeStudyReviewMetadata(theme) {
+      if (theme.nextReview !== undefined) {
+        theme.nextReview = normalizeReviewDate(theme.nextReview);
+      }
+      if (theme.lastReviewed !== undefined) {
+        theme.lastReviewed = normalizeReviewDate(theme.lastReviewed);
+      }
+      if (theme.reviewCount !== undefined) {
+        theme.reviewCount = boundedInteger(theme.reviewCount, 0, 0, 10000);
+      }
+      if (theme.reviewIntervalDays !== undefined) {
+        theme.reviewIntervalDays = boundedInteger(
+          theme.reviewIntervalDays,
+          0,
+          0,
+          90,
+        );
+      }
+      if (
+        theme.lastReviewResult !== undefined &&
+        ["again", "effort", "easy"].indexOf(theme.lastReviewResult) === -1
+      ) {
+        delete theme.lastReviewResult;
+      }
+    }
+
     o.sessions.forEach(normalizeStudyMetadata);
     o.questions.forEach(normalizeStudyMetadata);
+    o.themes.forEach(normalizeStudyReviewMetadata);
 
     delete o.timer;
 
@@ -421,4 +458,5 @@
     mergeForSync: mergeForSync,
   });
 })();
+
 
