@@ -63,11 +63,13 @@
     function profileCard(profile) {
       var saved = profile && profile.display_name;
       return (
-        '<section class="card community-profile"><div><h2>Seu perfil de leitor</h2><p class="m">' +
+        '<section id="community-profile" class="card community-profile"><div class="community-profile-header"><span class="community-profile-avatar" aria-hidden="true">' +
+        esc(saved ? saved.slice(0, 1).toLocaleUpperCase("pt-BR") : "✦") +
+        '</span><div><p class="eyebrow">SEU ESPAÇO</p><h2>Seu perfil de leitor</h2><p class="m">' +
         (saved
           ? "Este nome e esta apresentação aparecem nas suas publicações e grupos."
           : "Escolha como as outras pessoas vão reconhecer você na comunidade.") +
-        '</p></div><form data-community-form="profile" class="community-profile-form"><label class="f">Nome exibido<input class="grow" name="display_name" minlength="2" maxlength="40" autocomplete="nickname" value="' +
+        '</p></div></div><form data-community-form="profile" class="community-profile-form"><label class="f">Nome exibido<input class="grow" name="display_name" minlength="2" maxlength="40" autocomplete="nickname" value="' +
         esc(profile ? profile.display_name : "") +
         '" required></label><label class="f">Apresentação <span class="m">opcional</span><textarea name="bio" maxlength="240" rows="2" placeholder="Que tipos de livro você gosta?">' +
         esc(profile ? profile.bio : "") +
@@ -79,10 +81,12 @@
 
     function postComposer(profile) {
       if (!profile) {
-        return '<section class="card"><h2>Compartilhe uma leitura</h2><p class="empty">Crie seu perfil de leitor acima para publicar na comunidade.</p></section>';
+        return '<section id="community-composer" class="community-compose"><div class="community-compose-prompt"><span class="community-compose-mark" aria-hidden="true">✦</span><div><p class="eyebrow">SUA PRÓXIMA CONVERSA</p><h2>O que você está lendo?</h2></div></div><p class="empty">Crie seu perfil de leitor para compartilhar uma leitura.</p><a class="btn" href="#community-profile">Montar meu perfil</a></section>';
       }
       return (
-        '<section class="card"><h2>Compartilhe com os leitores</h2><form data-community-form="post" class="community-post-form"><label class="f">O que você está lendo ou pensando?<textarea name="body" maxlength="1500" rows="4" placeholder="Conte uma descoberta, faça uma pergunta ou compartilhe seu progresso…" required></textarea></label><div class="community-book-fields"><label class="f">Livro relacionado <span class="m">opcional</span><input class="grow" name="book_title" maxlength="160" placeholder="Título"></label><label class="f">Autor<input class="grow" name="book_author" maxlength="120" placeholder="Nome do autor"></label></div><div class="rowflex community-submit-row"><span class="m">Sua publicação será visível para leitores autenticados.</span><button class="btn pri" type="submit">Publicar</button></div></form></section>'
+        '<section id="community-composer" class="community-compose"><div class="community-compose-prompt"><span class="community-compose-mark" aria-hidden="true">' +
+        esc(profile.display_name.slice(0, 1).toLocaleUpperCase("pt-BR")) +
+        '</span><div><p class="eyebrow">A CONVERSA COMEÇA COM VOCÊ</p><h2>O que a leitura despertou?</h2></div></div><form data-community-form="post" class="community-post-form"><label class="sr-only" for="community-post-body">Escreva para a comunidade</label><textarea id="community-post-body" name="body" maxlength="1500" rows="3" placeholder="Compartilhe uma descoberta, uma pergunta ou uma ideia que ficou com você…" required></textarea><div class="community-book-fields"><label class="f">Livro relacionado <span class="m">opcional</span><input class="grow" name="book_title" maxlength="160" placeholder="Título"></label><label class="f">Autor <span class="m">opcional</span><input class="grow" name="book_author" maxlength="120" placeholder="Nome do autor"></label></div><div class="rowflex community-submit-row"><span class="m">Uma boa conversa pode começar por uma página.</span><button class="btn pri" type="submit">Compartilhar</button></div></form></section>'
       );
     }
 
@@ -267,14 +271,54 @@
         groupsHtml = '<p class="m">Alguns dados de indicações ou progresso não puderam ser carregados.</p>' + groupsHtml;
       }
 
+      var postCount = data.posts.length +
+        (data.posts.length === 1 ? " publicação" : " publicações");
+      var heroHtml =
+        '<section class="community-hero" aria-labelledby="community-hero-title">' +
+        '<div class="community-hero-copy"><p class="community-hero-kicker">UM CLUBE PARA QUEM AMA HISTÓRIAS</p>' +
+        '<h2 id="community-hero-title">Livros abrem conversas que continuam.</h2>' +
+        '<p>Divida ideias, encontre pessoas que leem como você e descubra outros mundos pelo olhar de cada leitor.</p>' +
+        '<a class="community-hero-link" href="#community-composer">Começar uma conversa <span aria-hidden="true">↓</span></a></div>' +
+        '<div class="community-hero-art" aria-hidden="true"><span class="community-hero-orbit community-hero-orbit-one"></span>' +
+        '<span class="community-hero-orbit community-hero-orbit-two"></span><div class="community-hero-book">' +
+        '<span class="community-hero-page community-hero-page-left"></span><span class="community-hero-page community-hero-page-right"></span>' +
+        '<span class="community-hero-spine"></span></div><span class="community-hero-spark">✦</span>' +
+        '<span class="community-hero-note">ler · trocar<br>· imaginar</span></div></section>';
+      var feedSectionHtml =
+        '<section class="community-feed" aria-labelledby="community-feed-title"><div class="community-section-heading">' +
+        '<div><p class="eyebrow">IDEIAS EM CIRCULAÇÃO</p><h2 id="community-feed-title">Da comunidade</h2>' +
+        '<p class="m">Leituras, perguntas e descobertas compartilhadas.</p></div>' +
+        '<span class="community-feed-count">' + esc(postCount) + '</span></div>' +
+        '<div class="community-feed-list">' + feedHtml + '</div></section>';
+      var groupDiscoveryHtml =
+        '<section class="card community-group-discovery"><div class="community-section-heading"><div>' +
+        '<p class="eyebrow">LEITURA EM COMPANHIA</p><h2>Encontre seu grupo</h2></div>' +
+        '<p class="m">Escolham um livro, avancem juntos e conversem sobre cada capítulo.</p></div>' +
+        '<div class="community-group-join-grid"><form data-community-form="create-group"><h3>Criar grupo</h3>' +
+        '<label class="f">Nome do grupo<input class="grow" name="name" minlength="2" maxlength="60" required></label>' +
+        '<label class="f">Descrição <span class="m">opcional</span><textarea name="description" maxlength="500" rows="2"></textarea></label>' +
+        '<button class="btn pri" type="submit">Criar grupo</button></form>' +
+        '<form data-community-form="join-group"><h3>Entrar em um grupo</h3>' +
+        '<label class="f">Código de convite<input class="grow community-code-input" name="invite_code" minlength="8" maxlength="16" ' +
+        'pattern="([A-Za-z0-9]{8}|[A-Fa-f0-9]{16})" title="Informe um código antigo de 8 caracteres ou um novo código de 16 caracteres hexadecimais" ' +
+        'autocomplete="off" autocapitalize="characters" required></label>' +
+        '<p class="m">Convites antigos de 8 caracteres continuam válidos.</p>' +
+        '<button class="btn" type="submit">Entrar no grupo</button></form></div></section>';
+      var groupsSectionHtml =
+        '<section class="community-groups" aria-labelledby="community-groups-title"><div class="community-section-heading">' +
+        '<div><p class="eyebrow">CÍRCULOS DE LEITURA</p><h2 id="community-groups-title">Seus grupos</h2></div>' +
+        '</div>' + groupsHtml + '</section>';
+
       return (
-        head("Comunidade", "Compartilhe leituras e acompanhe um livro junto com outras pessoas.") +
-        '<div class="community-stack">' +
-        profileCard(profile) +
-        '<section class="card"><div class="community-section-heading"><div><p class="eyebrow">Encontre leitores</p><h2>Grupos de leitura</h2></div><p class="m">Crie um espaço para escolher o livro do mês e avançar em conjunto.</p></div><div class="community-group-join-grid"><form data-community-form="create-group"><h3>Criar grupo</h3><label class="f">Nome do grupo<input class="grow" name="name" minlength="2" maxlength="60" required></label><label class="f">Descrição <span class="m">opcional</span><textarea name="description" maxlength="500" rows="2"></textarea></label><button class="btn pri" type="submit">Criar grupo</button></form><form data-community-form="join-group"><h3>Entrar em um grupo</h3><label class="f">Código de convite<input class="grow community-code-input" name="invite_code" minlength="8" maxlength="16" pattern="([A-Za-z0-9]{8}|[A-Fa-f0-9]{16})" title="Informe um código antigo de 8 caracteres ou um novo código de 16 caracteres hexadecimais" autocomplete="off" autocapitalize="characters" required></label><p class="m">Convites antigos de 8 caracteres continuam válidos.</p><button class="btn" type="submit">Entrar no grupo</button></form></div></section>' +
-        '<section class="community-groups"><div class="community-section-heading"><div><p class="eyebrow">Leitura compartilhada</p><h2>Seus grupos</h2></div></div>' + groupsHtml + '</section>' +
+        head("Comunidade", "Leituras que viram conversa, amizade e novas descobertas.") +
+        '<div class="community-page">' + heroHtml +
+        '<div class="community-layout"><main class="community-main" aria-label="Publicações e conversas">' +
         postComposer(profile) +
-        '<section class="community-feed"><div class="community-section-heading"><div><p class="eyebrow">Conversa entre leitores</p><h2>Publicações recentes</h2></div><span class="m">' + data.posts.length + (data.posts.length === 1 ? " publicação" : " publicações") + "</span></div>" + feedHtml + "</section></div>"
+        feedSectionHtml + '</main>' +
+        '<aside class="community-sidebar" aria-label="Seu espaço na comunidade">' +
+        profileCard(profile) +
+        groupDiscoveryHtml +
+        groupsSectionHtml + '</aside></div></div>'
       );
     }
 
