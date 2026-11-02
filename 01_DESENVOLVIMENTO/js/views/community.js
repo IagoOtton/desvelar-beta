@@ -342,7 +342,7 @@
         '</div>' + groupsHtml + '</section>';
 
       return (
-        head("Comunidade", "Leituras que viram conversa, amizade e novas descobertas.") +
+        head("Comunidade de leitura", "Leituras que viram conversa, amizade e novas descobertas.") +
         '<div class="community-page">' + heroHtml +
         '<div class="community-layout"><main class="community-main" aria-label="Publicações e conversas">' +
         postComposer(profile) +

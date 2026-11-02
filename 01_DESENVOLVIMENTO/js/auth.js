@@ -28,7 +28,7 @@
       <div class="auth-intro">
         <p class="auth-kicker">UM PASSO DE CADA VEZ</p>
         <h1 id="auth-heading">Seu espaço para avançar.</h1>
-        <p class="auth-lead">Estudos, hábitos, rotina e metas — organizados no seu ritmo.</p>
+        <p class="auth-lead">Estudos, atividade física, leitura e finanças — ferramentas pessoais e comunidades para avançar no seu ritmo.</p>
       </div>
 
       <div class="auth-form-wrap">

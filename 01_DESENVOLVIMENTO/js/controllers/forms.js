@@ -351,7 +351,9 @@
         message = "objetivo compartilhado criado";
       } else if (kind === "profile") {
         state.name = values.name.trim() || state.name;
-        state.goalH = Number(values.h);
+        if (values.h !== undefined && values.h !== "") {
+          state.goalH = Number(values.h);
+        }
         message = "perfil salvo";
       }
 

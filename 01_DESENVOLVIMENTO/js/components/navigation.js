@@ -2,7 +2,7 @@
   "use strict";
 
   window.DesvelarNavigation = (function () {
-    var PRIMARY_MOBILE_TAB_IDS = ["inicio", "foco", "estudo", "agenda"];
+    var PRIMARY_MOBILE_TAB_IDS = ["inicio", "agenda", "estudo", "leitura"];
     var MORE_ICON = "M4 6h16M4 12h16M4 18h16";
 
     function renderTab(tab, activeTab) {
@@ -19,21 +19,41 @@
       );
     }
 
+    function renderThemeToggle() {
+      var theme = document.documentElement.getAttribute("data-theme");
+      var isDark =
+        theme === "dark" ||
+        (theme !== "light" &&
+          !(window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: light)").matches));
+
+      return (
+        '<button class="nb nav-theme-toggle" type="button" data-a="theme" role="switch" aria-checked="' +
+        (isDark ? "true" : "false") +
+        '" aria-label="Tema escuro"><span class="nb-label">Tema escuro</span><span class="nav-theme-switch" aria-hidden="true"><span class="nav-theme-switch-thumb"></span></span></button>'
+      );
+    }
+
+    function renderTabWithExtras(tab, activeTab) {
+      return (
+        renderTab(tab, activeTab) +
+        (tab[0] === "sistema" ? renderThemeToggle() : "")
+      );
+    }
+
     function renderDesktop(tabs, activeTab) {
-      var last = "x";
+      var lastSection = "";
 
       return tabs
         .map(function (tab) {
+          var section = tab[3] || "";
           var heading = "";
 
-          if (tab[3] && tab[3] !== last) {
-            heading = '<div class="ng">' + tab[3] + "</div>";
+          if (section && section !== lastSection) {
+            heading = '<div class="ng">' + section + "</div>";
+            lastSection = section;
           }
-
-          if (tab[3]) last = tab[3];
-          else last = "";
-
-          return heading + renderTab(tab, activeTab);
+          return heading + renderTabWithExtras(tab, activeTab);
         })
         .join("");
     }
@@ -45,18 +65,6 @@
         });
       }).filter(Boolean);
 
-      tabs.forEach(function (tab) {
-        if (
-          primaryTabs.length < PRIMARY_MOBILE_TAB_IDS.length &&
-          tab[0] !== "sistema" &&
-          !primaryTabs.some(function (primaryTab) {
-            return primaryTab[0] === tab[0];
-          })
-        ) {
-          primaryTabs.push(tab);
-        }
-      });
-
       var primaryIds = primaryTabs.map(function (tab) {
         return tab[0];
       });
@@ -64,14 +72,16 @@
         return primaryIds.indexOf(tab[0]) === -1;
       });
       var menu = "";
-      var lastGroup = "";
+      var lastSection = "";
 
       moreTabs.forEach(function (tab) {
-        if (tab[3] && tab[3] !== lastGroup) {
-          menu += '<div class="ng">' + tab[3] + "</div>";
+        var section = tab[3] || "";
+
+        if (section && section !== lastSection) {
+          menu += '<div class="ng">' + section + "</div>";
+          lastSection = section;
         }
-        lastGroup = tab[3] || "";
-        menu += renderTab(tab, activeTab);
+        menu += renderTabWithExtras(tab, activeTab);
       });
 
       var moreIsActive = moreTabs.some(function (tab) {
@@ -98,8 +108,6 @@
       return heads ? renderDesktop(tabs, activeTab) : renderMobile(tabs, activeTab);
     }
 
-    return {
-      render: render,
-    };
+    return { render: render };
   })();
 })();

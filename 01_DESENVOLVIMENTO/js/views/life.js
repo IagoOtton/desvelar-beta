@@ -396,7 +396,7 @@
       );
     }
 
-    function routinePage() {
+    function routinePanel() {
       var state = dependencies.getState();
       var dow = (new Date().getDay() + 6) % 7;
       var cols = [0, 1, 2, 3, 4, 5, 6]
@@ -439,11 +439,8 @@
         })
         .join("");
       return (
-        dependencies.head(
-          "Rotina semanal",
-          "Seus blocos fixos de cada semana: aulas, estágio, academia, refeições. O que cair em hoje aparece no Início.",
-        ) +
-        '<div class="card"><h2>Novo bloco fixo</h2><form class="row" data-form="routine"><label class="f grow">Atividade<input id="ro-title" class="grow" name="title" maxlength="80" required placeholder="ex.: Aulas, Academia"></label>' +
+        '<section class="agenda-panel" aria-labelledby="agenda-routine-title"><div><h2 id="agenda-routine-title">Rotina semanal</h2><p class="m">Cadastre os blocos que se repetem na sua semana.</p></div>' +
+        '<div class="card"><h3>Novo bloco fixo</h3><form class="row" data-form="routine"><label class="f grow">Atividade<input id="ro-title" class="grow" name="title" maxlength="80" required placeholder="ex.: Aulas, Academia"></label>' +
         '<label class="f grow">Tag (opcional)' +
         dependencies.tagInput("ro-tag", "ex.: Faculdade, Saúde") +
         "</label>" +
@@ -466,7 +463,16 @@
         '<button class="btn pri" type="submit">Adicionar</button></form></div>' +
         '<div class="rgrid">' +
         cols +
-        "</div>"
+        "</div></section>"
+      );
+    }
+
+    function routinePage() {
+      return (
+        dependencies.head(
+          "Rotina semanal",
+          "Seus blocos fixos de cada semana: aulas, estágio, academia, refeições. O que cair em hoje aparece no Início.",
+        ) + routinePanel()
       );
     }
 
@@ -476,6 +482,7 @@
       financePage: financePage,
       goalsPage: goalsPage,
       routinePage: routinePage,
+      routinePanel: routinePanel,
     });
   }
   window.DesvelarLifeViews = Object.freeze({ create: create });
