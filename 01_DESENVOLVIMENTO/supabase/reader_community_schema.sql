@@ -247,14 +247,42 @@ create table if not exists public.reader_group_draws (
 
 create index if not exists community_posts_feed_idx
   on public.community_posts (created_at desc);
+create index if not exists community_posts_author_id_idx
+  on public.community_posts (author_id);
 create index if not exists community_comments_post_idx
   on public.community_post_comments (post_id, created_at);
+create index if not exists community_post_comments_author_id_idx
+  on public.community_post_comments (author_id);
+create index if not exists community_post_reactions_user_id_idx
+  on public.community_post_reactions (user_id);
+create index if not exists community_post_reports_reporter_id_idx
+  on public.community_post_reports (reporter_id);
 create index if not exists reader_group_cycles_group_month_idx
   on public.reader_group_cycles (group_id, cycle_month desc);
+create index if not exists reader_group_cycles_opened_by_idx
+  on public.reader_group_cycles (opened_by);
+create index if not exists reader_group_cycles_selected_by_idx
+  on public.reader_group_cycles (selected_by);
 create index if not exists reader_group_candidates_cycle_idx
   on public.reader_group_book_candidates (cycle_id, nominated_at);
+create index if not exists reader_group_draws_candidate_cycle_idx
+  on public.reader_group_draws (candidate_id, cycle_id);
+create index if not exists reader_group_draws_drawn_by_idx
+  on public.reader_group_draws (drawn_by);
+create index if not exists reader_group_members_user_group_idx
+  on public.reader_group_members (user_id, group_id);
+create index if not exists reader_group_nominations_candidate_cycle_idx
+  on public.reader_group_nominations (candidate_id, cycle_id);
+create index if not exists reader_group_nominations_cycle_candidate_idx
+  on public.reader_group_nominations (cycle_id, candidate_id);
+create index if not exists reader_group_nominations_user_id_idx
+  on public.reader_group_nominations (user_id);
 create index if not exists reader_group_progress_cycle_idx
   on public.reader_group_progress_updates (cycle_id, created_at desc);
+create index if not exists reader_group_progress_updates_user_id_idx
+  on public.reader_group_progress_updates (user_id);
+create index if not exists reader_groups_created_by_idx
+  on public.reader_groups (created_by);
 
 alter table public.reader_profiles enable row level security;
 alter table public.community_posts enable row level security;
@@ -308,7 +336,7 @@ as $function$
     select 1
     from public.reader_group_members m
     where m.group_id = _group_id
-      and m.user_id = auth.uid()
+      and m.user_id = (select auth.uid())
   );
 $function$;
 
@@ -323,7 +351,7 @@ as $function$
     select 1
     from public.reader_group_members m
     where m.group_id = _group_id
-      and m.user_id = auth.uid()
+      and m.user_id = (select auth.uid())
       and m.role = 'owner'
   );
 $function$;
@@ -340,7 +368,7 @@ as $function$
     from public.reader_group_cycles c
     join public.reader_group_members m on m.group_id = c.group_id
     where c.id = _cycle_id
-      and m.user_id = auth.uid()
+      and m.user_id = (select auth.uid())
   );
 $function$;
 
