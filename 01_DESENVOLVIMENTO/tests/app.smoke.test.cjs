@@ -1550,6 +1550,7 @@ test("interage com Pomodoro e registra questões em Desempenho", async () => {
 
   try {
     await waitForApp(page);
+    await page.locator('#sidenav [data-tab="estudo"]').click();
     await page.locator('#view .area-tabs [data-tab="foco"]').click();
     await page.locator("#pomo-tag").fill("Teste do módulo Pomodoro");
     await page.locator("#pomo-intent").fill("Validar a tela extraída");
