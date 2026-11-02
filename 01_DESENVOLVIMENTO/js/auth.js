@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var authScript = document.currentScript;
+  var appScriptSrc = authScript && authScript.getAttribute("data-app-src");
   var root = document.getElementById("auth-root");
   if (!root) return;
 
@@ -251,10 +253,19 @@
     appStarted = true;
     window.desvelarUser = user;
     message.textContent = "Carregando seus dados…";
+    var appSource = appScriptSrc || "./js/app.js";
+
+    if (appScriptSrc) {
+      var appPreload = document.createElement("link");
+      appPreload.rel = "preload";
+      appPreload.as = "script";
+      appPreload.href = appScriptSrc;
+      document.head.appendChild(appPreload);
+    }
 
     function openApp() {
       var appScript = document.createElement("script");
-      appScript.src = "./js/app.js";
+      appScript.src = appSource;
       appScript.onload = function () {
         root.style.display = "none";
         if (shell) shell.style.display = "";

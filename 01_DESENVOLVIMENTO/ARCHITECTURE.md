@@ -2,17 +2,15 @@
 
 ## Entrada do aplicativo
 
-`desvelar-v1-corrigido.html` carrega os scripts clássicos do aplicativo. Após a autenticação, `auth.js` carrega `js/app.js`. Os módulos são IIFEs que publicam uma API nomeada em `window.Desvelar...`; mantenha os scripts na ordem do HTML, porque os módulos são criados antes de o aplicativo ser iniciado.
+`desvelar-v1-corrigido.html` é a entrada de desenvolvimento e dos testes. Ela carrega os scripts clássicos do aplicativo. O build de produção agrupa e minifica esses módulos em dois bundles com nomes baseados no conteúdo: um bundle pequeno de autenticação e outro com o aplicativo. Após validar a sessão, `auth.js` pré-carrega o bundle do aplicativo enquanto busca os dados da conta e o executa quando a carga dos dados termina. Os módulos de origem continuam como IIFEs que publicam APIs em `window.Desvelar...`; mantenha a ordem das importações nas entradas de build, pois esses módulos são criados antes de o aplicativo ser iniciado.
 
 O fluxo esperado é:
 
-1. Utilitários, modelo, domínio e configuração.
-2. Componentes compartilhados e integrações.
-3. Repositórios, sincronização e estado.
-4. Views e controllers.
-5. Autenticação; depois da sessão, `app.js`.
+1. O bundle de autenticação carrega o modelo, o repositório de dados da nuvem e o cliente Supabase.
+2. O bundle do aplicativo carrega utilitários, domínio, configuração, componentes, repositórios, sincronização, estado, views e controllers.
+3. `app.js` encerra o bundle do aplicativo e inicia a interface depois de a sessão e os dados da conta estarem prontos.
 
-O build do beta copia a pasta `js` inteira. Ao adicionar um arquivo, inclua o script no HTML antes de qualquer módulo que o use.
+O build usa esbuild para minificar o JavaScript e o CSS, gerar nomes de arquivo com hash e publicar somente o HTML de entrada e os assets compilados. Ao adicionar um módulo de origem, inclua-o na entrada apropriada antes de qualquer módulo que o use. Os testes locais continuam carregando os scripts de origem pelo HTML de desenvolvimento.
 
 ## Responsabilidades
 

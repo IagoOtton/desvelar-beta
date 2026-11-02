@@ -33,7 +33,7 @@ jobs:
       - name: Configurar pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 10
+          version: 11.25.0
       - name: Configurar Node.js
         uses: actions/setup-node@v6
         with:
@@ -56,8 +56,22 @@ jobs:
     steps:
       - name: Baixar o código
         uses: actions/checkout@v6
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.25.0
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: 01_DESENVOLVIMENTO/pnpm-lock.yaml
+      - name: Instalar dependências do build
+        working-directory: 01_DESENVOLVIMENTO
+        run: pnpm install --frozen-lockfile
       - name: Montar os arquivos do beta
-        run: node scripts/build-beta.mjs
+        working-directory: 01_DESENVOLVIMENTO
+        run: pnpm build
       - name: Enviar os arquivos do site
         uses: actions/upload-pages-artifact@v4
         with:
