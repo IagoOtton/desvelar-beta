@@ -10,7 +10,9 @@ O fluxo esperado é:
 2. O bundle do aplicativo carrega utilitários, domínio, configuração, componentes, repositórios, sincronização, estado, views e controllers.
 3. `app.js` encerra o bundle do aplicativo e inicia a interface depois de a sessão e os dados da conta estarem prontos.
 
-O build usa esbuild para minificar o JavaScript e o CSS, gerar nomes de arquivo com hash e publicar somente o HTML de entrada e os assets compilados. Ao adicionar um módulo de origem, inclua-o na entrada apropriada antes de qualquer módulo que o use. Os testes locais continuam carregando os scripts de origem pelo HTML de desenvolvimento.
+O build usa esbuild para minificar o JavaScript e o CSS, gerar nomes de arquivo com hash e publicar o HTML de entrada, os assets compilados e o `service-worker.js` de produção. Ao adicionar um módulo de origem, inclua-o na entrada apropriada antes de qualquer módulo que o use. Os testes locais continuam carregando os scripts de origem pelo HTML de desenvolvimento.
+
+O bundle de autenticação registra um service worker apenas em HTTPS. Ele usa cache-first somente para JavaScript e CSS de produção em `assets/` cujos nomes incluem hash de conteúdo; o HTML, as fontes externas e as respostas do Supabase continuam fora desse cache. O build deriva o identificador do cache dos nomes dos bundles. A ativação mantém a geração atual e a anterior para arquivos referenciados por um HTML ainda em cache e remove gerações mais antigas.
 
 ## Responsabilidades
 
