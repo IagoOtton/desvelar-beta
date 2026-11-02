@@ -41,7 +41,8 @@
 
   function applyPostStats(posts, stats) {
     var statsByPost = Object.create(null);
-    rows(stats).forEach(function (entry) {
+    var statRows = Array.isArray(stats) ? stats : rows(stats);
+    statRows.forEach(function (entry) {
       statsByPost[entry.post_id] = entry;
     });
     posts.forEach(function (post) {
