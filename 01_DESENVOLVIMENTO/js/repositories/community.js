@@ -88,13 +88,13 @@
           var progressUserIds = Array.from(new Set(progress.map(function (entry) {
             return entry.user_id;
           })));
-          var profileResult = await client
+          var progressProfilesResult = await client
             .from("reader_profiles")
             .select("user_id, display_name")
             .in("user_id", progressUserIds);
-          relatedError = relatedError || profileResult.error || null;
+          relatedError = relatedError || progressProfilesResult.error || null;
           var profileNames = Object.create(null);
-          rows(profileResult).forEach(function (profile) {
+          rows(progressProfilesResult).forEach(function (profile) {
             profileNames[profile.user_id] = profile.display_name;
           });
           progress.forEach(function (entry) {
