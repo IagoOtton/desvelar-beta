@@ -1632,9 +1632,41 @@ test("cria grupo de leitura, abre ciclo, recebe indicação, sorteia e salva pro
     await group.locator('[data-community-action="draw"]').click();
     await group.locator(".community-selected-book").getByText("O planeta azul", { exact: true }).waitFor({ state: "visible" });
 
-    await group.locator('form[data-community-form="progress"] input[name="percent"]').fill("35");
-    await group.locator('form[data-community-form="progress"] textarea[name="note"]').fill("A história começou a ficar intensa.");
-    await group.locator('form[data-community-form="progress"] button[type="submit"]').click();
+    const progressForm = group.locator('form[data-community-form="progress"]');
+    async function rejectProgress(values, message) {
+      await progressForm.evaluate((form, nextValues) => {
+        Object.entries(nextValues).forEach(([name, value]) => {
+          form.querySelector(`[name="${name}"]`).value = value;
+        });
+        form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      }, values);
+      await page.getByText(message, { exact: true }).waitFor({ state: "visible" });
+      assert.equal(
+        await page.evaluate(() => window.__mockCalls.filter(
+          (call) => call.type === "insert" && call.table === "reader_group_progress_updates",
+        ).length),
+        0,
+      );
+    }
+
+    await rejectProgress(
+      { percent: "101", pages: "", total_pages: "" },
+      "O percentual precisa ser um número inteiro entre 0 e 100.",
+    );
+    await rejectProgress(
+      { percent: "", pages: "20", total_pages: "" },
+      "Informe as páginas lidas e o total de páginas juntos.",
+    );
+    await rejectProgress(
+      { percent: "", pages: "101", total_pages: "100" },
+      "As páginas lidas não podem passar do total do livro.",
+    );
+
+    await progressForm.locator('input[name="percent"]').fill("35");
+    await progressForm.locator('input[name="pages"]').fill("");
+    await progressForm.locator('input[name="total_pages"]').fill("");
+    await progressForm.locator('textarea[name="note"]').fill("A história começou a ficar intensa.");
+    await progressForm.locator('button[type="submit"]').click();
     await group.getByText("A história começou a ficar intensa.", { exact: true }).waitFor({ state: "visible" });
 
     const savedCalls = await page.evaluate(() => window.__mockCalls);
