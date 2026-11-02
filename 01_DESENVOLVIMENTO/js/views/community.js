@@ -93,18 +93,16 @@
       );
     }
 
-    function postHtml(post, userId) {
+    function postHtml(post) {
       var comments = Array.isArray(post.community_post_comments)
         ? post.community_post_comments.slice().sort(function (a, b) {
             return new Date(a.created_at) - new Date(b.created_at);
           })
         : [];
-      var reactions = Array.isArray(post.community_post_reactions)
-        ? post.community_post_reactions
-        : [];
-      var reacted = reactions.some(function (reaction) {
-        return reaction.user_id === userId;
-      });
+      var commentCount = Math.max(comments.length, Number(post.comment_count || 0));
+      var reactionCount = Math.max(0, Number(post.reaction_count || 0));
+      var reacted = Boolean(post.reacted_by_user);
+      var olderCommentCount = Math.max(0, commentCount - comments.length);
       var book = post.book_title
         ? '<div class="community-book-tag"><span aria-hidden="true">▤</span><span><strong>' +
           esc(post.book_title) +
@@ -131,6 +129,11 @@
             .join("") +
           "</ol>"
         : '<p class="m community-no-comments">Ainda não há comentários.</p>';
+      var olderCommentsButton = olderCommentCount
+        ? '<button class="btn sm community-load-comments" type="button" data-community-action="load-comments" data-post-id="' +
+          esc(post.id) +
+          '">Carregar comentários anteriores (' + olderCommentCount + ")</button>"
+        : "";
 
       return (
         '<article class="community-post"><header class="community-post-header"><div class="community-avatar" aria-hidden="true">' +
@@ -158,12 +161,13 @@
         '"><span aria-hidden="true">' +
         (reacted ? "♥" : "♡") +
         '</span> ' +
-        reactions.length +
+        reactionCount +
         ' curtidas</button><span class="m">' +
-        comments.length +
-        (comments.length === 1 ? " comentário" : " comentários") +
+        commentCount +
+        (commentCount === 1 ? " comentário" : " comentários") +
         '</span></div><div class="community-comments-area"><h3>Conversa</h3>' +
         commentsHtml +
+        olderCommentsButton +
         '<form data-community-form="comment" data-post-id="' +
         esc(post.id) +
         '" class="community-comment-form"><label class="sr-only" for="comment-' +
@@ -176,10 +180,12 @@
 
     function progressHtml(cycle, entries) {
       if (!entries.length) return '<p class="m">Ninguém compartilhou o progresso ainda.</p>';
+      var olderUpdates = Number(cycle.progress_count || 0) > entries.length
+        ? '<p class="m">Exibindo as oito atualizações mais recentes deste ciclo.</p>'
+        : "";
       return (
         '<ul class="community-progress-list">' +
         entries
-          .slice(0, 8)
           .map(function (entry) {
             var percent = entry.percent_complete;
             if (percent == null && entry.pages_read != null && entry.total_pages) {
@@ -197,21 +203,22 @@
             );
           })
           .join("") +
-          "</ul>"
+          "</ul>" + olderUpdates
       );
     }
 
     function cycleHtml(group, cycle, data, isOwner) {
-      var candidates = data.candidates.filter(function (item) { return item.cycle_id === cycle.id; });
-      var nominations = data.nominations.filter(function (item) { return item.cycle_id === cycle.id; });
-      var progress = data.progress.filter(function (item) { return item.cycle_id === cycle.id; });
+      var details = data.cycleDetails[cycle.id] || null;
+      var candidates = details ? details.candidates : [];
+      var progress = details ? details.progress : [];
+      var detailError = data.cycleDetailErrors[cycle.id];
       var status = cycle.status === "nominations" ? "Indicações abertas" : cycle.status === "reading" ? "Leitura em andamento" : "Ciclo encerrado";
       var selectedBook = cycle.selected_title
         ? '<div class="community-selected-book"><span class="m">Livro do mês</span><strong>' + esc(cycle.selected_title) + "</strong>" + (cycle.selected_author ? '<span class="m">' + esc(cycle.selected_author) + "</span>" : "") + "</div>"
         : "";
       var candidatesHtml = candidates.length
         ? '<ul class="community-candidate-list">' + candidates.map(function (candidate) {
-            var count = nominations.filter(function (item) { return item.candidate_id === candidate.id; }).length;
+            var count = Number(candidate.nomination_count || 0);
             return '<li><div><strong>' + esc(candidate.title) + '</strong>' + (candidate.author ? '<span class="m">' + esc(candidate.author) + '</span>' : "") + '</div><span class="badge">' + count + (count === 1 ? " indicação" : " indicações") + "</span></li>";
           }).join("") + "</ul>"
         : '<p class="empty">Ainda não há indicações. Cada pessoa pode sugerir mais de um livro.</p>';
@@ -222,13 +229,28 @@
       var progressSection = cycle.status === "reading"
         ? '<section class="community-progress-section"><h4>Progresso compartilhado</h4>' + progressHtml(cycle, progress) + '<form class="community-progress-form" data-community-form="progress" data-cycle-id="' + esc(cycle.id) + '"><h4>Atualizar meu progresso</h4><div class="community-progress-fields"><label class="f">Percentual<input name="percent" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="Ex.: 35"></label><label class="f">Páginas lidas<input name="pages" type="number" min="0" step="1" inputmode="numeric" placeholder="Ex.: 120"></label><label class="f">Total de páginas<input name="total_pages" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex.: 340"></label></div><label class="f">Comentário <span class="m">opcional</span><textarea name="note" maxlength="500" rows="2" placeholder="Como está sendo a leitura?"></textarea></label><button class="btn" type="submit">Compartilhar progresso</button></form></section>'
         : "";
+      var summaryContent = cycle.status === "nominations"
+        ? '<p class="m">' + Number(cycle.candidate_count || 0) + (Number(cycle.candidate_count || 0) === 1 ? " livro indicado" : " livros indicados") + " neste ciclo.</p>"
+        : cycle.status === "reading"
+          ? '<p class="m">' + Number(cycle.progress_count || 0) + (Number(cycle.progress_count || 0) === 1 ? " atualização de progresso" : " atualizações de progresso") + " compartilhadas.</p>"
+          : "";
+      var detailsButton = !details && cycle.status !== "closed"
+        ? '<div class="community-cycle-details-action">' +
+          (detailError ? '<p class="m">Não foi possível carregar os detalhes deste ciclo.</p>' : "") +
+          '<button class="btn sm" type="button" data-community-action="load-cycle-details" data-cycle-id="' + esc(cycle.id) + '">' +
+          (cycle.status === "nominations" ? "Ver indicações e sugerir livros" : "Ver progresso do grupo") +
+          "</button></div>"
+        : "";
+      var loadedContent = cycle.status === "nominations"
+        ? candidatesHtml + nominationForm
+        : progressSection;
 
       return (
         '<section class="community-cycle"><header class="community-cycle-header"><div><h3>' +
         esc(monthLabel(cycle.cycle_month)) +
         '</h3><span class="badge">' + esc(status) + "</span></div>" +
-        (cycle.status === "nominations" ? '<span class="m">' + candidates.length + (candidates.length === 1 ? " livro indicado" : " livros indicados") + "</span>" : "") +
-        "</header>" + selectedBook + (cycle.status === "nominations" ? candidatesHtml + nominationForm : progressSection) + "</section>"
+        (cycle.status === "nominations" ? '<span class="m">' + Number(cycle.candidate_count || 0) + (Number(cycle.candidate_count || 0) === 1 ? " livro indicado" : " livros indicados") + "</span>" : "") +
+        "</header>" + selectedBook + summaryContent + detailsButton + (details ? loadedContent : "") + "</section>"
       );
     }
 
@@ -242,7 +264,7 @@
         ? '<details class="community-open-cycle"><summary>' + (cycles.length ? "Abrir outro ciclo de leitura" : "Abrir ciclo de leitura") + '</summary><form data-community-form="open-cycle" data-group-id="' + esc(group.id) + '"><label class="f">Mês do ciclo<input type="month" name="month" min="' + esc(monthValue()) + '" value="' + esc(nextAvailableMonth(cycles)) + '" required></label><p class="m">Você pode escolher o livro agora ou abrir indicações para o grupo.</p><div class="community-book-fields"><label class="f">Livro definido agora <span class="m">opcional</span><input class="grow" name="title" maxlength="160"></label><label class="f">Autor<input class="grow" name="author" maxlength="120"></label></div><label class="f">ISBN <span class="m">opcional</span><input class="grow" name="isbn" maxlength="20" inputmode="numeric"></label><button class="btn" type="submit">Criar ciclo</button></form></details>'
         : "";
       var content = cycles.length
-        ? cycleList + (cycles.length > 6 ? '<p class="m">Mostrando os seis ciclos mais recentes.</p>' : "")
+        ? cycleList + (Number(cycles[0].total_cycle_count || 0) > cycles.length ? '<p class="m">Mostrando os seis ciclos mais recentes.</p>' : "")
         : '<p class="empty">' + (isOwner ? "Abra o primeiro ciclo para escolher o livro do mês ou receber indicações." : "A pessoa responsável ainda não abriu um ciclo de leitura.") + "</p>";
 
       return (
@@ -260,8 +282,14 @@
       var feedHtml = data.errors.posts
         ? '<p class="m">Não foi possível carregar as publicações agora. Tente atualizar a tela.</p>'
         : data.posts.length
-          ? data.posts.map(function (post) { return postHtml(post, userId); }).join("")
+          ? data.posts.map(function (post) { return postHtml(post); }).join("")
           : '<p class="empty">Ainda não há publicações. Seja a primeira pessoa a compartilhar uma leitura.</p>';
+      var postStatsNotice = data.errors.postStats
+        ? '<p class="m">As contagens de curtidas e comentários estão temporariamente indisponíveis.</p>'
+        : "";
+      var feedPagination = !data.errors.posts && data.hasMorePosts
+        ? '<div class="community-feed-more"><button class="btn" type="button" data-community-action="load-more">Carregar mais publicações</button></div>'
+        : "";
       var groupsHtml = data.errors.groups
         ? '<p class="m">Não foi possível carregar seus grupos de leitura.</p>'
         : data.groups.length
@@ -292,7 +320,8 @@
         '<div><p class="eyebrow">IDEIAS EM CIRCULAÇÃO</p><h2 id="community-feed-title">Da comunidade</h2>' +
         '<p class="m">Leituras, perguntas e descobertas compartilhadas.</p></div>' +
         '<span class="community-feed-count">' + esc(postCount) + '</span></div>' +
-        '<div class="community-feed-list">' + feedHtml + '</div></section>';
+        postStatsNotice +
+        '<div class="community-feed-list">' + feedHtml + '</div>' + feedPagination + '</section>';
       var groupDiscoveryHtml =
         '<section class="card community-group-discovery"><div class="community-section-heading"><div>' +
         '<p class="eyebrow">LEITURA EM COMPANHIA</p><h2>Encontre seu grupo</h2></div>' +

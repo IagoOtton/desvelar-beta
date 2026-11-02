@@ -369,6 +369,10 @@
     },
     setUiState: function (updates) {
       if (Object.prototype.hasOwnProperty.call(updates, "tab")) {
+        if (updates.tab === "comunidade") {
+          window.DesvelarCommunityRepository.invalidateFeed();
+          window.DesvelarCommunityRepository.invalidatePage();
+        }
         tab = updates.tab;
       }
       if (Object.prototype.hasOwnProperty.call(updates, "zen")) {

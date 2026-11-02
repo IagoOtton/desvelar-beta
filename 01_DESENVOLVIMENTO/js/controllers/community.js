@@ -159,6 +159,28 @@
           return true;
         }
 
+        if (kind === "post") {
+          repository.invalidateFeed();
+        } else if (kind === "comment") {
+          try {
+            var refreshedPost = await repository.refreshPost(userId, form.dataset.postId);
+            if (refreshedPost && refreshedPost.error) repository.invalidateFeed();
+          } catch (refreshError) {
+            console.warn("O comentário foi salvo, mas a publicação não foi atualizada:", refreshError);
+            repository.invalidateFeed();
+          }
+        }
+        if (
+          kind === "profile" ||
+          kind === "create-group" ||
+          kind === "join-group" ||
+          kind === "open-cycle" ||
+          kind === "nominate" ||
+          kind === "progress"
+        ) {
+          repository.invalidatePage();
+        }
+
         var messages = {
           profile: "Perfil salvo.",
           post: "Publicação compartilhada.",
@@ -187,6 +209,72 @@
       if (!button) return false;
 
       var action = button.dataset.communityAction;
+      if (action === "load-cycle-details") {
+        event.preventDefault();
+        if (button.disabled) return true;
+        var originalDetailLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = "Carregando detalhes…";
+        try {
+          var detailResult = await repository.loadCycleDetails(
+            dependencies.getUserId(),
+            button.dataset.cycleId,
+          );
+          if (detailResult && detailResult.error) {
+            console.error("Erro ao carregar detalhes do ciclo:", detailResult.error);
+            dependencies.toast("Não foi possível carregar os detalhes. Tente novamente.");
+            if (button.isConnected) {
+              button.disabled = false;
+              button.textContent = originalDetailLabel;
+            }
+            return true;
+          }
+          dependencies.render();
+          return true;
+        } catch (error) {
+          console.error("Erro ao carregar detalhes do ciclo:", error);
+          dependencies.toast("Não foi possível carregar os detalhes. Verifique sua conexão e tente novamente.");
+          if (button.isConnected) {
+            button.disabled = false;
+            button.textContent = originalDetailLabel;
+          }
+          return true;
+        }
+      }
+
+      if (
+        action === "load-more" ||
+        action === "load-comments"
+      ) {
+        event.preventDefault();
+        if (button.disabled) return true;
+        var originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = action === "load-more" ? "Carregando publicações…" : "Carregando comentários…";
+        try {
+          var pageResult = action === "load-more"
+            ? await repository.loadMorePosts(dependencies.getUserId())
+            : await repository.loadOlderComments(dependencies.getUserId(), button.dataset.postId);
+          if (pageResult && pageResult.error) {
+            console.error("Erro ao carregar mais conteúdo da comunidade:", pageResult.error);
+            dependencies.toast("Não foi possível carregar agora. Tente novamente.");
+            button.disabled = false;
+            button.textContent = originalText;
+            return true;
+          }
+          dependencies.render();
+          return true;
+        } catch (error) {
+          console.error("Erro ao carregar mais conteúdo da comunidade:", error);
+          dependencies.toast(messageFor(error, "Não foi possível carregar agora."));
+          if (button.isConnected) {
+            button.disabled = false;
+            button.textContent = originalText;
+          }
+          return true;
+        }
+      }
+
       if (action !== "reaction" && action !== "draw") return false;
       event.preventDefault();
 
@@ -212,8 +300,19 @@
         }
 
         if (action === "reaction") {
+          try {
+            var refreshed = await repository.refreshPost(
+              dependencies.getUserId(),
+              button.dataset.postId,
+            );
+            if (refreshed && refreshed.error) repository.invalidateFeed();
+          } catch (refreshError) {
+            console.warn("A reação foi salva, mas a publicação não foi atualizada:", refreshError);
+            repository.invalidateFeed();
+          }
           dependencies.render();
         } else {
+          repository.invalidatePage();
           dependencies.toast("Sorteio concluído. O livro escolhido já aparece no grupo.");
           dependencies.render();
         }
