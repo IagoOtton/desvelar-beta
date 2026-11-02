@@ -367,8 +367,9 @@
       if (equal(localValue, baseValue)) return clone(remoteValue);
       if (equal(remoteValue, baseValue)) return clone(localValue);
 
-      // Uma exclusão feita em um dispositivo prevalece sobre um valor sem alteração.
-      if (localValue === missing && baseValue !== missing) return missing;
+      // As comparações acima mantêm a exclusão se o outro lado não mudou.
+      // Se o outro lado editou, preservamos a edição para evitar perda silenciosa.
+      if (localValue === missing && baseValue !== missing) return clone(remoteValue);
       if (remoteValue === missing && baseValue !== missing) return clone(localValue);
 
       if (Array.isArray(localValue) || Array.isArray(remoteValue) || Array.isArray(baseValue)) {
