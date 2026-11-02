@@ -1,13 +1,16 @@
 {
   "name": "desvelar",
   "private": true,
+  "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
+    "build": "node ../scripts/build-beta.mjs",
     "test": "node --test tests/app.smoke.test.cjs"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
     "playwright": "1.62.1"
   }
 }
