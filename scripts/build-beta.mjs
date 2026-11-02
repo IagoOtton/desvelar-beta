@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
 import {
   mkdirSync,
   readFileSync,
@@ -59,6 +60,24 @@ function outputUrl(entryPoint) {
 const authUrl = outputUrl(entries.auth);
 const appUrl = outputUrl(entries.app);
 const styleUrl = outputUrl(entries.style);
+const cacheVersion = createHash("sha256")
+  .update([authUrl, appUrl, styleUrl].join("\n"))
+  .digest("hex")
+  .slice(0, 12);
+const serviceWorkerTemplate = readFileSync(
+  join(appRoot, "service-worker.js"),
+  "utf8",
+);
+
+if (!serviceWorkerTemplate.includes("__CACHE_VERSION__")) {
+  throw new Error("Não foi possível localizar a versão de cache do service worker.");
+}
+
+writeFileSync(
+  join(outputRoot, "service-worker.js"),
+  serviceWorkerTemplate.replaceAll("__CACHE_VERSION__", cacheVersion),
+);
+
 const sourceHtml = readFileSync(
   join(appRoot, "desvelar-v1-corrigido.html"),
   "utf8",
