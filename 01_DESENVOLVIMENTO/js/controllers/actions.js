@@ -8,6 +8,7 @@
       "setTheme",
       "verifyPassword",
       "signOut",
+      "confirm",
       "toast",
       "uid",
       "today",
@@ -272,6 +273,9 @@
           return item.id === button.dataset.id;
         });
         if (itemIndex === -1) return;
+        if (button.dataset.confirm && !dependencies.confirm(button.dataset.confirm)) {
+          return;
+        }
 
         var deletedItem = collectionItems[itemIndex];
         var deletedReadlog = [];
@@ -305,6 +309,7 @@
           readlog: "Registro de leitura removido.",
           routine: "Item da rotina removido.",
           sessions: "Sessão removida.",
+          strengthSessions: "Treino removido.",
           tasks: "Atividade removida.",
           themes: "Tema removido.",
           txs: "Lançamento removido.",

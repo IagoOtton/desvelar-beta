@@ -2195,6 +2195,7 @@ body.zen nav.bottom {
     white-space: normal;
   }
 }
+
 @media (max-width: 720px) {
   svg.ch text {
     font-size: 24px;
@@ -2553,6 +2554,39 @@ body.zen .cloud-sync-mobile {
 }
 
 
+.home-active-workout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+  border-color: color-mix(in srgb, var(--a1) 34%, var(--line));
+  background: linear-gradient(115deg, color-mix(in srgb, var(--a1) 9%, var(--surface)), var(--surface));
+}
+
+.home-active-workout-copy {
+  min-width: 0;
+}
+
+.home-active-workout-copy .eyebrow {
+  margin: 0 0 5px;
+  color: var(--a1);
+  font: 600 10px / 1.4 var(--mono);
+  letter-spacing: 0.09em;
+}
+
+.home-active-workout h2 {
+  margin: 0;
+}
+
+.home-active-workout .m {
+  margin: 4px 0 0;
+}
+
+.home-active-workout > .btn {
+  flex: 0 0 auto;
+}
+
 .home-quick-actions {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -2616,6 +2650,15 @@ body.zen .cloud-sync-mobile {
 }
 
 @media (max-width: 860px) {
+  .home-active-workout {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-active-workout > .btn {
+    width: 100%;
+  }
+
   .home-quick-actions {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
@@ -5329,5 +5372,1124 @@ body.zen .shell > main {
   }
 }
 
+/* Treino de musculação: registro simples e confortável no celular. */
+.strength-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.8fr);
+  gap: 16px;
+  align-items: stretch;
+  margin-top: 10px;
+}
+.strength-start-card,
+.strength-section-card,
+.strength-routine-editor,
+.strength-active-aside,
+.strength-add-exercise {
+  min-width: 0;
+  padding: clamp(18px, 2.5vw, 26px);
+  border-radius: 22px;
+}
+.strength-start-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 212px;
+  background: linear-gradient(130deg, var(--surface), color-mix(in srgb, var(--a1) 7%, var(--surface)));
+}
+.strength-start-card h2,
+.strength-section-heading h2,
+.strength-routine-editor h2,
+.strength-active-main h2,
+.strength-add-exercise h2 {
+  margin: 0;
+  color: var(--ink);
+  font: 600 clamp(20px, 2.4vw, 26px) / 1.25 var(--display);
+  letter-spacing: -0.03em;
+}
+.strength-start-card > .m {
+  max-width: 58ch;
+  margin: 9px 0 18px;
+  line-height: 1.6;
+}
+.strength-start-actions,
+.strength-routine-actions,
+.strength-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.strength-start-actions .btn,
+.strength-routine-actions .btn,
+.strength-editor-actions .btn {
+  min-height: 46px;
+}
+.strength-week-card {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  padding: 20px 22px;
+  border-radius: 22px;
+}
+.strength-week-card > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.strength-week-card .l {
+  color: var(--muted);
+}
+.strength-week-card .v {
+  color: var(--ink);
+  font: 650 25px / 1 var(--display);
+  font-variant-numeric: tabular-nums;
+}
+.strength-section-card {
+  margin-top: 16px;
+}
+.strength-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 15px;
+}
+.strength-measurement-intro {
+  margin: 0 0 12px;
+}
+.strength-measurement-intro .m {
+  margin: 0;
+}
+.strength-measurement-entry,
+.strength-measurement-trend {
+  margin-top: 16px;
+}
+.strength-measurement-entry form {
+  display: grid;
+  gap: 14px;
+}
+.strength-measurement-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.strength-measurement-note textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+}
+.strength-measurement-trend .strength-section-heading {
+  align-items: flex-end;
+}
+.strength-measurement-select {
+  min-width: 180px;
+  max-width: 260px;
+}
+.strength-measurement-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.strength-measurement-stat {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface2);
+}
+.strength-measurement-stat span,
+.strength-measurement-value span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.strength-measurement-stat strong {
+  color: var(--ink);
+  font: 650 19px / 1.2 var(--display);
+  font-variant-numeric: tabular-nums;
+}
+.strength-measurement-chart {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  margin: 8px 0 0;
+}
+.strength-measurement-count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.strength-measurement-list {
+  display: grid;
+  gap: 10px;
+}
+.strength-measurement-record {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface2) 48%, var(--surface));
+}
+.strength-measurement-record > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.strength-measurement-record h3 {
+  margin: 0;
+  font: 600 16px / 1.3 var(--display);
+}
+.strength-measurement-record .m {
+  margin: 4px 0 0;
+}
+.strength-measurement-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+.strength-measurement-actions .btn {
+  min-height: 44px;
+}
+.strength-measurement-actions [data-k="bodyMeasurements"] {
+  color: var(--a1);
+}
+.strength-measurement-values {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.strength-measurement-value {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: var(--surface2);
+}
+.strength-measurement-value strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.strength-section-heading .eyebrow,
+.strength-section-card > .eyebrow,
+.strength-routine-card .eyebrow,
+.strength-start-card .eyebrow,
+.strength-add-exercise .eyebrow,
+.strength-active-header .eyebrow {
+  margin: 0 0 6px;
+  color: var(--a1);
+  font: 600 10px / 1.4 var(--mono);
+  letter-spacing: 0.09em;
+}
+.strength-routine-list {
+  display: grid;
+  gap: 10px;
+}
+.strength-routine-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface2) 55%, var(--surface));
+}
+.strength-routine-card h3 {
+  margin: 0;
+  font: 600 17px / 1.3 var(--display);
+}
+.strength-routine-card .m {
+  margin: 5px 0 0;
+  line-height: 1.5;
+}
+.strength-routine-actions {
+  flex: 0 0 auto;
+}
+.strength-routine-delete {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -7px;
+}
+.strength-empty-state {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 16px 4px 4px;
+}
+.strength-empty-state h3,
+.strength-empty-state p {
+  margin: 0;
+}
+.strength-empty-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--a1) 14%, var(--surface));
+  color: var(--a1);
+  font-size: 26px;
+}
+.strength-latest-session,
+.strength-performance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.strength-latest-session > div,
+.strength-performance-row > div {
+  display: grid;
+  gap: 5px;
+}
+.strength-session-duration,
+.strength-best {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font: 600 12px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.strength-routine-editor > form {
+  display: grid;
+  gap: 18px;
+}
+.strength-routine-editor .strength-section-heading {
+  margin: 4px 0 -6px;
+}
+.strength-routine-rows {
+  display: grid;
+  gap: 12px;
+}
+.strength-routine-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(95px, 0.75fr)) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface2) 40%, var(--surface));
+}
+.strength-routine-row .btn {
+  min-height: 46px;
+  margin-bottom: 1px;
+}
+.strength-routine-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.strength-routine-row-actions .btn {
+  min-width: 44px;
+  padding-inline: 8px;
+}
+.strength-routine-row-actions [data-strength-action^="move-routine-exercise-"] {
+  width: 44px;
+  padding-inline: 0;
+  font-size: 17px;
+}
+.strength-editor-actions {
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+.strength-history-list,
+.strength-performance-list {
+  display: grid;
+  gap: 0;
+  margin-top: 12px;
+}
+.strength-history-details {
+  border-top: 1px solid var(--line);
+}
+.strength-history-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 66px;
+  cursor: pointer;
+  list-style: none;
+}
+.strength-history-details summary::-webkit-details-marker {
+  display: none;
+}
+.strength-history-details summary > span:first-child {
+  display: grid;
+  gap: 5px;
+}
+.strength-history-details summary small {
+  color: var(--muted);
+}
+.strength-history-exercises {
+  display: grid;
+  gap: 8px;
+  padding: 0 10px 16px 18px;
+}
+.strength-history-exercises > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 13px;
+}
+.strength-history-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin: 10px 0 14px;
+}
+.strength-history-edit-actions .btn {
+  min-height: 44px;
+}
+.strength-history-edit-actions [data-k="strengthSessions"] {
+  color: var(--a1);
+}
+.strength-history-edit-container[hidden] {
+  display: none;
+}
+.strength-history-edit-form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface2) 42%, var(--surface));
+}
+.strength-history-edit-form > h3 {
+  margin: 0;
+  font: 600 16px / 1.3 var(--display);
+}
+.strength-history-edit-exercise {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+.strength-history-edit-exercise legend {
+  padding: 0 5px;
+  font-weight: 600;
+}
+.strength-history-edit-row {
+  display: grid;
+  grid-template-columns: 58px minmax(100px, 1fr) minmax(100px, 1fr);
+  gap: 9px;
+  align-items: end;
+}
+.strength-history-edit-set-label {
+  padding-bottom: 12px;
+  color: var(--muted);
+  font: 500 11px var(--mono);
+}
+.strength-history-edit-row input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 500 14px var(--body);
+}
+.strength-history-edit-form .strength-history-edit-actions {
+  margin: 0;
+}
+.strength-performance-row {
+  flex-wrap: wrap;
+}
+.strength-performance-row small {
+  color: var(--muted);
+}
+.strength-active-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 4px 0 18px;
+}
+.strength-active-header h1 {
+  margin: 0;
+  font: 650 clamp(27px, 3vw, 36px) / 1.15 var(--display);
+  letter-spacing: -0.04em;
+}
+.strength-active-header .m {
+  margin: 7px 0 0;
+}
+.strength-active-clock {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  min-width: 100px;
+}
+.strength-active-clock strong {
+  color: var(--ink);
+  font: 650 20px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.strength-active-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  gap: 16px;
+  align-items: start;
+}
+.strength-active-main {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.strength-active-aside {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 11px;
+}
+.strength-active-aside .eyebrow {
+  margin: 0;
+  color: var(--a1);
+  font: 600 10px var(--mono);
+  letter-spacing: 0.09em;
+}
+.strength-session-progress {
+  color: var(--ink);
+  font: 650 29px / 1 var(--display);
+}
+.strength-session-progress small {
+  color: var(--muted);
+  font: 400 13px var(--body);
+}
+.strength-progress-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface2);
+}
+.strength-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--good);
+  transition: width 180ms ease;
+}
+.strength-active-aside > .m {
+  margin: 0 0 3px;
+  line-height: 1.5;
+}
+.strength-active-aside .btn {
+  width: 100%;
+  min-height: 46px;
+}
+.strength-discard {
+  color: var(--a1);
+}
+.strength-exercise-card {
+  min-width: 0;
+  padding: clamp(16px, 2vw, 22px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+.strength-exercise-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.strength-exercise-card > header .ico {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+}
+.strength-exercise-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+}
+.strength-exercise-actions .btn {
+  width: 44px;
+  min-height: 44px;
+  padding-inline: 0;
+  font-size: 16px;
+}
+.strength-exercise-actions .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+.strength-exercise-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.strength-exercise-index,
+.strength-set-number {
+  display: grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--good) 18%, var(--surface));
+  color: var(--ink);
+  font: 600 11px var(--mono);
+}
+.strength-exercise-title h2 {
+  margin: 0;
+  font: 600 19px / 1.3 var(--display);
+}
+.strength-exercise-plan {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 12px;
+}
+.strength-exercise-title .m {
+  margin: 5px 0 0;
+  font-size: 12px;
+}
+.strength-set-header,
+.strength-set-row {
+  display: grid;
+  grid-template-columns: 42px minmax(90px, 1fr) minmax(90px, 1fr) minmax(82px, auto) 44px;
+  gap: 9px;
+  align-items: center;
+}
+.strength-set-header {
+  margin: 0 0 7px;
+  color: var(--muted);
+  font: 500 10px var(--mono);
+}
+.strength-set-list {
+  display: grid;
+  gap: 7px;
+}
+.strength-set-row {
+  min-height: 56px;
+  padding: 6px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface2) 44%, var(--surface));
+}
+.strength-set-row.is-complete {
+  background: color-mix(in srgb, var(--good) 14%, var(--surface));
+}
+.strength-set-input {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+.strength-set-input input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 500 14px var(--body);
+}
+.strength-set-row .btn {
+  min-height: 44px;
+  padding-inline: 10px;
+}
+.strength-set-row .strength-remove-set {
+  width: 44px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 19px;
+}
+.strength-add-set {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border-style: dashed;
+}
+.strength-rest-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--good) 35%, var(--line));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--good) 12%, var(--surface));
+}
+.strength-rest-card > span {
+  margin-right: auto;
+  color: var(--muted);
+}
+.strength-rest-card strong {
+  color: var(--ink);
+  font: 650 18px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.strength-rest-card .btn {
+  min-height: 44px;
+}
+.strength-add-exercise > div:first-child {
+  margin-bottom: 12px;
+}
+.strength-add-exercise-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+.strength-add-exercise-controls .btn {
+  min-height: 46px;
+}
+.strength-tabs {
+  margin-bottom: 14px !important;
+}
+@media (max-width: 900px) {
+  .strength-active-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .strength-active-aside {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+  }
+  .strength-active-aside .eyebrow,
+  .strength-active-aside > .m,
+  .strength-active-aside .strength-progress-track {
+    grid-column: 1 / -1;
+  }
+  .strength-active-aside .btn {
+    grid-column: span 1;
+  }
+}
+@media (max-width: 700px) {
+  .strength-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .strength-start-card {
+    min-height: 0;
+  }
+  .strength-week-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .strength-week-card > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+  .strength-section-heading {
+    align-items: flex-start;
+  }
+  .strength-measurement-fields,
+  .strength-measurement-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .strength-measurement-trend .strength-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .strength-measurement-select {
+    width: 100%;
+    max-width: none;
+  }
+  .strength-measurement-record > header {
+    flex-direction: column;
+  }
+  .strength-measurement-actions {
+    width: 100%;
+  }
+  .strength-measurement-actions .btn {
+    flex: 1;
+  }
+  .strength-routine-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .strength-routine-actions {
+    width: 100%;
+  }
+  .strength-routine-actions .btn {
+    flex: 1;
+  }
+  .strength-routine-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .strength-routine-name {
+    grid-column: 1 / -1;
+  }
+  .strength-routine-row-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .strength-editor-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .strength-editor-actions .btn:last-child {
+    grid-column: 1 / -1;
+  }
+  .strength-active-header {
+    align-items: flex-start;
+  }
+  .strength-active-clock {
+    min-width: 75px;
+  }
+  .strength-active-aside {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding: 16px;
+  }
+  .strength-add-exercise-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .strength-add-exercise-controls .btn {
+    width: 100%;
+  }
+}
+@media (max-width: 430px) {
+  .strength-set-header,
+  .strength-set-row {
+    grid-template-columns: 26px minmax(48px, 1fr) minmax(48px, 1fr) 64px 44px;
+    gap: 4px;
+  }
+  .strength-set-header {
+    font-size: 9px;
+  }
+  .strength-set-row {
+    padding: 4px;
+  }
+  .strength-set-row .btn {
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+  .strength-set-row .strength-remove-set {
+    width: 44px;
+  }
+  .strength-set-number {
+    width: 28px;
+    height: 28px;
+  }
+  .strength-rest-card {
+    flex-wrap: wrap;
+  }
+  .strength-history-exercises > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+  .strength-history-edit-row {
+    grid-template-columns: 48px minmax(72px, 1fr) minmax(72px, 1fr);
+    gap: 6px;
+  }
+}
 
+/* Melhorias de consistência e acompanhamento da musculação. */
+.strength-calendar-card,
+.strength-summary-hero,
+.strength-performance-focus {
+  margin-top: 16px;
+  padding: clamp(18px, 2.5vw, 26px);
+  border-radius: 22px;
+}
+.strength-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.strength-calendar-day {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface2);
+  color: var(--muted);
+}
+.strength-calendar-day span {
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.strength-calendar-day strong {
+  color: var(--ink);
+  font: 600 14px var(--mono);
+}
+.strength-calendar-day.is-trained {
+  border-color: color-mix(in srgb, var(--good) 42%, var(--line));
+  background: color-mix(in srgb, var(--good) 14%, var(--surface));
+}
+.strength-calendar-day.is-trained strong {
+  color: var(--good);
+}
+.strength-calendar-day.is-today {
+  outline: 2px solid color-mix(in srgb, var(--a1) 55%, transparent);
+  outline-offset: 1px;
+}
+.strength-target-select {
+  width: min(180px, 42%);
+}
+.strength-calendar-progress {
+  height: 8px;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface2);
+}
+.strength-calendar-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--good);
+  transition: width 180ms ease;
+}
+.strength-calendar-card > .m {
+  margin: 8px 0 0;
+}
+.strength-summary-hero > .eyebrow {
+  margin: 0 0 7px;
+  color: var(--a1);
+  font: 600 10px var(--mono);
+  letter-spacing: 0.09em;
+}
+.strength-summary-hero > h2 {
+  margin: 0;
+  color: var(--ink);
+  font: 650 clamp(24px, 3vw, 34px) / 1.15 var(--display);
+}
+.strength-summary-hero > .m {
+  margin: 8px 0 20px;
+}
+.strength-summary-stats,
+.strength-performance-focus-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.strength-summary-stats > div,
+.strength-performance-focus-stats > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface2);
+}
+.strength-summary-stats span,
+.strength-performance-focus-stats span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.strength-summary-stats strong,
+.strength-performance-focus-stats strong {
+  color: var(--ink);
+  font: 650 19px / 1.2 var(--display);
+  overflow-wrap: anywhere;
+}
+.strength-summary-records {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--good) 13%, var(--surface));
+}
+.strength-summary-records > .eyebrow {
+  margin: 0 0 8px;
+  color: var(--good);
+  font: 600 10px var(--mono);
+  letter-spacing: 0.08em;
+}
+.strength-summary-records p {
+  margin: 5px 0;
+}
+.strength-summary-no-record,
+.strength-summary-note,
+.strength-history-feedback {
+  padding: 12px 14px;
+  border-radius: 13px;
+  background: var(--surface2);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.strength-summary-exercises {
+  margin-top: 20px;
+}
+.strength-summary-exercises h3 {
+  margin: 0 0 8px;
+  font: 600 17px var(--display);
+}
+.strength-summary-exercise {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.strength-summary-exercise span {
+  color: var(--muted);
+  text-align: right;
+}
+.strength-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 18px;
+}
+.strength-summary-actions .btn {
+  min-height: 46px;
+}
+.strength-performance-focus .strength-section-heading {
+  align-items: flex-end;
+}
+.strength-performance-focus h2 {
+  margin: 0;
+  font: 600 clamp(20px, 2.4vw, 26px) / 1.25 var(--display);
+}
+.strength-performance-select {
+  width: min(250px, 50%);
+}
+.strength-performance-focus-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 8px;
+}
+.strength-performance-controls {
+  display: flex;
+  gap: 10px;
+}
+.strength-performance-chart {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  margin-top: 8px;
+}
+.strength-history-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.strength-history-details[hidden] {
+  display: none;
+}
+.strength-history-no-results {
+  margin: 8px 0 14px;
+}
+.strength-history-feedback {
+  margin: 0 10px 12px 18px;
+}
+.strength-picker-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(160px, 0.8fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.strength-favorite-button {
+  min-width: 44px;
+  color: var(--a1);
+  font-size: 18px;
+}
+.strength-favorite-button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--a1) 45%, var(--line));
+  background: color-mix(in srgb, var(--a1) 12%, var(--surface));
+}
+.strength-session-feedback {
+  margin: 2px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.strength-session-feedback summary {
+  min-height: 28px;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 600;
+}
+.strength-session-feedback form {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.strength-session-feedback textarea {
+  width: 100%;
+  resize: vertical;
+}
+.strength-alert-toggle {
+  width: 100%;
+  min-height: 44px;
+}
+.strength-alert-help {
+  color: var(--muted);
+  line-height: 1.45;
+}
+.strength-measurement-controls {
+  display: flex;
+  gap: 10px;
+}
+.strength-measurement-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
 
+@media (max-width: 700px) {
+  .strength-history-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .strength-history-filters label:first-child {
+    grid-column: 1 / -1;
+  }
+  .strength-summary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .strength-calendar-card .strength-section-heading,
+  .strength-performance-focus .strength-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .strength-target-select,
+  .strength-performance-select {
+    width: 100%;
+    max-width: none;
+  }
+  .strength-performance-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .strength-measurement-controls,
+  .strength-picker-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 430px) {
+  .strength-calendar-days {
+    gap: 4px;
+  }
+  .strength-calendar-day {
+    padding: 8px 2px;
+    border-radius: 10px;
+  }
+  .strength-calendar-day span {
+    font-size: 9px;
+  }
+  .strength-summary-stats,
+  .strength-performance-focus-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .strength-summary-exercise {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .strength-summary-exercise span {
+    text-align: left;
+  }
+}

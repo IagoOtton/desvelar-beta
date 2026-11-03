@@ -13,6 +13,9 @@
     "txs",
     "goals",
     "routine",
+    "strengthRoutines",
+    "strengthSessions",
+    "bodyMeasurements",
   ];
   var MODULE_IDS = [
     "foco",
@@ -55,7 +58,7 @@
   var STUDY_TYPES = ["theory", "questions", "class", "review", "other"];
   function emptyState() {
     return {
-      v: 5,
+      v: 8,
       name: "",
       goalH: 20,
       sessions: [],
@@ -70,6 +73,13 @@
       txs: [],
       goals: [],
       routine: [],
+      strengthRoutines: [],
+      strengthSessions: [],
+      bodyMeasurements: [],
+      strengthSettings: {
+        weeklyTarget: 3,
+        favoriteExerciseKeys: [],
+      },
     };
   }
   function boundedInteger(value, fallback, min, max) {
@@ -79,6 +89,185 @@
       value <= max
       ? value
       : fallback;
+  }
+  function nullableInteger(value, min, max) {
+    if (value === null || value === undefined || value === "") return null;
+    var number = Number(value);
+    return Number.isInteger(number) && number >= min && number <= max
+      ? number
+      : null;
+  }
+  function nullableWeight(value) {
+    if (value === null || value === undefined || value === "") return null;
+    var number = Number(value);
+    return Number.isFinite(number) && number >= 0 && number <= 1000
+      ? Math.round(number * 100) / 100
+      : null;
+  }
+  function nullableMeasure(value, max) {
+    if (value === null || value === undefined || value === "") return null;
+    var number = Number(value);
+    return Number.isFinite(number) && number > 0 && number <= max
+      ? Math.round(number * 10) / 10
+      : null;
+  }
+  function cleanId(value, fallback) {
+    return typeof value === "string" && value.trim()
+      ? value.trim().slice(0, 120)
+      : fallback;
+  }
+  function cleanDateKey(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return "";
+    }
+    var date = new Date(value + "T00:00:00Z");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+      ? value
+      : "";
+  }
+  function normalizeStrengthExercise(exercise, index, isRoutine) {
+    if (!exercise || typeof exercise !== "object" || Array.isArray(exercise)) {
+      throw new Error("Exercício de musculação inválido");
+    }
+    exercise.id = cleanId(exercise.id, "exercise-" + index);
+    exercise.exerciseKey = cleanId(exercise.exerciseKey, exercise.id);
+    exercise.name =
+      typeof exercise.name === "string" ? exercise.name.trim().slice(0, 100) : "";
+    if (!exercise.name) throw new Error("Exercício sem nome");
+    exercise.plannedSets = boundedInteger(exercise.plannedSets, 3, 1, 30);
+    exercise.targetReps = boundedInteger(exercise.targetReps, 10, 1, 100);
+    exercise.restSeconds = boundedInteger(exercise.restSeconds, 60, 0, 600);
+
+    if (!isRoutine) {
+      if (!Array.isArray(exercise.sets)) exercise.sets = [];
+      exercise.sets.forEach(function (set, setIndex) {
+        if (!set || typeof set !== "object" || Array.isArray(set)) {
+          throw new Error("Série de musculação inválida");
+        }
+        set.id = cleanId(set.id, exercise.id + "-set-" + setIndex);
+        set.weight = nullableWeight(set.weight);
+        set.reps = nullableInteger(set.reps, 1, 1000);
+        set.completed = set.completed === true;
+        set.completedAt =
+          typeof set.completedAt === "string" ? set.completedAt : "";
+      });
+    }
+    return exercise;
+  }
+  function normalizeStrengthRoutine(routine, index) {
+    if (!routine || typeof routine !== "object" || Array.isArray(routine)) {
+      throw new Error("Rotina de musculação inválida");
+    }
+    routine.id = cleanId(routine.id, "strength-routine-" + index);
+    routine.name =
+      typeof routine.name === "string" ? routine.name.trim().slice(0, 80) : "";
+    if (!routine.name) throw new Error("Rotina de musculação sem nome");
+    routine.exercises = Array.isArray(routine.exercises)
+      ? routine.exercises
+      : [];
+    routine.exercises.forEach(function (exercise, exerciseIndex) {
+      normalizeStrengthExercise(exercise, exerciseIndex, true);
+    });
+    routine.createdAt =
+      typeof routine.createdAt === "string" ? routine.createdAt : "";
+    routine.updatedAt =
+      typeof routine.updatedAt === "string" ? routine.updatedAt : "";
+    return routine;
+  }
+  function normalizeStrengthSession(session, index) {
+    if (!session || typeof session !== "object" || Array.isArray(session)) {
+      throw new Error("Sessão de musculação inválida");
+    }
+    session.id = cleanId(session.id, "strength-session-" + index);
+    session.name =
+      typeof session.name === "string" ? session.name.trim().slice(0, 80) : "";
+    if (!session.name) session.name = "Treino livre";
+    session.routineId =
+      typeof session.routineId === "string" ? session.routineId : "";
+    session.date = cleanDateKey(session.date);
+    session.startedAt =
+      typeof session.startedAt === "string" &&
+      Number.isFinite(new Date(session.startedAt).getTime())
+        ? session.startedAt
+        : session.date
+          ? session.date + "T00:00:00.000Z"
+          : "1970-01-01T00:00:00.000Z";
+    session.status =
+      session.status === "active" || session.status === "completed"
+        ? session.status
+        : "completed";
+    session.finishedAt =
+      typeof session.finishedAt === "string" ? session.finishedAt : "";
+    session.restUntil = boundedInteger(session.restUntil, 0, 0, 9007199254740991);
+    session.effort = nullableInteger(session.effort, 1, 10);
+    session.note = typeof session.note === "string"
+      ? session.note.trim().slice(0, 500)
+      : "";
+    session.exercises = Array.isArray(session.exercises) ? session.exercises : [];
+    session.exercises.forEach(function (exercise, exerciseIndex) {
+      normalizeStrengthExercise(exercise, exerciseIndex, false);
+    });
+    return session;
+  }
+  function normalizeBodyMeasurement(measurement, index) {
+    if (!measurement || typeof measurement !== "object" || Array.isArray(measurement)) {
+      throw new Error("Registro de medidas corporais inválido");
+    }
+    measurement.id = cleanId(measurement.id, "body-measurement-" + index);
+    measurement.date = cleanDateKey(measurement.date);
+    if (!measurement.date) throw new Error("Data de medida corporal inválida");
+    measurement.weightKg = nullableMeasure(measurement.weightKg, 1000);
+    measurement.waistCm = nullableMeasure(measurement.waistCm, 300);
+    measurement.abdomenCm = nullableMeasure(measurement.abdomenCm, 300);
+    measurement.chestCm = nullableMeasure(measurement.chestCm, 300);
+    measurement.hipCm = nullableMeasure(measurement.hipCm, 300);
+    measurement.armCm = nullableMeasure(measurement.armCm, 150);
+    measurement.thighCm = nullableMeasure(measurement.thighCm, 200);
+    measurement.calfCm = nullableMeasure(measurement.calfCm, 150);
+    if (![
+      measurement.weightKg,
+      measurement.waistCm,
+      measurement.abdomenCm,
+      measurement.chestCm,
+      measurement.hipCm,
+      measurement.armCm,
+      measurement.thighCm,
+      measurement.calfCm,
+    ].some(function (value) { return value !== null; })) {
+      throw new Error("Registro de medidas sem valores");
+    }
+    measurement.note = typeof measurement.note === "string"
+      ? measurement.note.trim().slice(0, 300)
+      : "";
+    measurement.createdAt = typeof measurement.createdAt === "string"
+      ? measurement.createdAt
+      : "";
+    measurement.updatedAt = typeof measurement.updatedAt === "string"
+      ? measurement.updatedAt
+      : measurement.createdAt;
+    return measurement;
+  }
+  function normalizeStrengthSettings(value) {
+    var settings = value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : {};
+    var favorites = Array.isArray(settings.favoriteExerciseKeys)
+      ? settings.favoriteExerciseKeys
+      : [];
+    var uniqueFavorites = [];
+    favorites.forEach(function (key) {
+      if (
+        typeof key === "string" &&
+        key.trim() &&
+        uniqueFavorites.indexOf(key.trim().slice(0, 100)) === -1
+      ) {
+        uniqueFavorites.push(key.trim().slice(0, 100));
+      }
+    });
+    return {
+      weeklyTarget: boundedInteger(settings.weeklyTarget, 3, 1, 7),
+      favoriteExerciseKeys: uniqueFavorites.slice(0, 200),
+    };
   }
 
   function normalizeEnabledTabs(value) {
@@ -106,7 +295,12 @@
     // Valida as coleções e seus registros.
     LISTS.forEach(function (k) {
       if (o[k] === undefined) {
-        if (k === "mistakes") {
+        if (
+          k === "mistakes" ||
+          k === "strengthRoutines" ||
+          k === "strengthSessions" ||
+          k === "bodyMeasurements"
+        ) {
           o[k] = [];
         } else if (typeof o.v === "number" && o.v >= 4) {
           throw new Error("Coleção ausente em dados da versão atual: " + k);
@@ -241,6 +435,10 @@
     o.questions.forEach(normalizeStudyMetadata);
     o.mistakes.forEach(normalizeMistake);
     o.themes.forEach(normalizeStudyReviewMetadata);
+    o.strengthRoutines.forEach(normalizeStrengthRoutine);
+    o.strengthSessions.forEach(normalizeStrengthSession);
+    o.bodyMeasurements.forEach(normalizeBodyMeasurement);
+    o.strengthSettings = normalizeStrengthSettings(o.strengthSettings);
 
     delete o.timer;
 
@@ -288,7 +486,7 @@
     o.name = typeof o.name === "string" ? o.name : "";
     delete o.lastBackup;
 
-    o.v = 5;
+    o.v = 8;
 
     return o;
   }

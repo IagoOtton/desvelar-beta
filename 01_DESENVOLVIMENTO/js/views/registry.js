@@ -18,6 +18,9 @@
       "getZen",
       "getCloudSyncStatus",
       "getWipeArm",
+      "getActivityView",
+      "getEditingRoutineId",
+      "getSelectedMeasurementMetric",
       "groupRepository",
       "communityRepository",
     ];
@@ -41,6 +44,7 @@
     var charts = dependencies.charts;
     var head = dependencies.head;
     var studyTabIds = ["estudo", "foco", "temas", "erros", "desempenho"];
+    var strengthTabIds = ["atividade_fisica"];
 
     function studyHead(title, subtitle) {
       var activeTab = dependencies.getActiveTab();
@@ -70,6 +74,46 @@
               item[0] +
               '"' +
               (activeTab === item[0] ? ' aria-current="page"' : "") +
+              ">" +
+              item[1] +
+              "</button>"
+            );
+          })
+          .join("") +
+        "</nav>"
+      );
+    }
+
+    function strengthHead(title, subtitle) {
+      var activeTab = dependencies.getActiveTab();
+      if (strengthTabIds.indexOf(activeTab) === -1) {
+        return head(title, subtitle);
+      }
+      var activityView = dependencies.getActivityView();
+      var navigation = [
+        ["training", "Treinar"],
+        ["routines", "Rotinas"],
+        ["history", "Histórico"],
+        ["performance", "Desempenho"],
+        ["measurements", "Medidas"],
+      ];
+      var pageHeader =
+        '<header class="study-heading study-heading--notebook"><div class="study-mobile-brand"><span class="study-mobile-brand-mark" aria-hidden="true">D</span><span>DESVELAR</span></div><p class="study-breadcrumb">Pessoal <span>/</span> Atividade física</p>' +
+        head(title, subtitle) +
+        "</header>";
+      if (activityView === "active") {
+        return '<header class="study-heading study-heading--notebook"><div class="study-mobile-brand"><span class="study-mobile-brand-mark" aria-hidden="true">D</span><span>DESVELAR</span></div><p class="study-breadcrumb">Pessoal <span>/</span> Atividade física <span>/</span> Treino</p></header>';
+      }
+      return (
+        pageHeader +
+        '<nav class="area-tabs strength-tabs" aria-label="Ferramentas de atividade física">' +
+        navigation
+          .map(function (item) {
+            return (
+              '<button class="area-tab" type="button" data-strength-view="' +
+              item[0] +
+              '"' +
+              ((activityView === item[0] || (activityView === "routine-editor" && item[0] === "routines")) ? ' aria-current="page"' : "") +
               ">" +
               item[1] +
               "</button>"
@@ -271,6 +315,28 @@
       months: date.MES,
       weekdays: date.DIAS,
     });
+    var strength = window.DesvelarStrengthViews.create({
+      getState: stateStore.getState,
+      getActivityView: dependencies.getActivityView,
+      getEditingRoutineId: dependencies.getEditingRoutineId,
+      getSelectedMeasurementMetric: dependencies.getSelectedMeasurementMetric,
+      getSelectedMeasurementRange: dependencies.getSelectedMeasurementRange,
+      getSelectedPerformanceExercise: dependencies.getSelectedPerformanceExercise,
+      getSelectedPerformanceMetric: dependencies.getSelectedPerformanceMetric,
+      exerciseCatalog: window.DesvelarStrengthTraining.catalog,
+      measurementFields: window.DesvelarBodyMeasurements.FIELDS,
+      exerciseKey: window.DesvelarStrengthTraining.exerciseKey,
+      lastPerformance: window.DesvelarStrengthTraining.lastPerformance,
+      sessionDurationSeconds: window.DesvelarStrengthTraining.sessionDurationSeconds,
+      formatDuration: window.DesvelarStrengthTraining.formatDuration,
+      today: date.today,
+      wkStart: date.wkStart,
+      addDays: date.addDays,
+      weekdays: date.DIAS,
+      fmtD: date.fmtD,
+      esc: formatting.esc,
+      head: strengthHead,
+    });
 
     function underConstruction(title, subtitle, message) {
       return function () {
@@ -289,11 +355,7 @@
       pages: Object.freeze({
         inicio: home.homePage,
         agenda: agenda.agendaPage,
-        atividade_fisica: underConstruction(
-          "Atividade física",
-          "Seu espaço pessoal para acompanhar a atividade física.",
-          "Esta ferramenta estará disponível em uma próxima etapa.",
-        ),
+        atividade_fisica: strength.page,
         foco: focus.focusPage,
         temas: learning.themesPage,
         financas: life.financePage,

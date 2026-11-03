@@ -74,7 +74,7 @@
     desempenho: "Gráficos e indicadores do seu progresso.",
     agenda: "Calendário, compromissos, tarefas e rotina semanal.",
     financas: "Lançamentos, categorias e saldo.",
-    atividade_fisica: "Área pessoal de atividade física em construção.",
+    atividade_fisica: "Treinos de musculação, rotinas, histórico, desempenho e medidas corporais.",
     comunidade_estudos: "Comunidade de estudos em construção.",
     comunidade_atividade_fisica: "Comunidade de atividade física em construção.",
     comunidade: "Publicações e grupos de leitura.",
