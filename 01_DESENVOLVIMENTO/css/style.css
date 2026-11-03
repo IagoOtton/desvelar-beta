@@ -5062,4 +5062,200 @@ body.zen .shell > main {
   }
 }
 
+.auth-privacy-link {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 12px;
+}
+.auth-privacy-link a,
+.privacy-card a {
+  color: var(--a1);
+  text-underline-offset: 3px;
+}
+.privacy-page {
+  min-height: 100vh;
+}
+.privacy-shell {
+  width: min(100%, 900px);
+  margin: 0 auto;
+  padding: max(24px, env(safe-area-inset-top, 0px)) 0
+    max(32px, env(safe-area-inset-bottom, 0px));
+}
+.privacy-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.privacy-back:hover,
+.privacy-back:focus-visible {
+  color: var(--ink);
+}
+.privacy-header {
+  margin: 24px 0 22px;
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid color-mix(in srgb, var(--a1) 24%, var(--line));
+  border-radius: 28px 28px 28px 10px;
+  background:
+    radial-gradient(ellipse at 88% 16%, color-mix(in srgb, var(--a1) 17%, transparent), transparent 42%),
+    linear-gradient(132deg, color-mix(in srgb, var(--surface2) 84%, var(--a2) 6%), var(--surface));
+  box-shadow: var(--shadow);
+}
+.privacy-eyebrow {
+  margin: 0 0 10px;
+  color: var(--a1);
+  font: 600 10px var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.privacy-header h1 {
+  margin: 0;
+  font: 600 clamp(30px, 6vw, 44px) / 1.15 var(--display);
+  letter-spacing: -0.04em;
+}
+.privacy-lead {
+  max-width: 58ch;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+.privacy-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 20px;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+.privacy-sections {
+  display: grid;
+  gap: 14px;
+}
+.privacy-card {
+  overflow-wrap: anywhere;
+}
+.privacy-card h2 {
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+.privacy-card p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.privacy-card ul {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding-left: 22px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.privacy-card li::marker {
+  color: var(--a1);
+}
+.privacy-card strong {
+  color: var(--ink);
+}
+.privacy-controller {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 20px;
+  align-items: center;
+}
+.privacy-controller .privacy-eyebrow,
+.privacy-controller h2,
+.privacy-controller p {
+  margin-top: 0;
+}
+.privacy-controller .privacy-eyebrow {
+  margin-bottom: 7px;
+}
+.privacy-controller .btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-height: 44px;
+}
+.privacy-email {
+  grid-column: 1 / -1;
+  width: fit-content;
+}
+.privacy-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+.privacy-footer a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.privacy-note {
+  border-color: color-mix(in srgb, var(--warn) 32%, var(--line));
+}
+.study-privacy-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  padding: 15px 18px;
+  border: 1px solid color-mix(in srgb, var(--a1) 26%, var(--line));
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--a1) 7%, var(--surface));
+}
+.study-privacy-note div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.study-privacy-note strong {
+  font-size: 13px;
+}
+.study-privacy-note span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.study-privacy-note a {
+  flex: 0 0 auto;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--a1);
+  font-size: 12px;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+.privacy-settings-card .btn {
+  margin-top: 14px;
+}
+@media (max-width: 600px) {
+  .privacy-shell {
+    padding-inline: 0;
+  }
+  .privacy-header {
+    border-radius: 22px 22px 22px 8px;
+  }
+  .privacy-controller {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .privacy-controller .btn,
+  .privacy-email {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .privacy-controller .btn {
+    width: 100%;
+  }
+  .study-privacy-note {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+
 

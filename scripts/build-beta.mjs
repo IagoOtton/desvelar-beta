@@ -114,6 +114,21 @@ if (!html.includes("</body>")) {
 html = html.replace("</body>", `${deferredScripts}\n  </body>`);
 writeFileSync(join(outputRoot, "index.html"), html);
 
+const sourcePrivacyHtml = readFileSync(
+  join(appRoot, "privacidade.html"),
+  "utf8",
+);
+
+if (!stylesheetPattern.test(sourcePrivacyHtml)) {
+  throw new Error("Não foi possível localizar a folha de estilos do aviso de privacidade.");
+}
+
+const privacyHtml = sourcePrivacyHtml.replace(
+  stylesheetPattern,
+  `<link rel="stylesheet" href="${styleUrl}" />`,
+).replaceAll('href="./desvelar-v1-corrigido.html"', 'href="./index.html"');
+writeFileSync(join(outputRoot, "privacidade.html"), privacyHtml);
+
 const bundleSizes = Object.entries({ auth: authUrl, app: appUrl, style: styleUrl })
   .map(([name, url]) => {
     const filePath = join(outputRoot, url.replace(/^\.\//, ""));
@@ -122,3 +137,4 @@ const bundleSizes = Object.entries({ auth: authUrl, app: appUrl, style: styleUrl
   .join(", ");
 
 console.log(`Beta otimizado preparado em dist-beta/ (${bundleSizes}).`);
+
