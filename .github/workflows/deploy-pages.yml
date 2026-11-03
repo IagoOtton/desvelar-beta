@@ -73,7 +73,7 @@ jobs:
         working-directory: 01_DESENVOLVIMENTO
         run: pnpm build
       - name: Enviar os arquivos do site
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist-beta
 
