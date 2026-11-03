@@ -145,7 +145,7 @@
     getState: stateStore.getState,
     getTab: function () { return tab; },
     persist: persist,
-    render: render,
+    showPomodoroDecision: showPomodoroDecision,
     toast: toast,
     pad: pad,
   });
@@ -357,6 +357,8 @@
     circumference: PC,
     phaseName: phaseName,
     pomoRemaining: pomoRem,
+    pomoOvertime: PomodoroRuntime.overtimeSeconds,
+    pomoPaused: PomodoroRuntime.isPaused,
     formatClock: fmtClock,
   });
   var VIEWS = ViewRegistry.pages;
@@ -442,6 +444,9 @@
     pomoStart: pomoStart,
     pomoPause: pomoPause,
     pomoComplete: pomoComplete,
+    pomoFinishStudy: PomodoroDomain.finishStudy,
+    pomoEndBreak: PomodoroDomain.markBreakComplete,
+    refreshPomodoro: showPomodoroDecision,
     render: render,
     commit: commit,
     moduleIds: DataModel.MODULE_IDS,
@@ -542,6 +547,41 @@
     }
   }
 
+  function pomodoroDecisionBannerHtml() {
+    var run = S && S.pomoRun;
+    if (tab === "foco" || !run) return "";
+    if (run.phase === "focus" && run.overtimeSince) {
+      return (
+        '<aside class="pomo-overdue-banner" role="alert"><div class="pomo-overdue-copy"><strong>O tempo de foco terminou</strong><p>O bloco foi salvo e o contador segue contando. Inicie a pausa ou finalize o estudo.</p><span class="pomo-overdue-clock" id="pomo-overtime-clock" aria-label="Tempo extra de foco">+' +
+        fmtClock(PomodoroRuntime.overtimeSeconds(run)) +
+        '</span></div><div class="pomo-overdue-actions"><button class="btn pri" type="button" data-a="pomo-start-break">Iniciar pausa</button><button class="btn" type="button" data-a="pomo-finish-study">Finalizar estudo</button></div></aside>'
+      );
+    }
+    if (run.breakEndedAt) {
+      return (
+        '<aside class="pomo-overdue-banner pomo-break-ended-banner" role="alert"><div class="pomo-overdue-copy"><strong>A pausa terminou</strong><p>Comece o próximo bloco ou finalize o estudo.</p></div><div class="pomo-overdue-actions"><button class="btn pri" type="button" data-a="pomo-next-focus">Iniciar próximo bloco</button><button class="btn" type="button" data-a="pomo-finish-study">Finalizar estudo</button></div></aside>'
+      );
+    }
+    return "";
+  }
+
+  function showPomodoroDecision() {
+    if (tab === "foco") {
+      render();
+      return;
+    }
+    var view = document.getElementById("view");
+    if (!view) return;
+    var banner = view.querySelector(".pomo-overdue-banner");
+    var html = pomodoroDecisionBannerHtml();
+    if (banner) {
+      if (html) banner.outerHTML = html;
+      else banner.remove();
+    } else if (html) {
+      view.insertAdjacentHTML("afterbegin", html);
+    }
+  }
+
   function render(options) {
     buildTags();
     document.getElementById("sidenav").innerHTML =
@@ -568,7 +608,7 @@
         : tickerHtml();
     };
     document.getElementById("view").innerHTML =
-      pageTicker() + cloudSyncMobileStatusHtml() +
+      pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() +
       '<div class="card"><p class="m">Carregando...</p></div>';
 
     Promise.resolve()
@@ -578,7 +618,7 @@
       .then(function (html) {
         if (tab === currentTab) {
           document.getElementById("view").innerHTML =
-            pageTicker() + cloudSyncMobileStatusHtml() + html;
+            pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() + html;
           if (isStudyTab) {
             var studyMobileBrand = document.querySelector(
               "#view .study-mobile-brand",
@@ -629,7 +669,7 @@
         if (tab !== currentTab) return;
 
         document.getElementById("view").innerHTML =
-          pageTicker() + cloudSyncMobileStatusHtml() +
+          pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() +
           '<div class="card"><h2 tabindex="-1">Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
         focusRenderedTarget(options);
       });
@@ -668,7 +708,14 @@
     var saved =
       typeof savedResult === "boolean" ? savedResult : persist();
     saveOk = saved;
-    if (!(renderOptions && renderOptions.skipRender)) {
+    if (renderOptions && renderOptions.skipRender) {
+      var localSaveStatus = document.querySelector("#sidenav .sync");
+      if (localSaveStatus) {
+        localSaveStatus.classList.toggle("bad", !saveOk);
+        localSaveStatus.innerHTML =
+          "<i></i>" + (saveOk ? "Salvo neste navegador" : "Sem salvar");
+      }
+    } else {
       render(renderOptions);
     }
 
@@ -834,10 +881,21 @@
     return;
   }
 
-  var caught = false;
-  while (S.pomoRun && S.pomoRun.end && S.pomoRun.end <= Date.now()) {
-    pomoComplete(S.pomoRun.end);
-    caught = true;
+  var caughtBreak = false;
+  if (
+    S.pomoRun &&
+    S.pomoRun.phase === "focus" &&
+    S.pomoRun.end &&
+    S.pomoRun.end <= Date.now()
+  ) {
+    PomodoroDomain.markFocusComplete(S, S.pomoRun.end);
+  } else if (
+    S.pomoRun &&
+    S.pomoRun.phase !== "focus" &&
+    S.pomoRun.end &&
+    S.pomoRun.end <= Date.now()
+  ) {
+    caughtBreak = PomodoroDomain.markBreakComplete(S, S.pomoRun.end);
   }
 
   PomodoroRuntime.startClock();
@@ -860,11 +918,11 @@
     );
   }
 
-  if (caught) {
+  if (caughtBreak) {
     toast(
       initSaved
-        ? "Pomodoro concluído enquanto a aba estava fechada."
-        : "Pomodoro concluído, mas não foi possível salvar os dados. Verifique a sincronização em Configurações.",
+        ? "A pausa terminou enquanto você estava fora. Comece outro bloco ou finalize o estudo."
+        : "Pausa concluída, mas não foi possível salvar os dados. Verifique a sincronização em Configurações.",
     );
   }
 

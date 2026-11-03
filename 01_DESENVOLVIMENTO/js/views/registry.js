@@ -203,6 +203,7 @@
       brainGraph: insights.brainGraph,
       phaseName: dependencies.phaseName,
       pomoRemaining: dependencies.pomoRemaining,
+      pomoOvertime: dependencies.pomoOvertime,
       formatClock: dependencies.formatClock,
     });
     var learning = window.DesvelarLearningViews.create({
@@ -263,6 +264,8 @@
       tlabel: tags.label,
       phaseName: dependencies.phaseName,
       pomoRem: dependencies.pomoRemaining,
+      pomoOvertime: dependencies.pomoOvertime,
+      pomoPaused: dependencies.pomoPaused,
       fmtClock: dependencies.formatClock,
       esc: formatting.esc,
       chip: tags.chip,

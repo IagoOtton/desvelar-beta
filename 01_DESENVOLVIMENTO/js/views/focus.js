@@ -9,6 +9,8 @@
       "tlabel",
       "phaseName",
       "pomoRem",
+      "pomoOvertime",
+      "pomoPaused",
       "fmtClock",
       "esc",
       "chip",
@@ -48,7 +50,7 @@
       return out;
     }
 
-    function dialSvg(frac, brk, paused) {
+    function dialSvg(frac, brk, paused, overtime) {
       var ticks = "",
         ang,
         kx,
@@ -74,7 +76,11 @@
       ang = ((-90 + frac * 360) * Math.PI) / 180;
       kx = 160 + 118 * Math.cos(ang);
       ky = 160 + 118 * Math.sin(ang);
-      var stroke = paused ? "var(--warn)" : brk ? "var(--good)" : "url(#pg)",
+      var stroke = paused || overtime
+          ? "var(--warn)"
+          : brk
+            ? "var(--good)"
+            : "url(#pg)",
         da = dependencies.circumference * frac + " " + dependencies.circumference;
       return (
         '<svg viewBox="0 0 320 320" aria-hidden="true"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient></defs>' +
@@ -96,7 +102,11 @@
         '" cy="' +
         ky.toFixed(1) +
         '" r="7" fill="var(--ink)" stroke="' +
-        (paused ? "var(--warn)" : brk ? "var(--good)" : "var(--a1)") +
+        (paused || overtime
+          ? "var(--warn)"
+          : brk
+            ? "var(--good)"
+            : "var(--a1)") +
         '" stroke-width="3"/></svg>'
       );
     }
@@ -111,21 +121,39 @@
           return x.date === t && x.pomo;
         });
       var brk = !!r && r.phase !== "focus",
-        paused = !!r && !r.end,
-        running = !!r && !!r.end;
+        overtime = !!r && r.phase === "focus" && !!r.overtimeSince,
+        breakEnded = !!r && !!r.breakEndedAt,
+        paused = !!r && dependencies.pomoPaused(r),
+        running = !!r && !paused && !breakEnded;
       var rem = r ? dependencies.pomoRem(r) : P.focus * 60,
         dur = r ? r.dur : P.focus * 60,
-        frac = Math.max(0, Math.min(1, rem / dur));
-      var pillCls = !r ? "f" : paused ? "p" : brk ? "b" : "f",
+        overtimeTime = overtime ? dependencies.pomoOvertime(r) : 0,
+        timeText = overtime
+          ? "+" + dependencies.fmtClock(overtimeTime)
+          : dependencies.fmtClock(rem),
+        frac = overtime ? 1 : Math.max(0, Math.min(1, rem / dur));
+      var pillCls = !r
+          ? "f"
+          : overtime
+            ? "o"
+            : paused
+              ? "p"
+              : brk
+                ? "b"
+                : "f",
         pillTxt =
           (!r
             ? "PRONTO"
             : r.phase === "focus"
-              ? "FOCO"
-              : r.phase === "short"
+              ? overtime
+                ? "TEMPO ENCERRADO"
+                : "FOCO"
+              : breakEnded
+                ? "PAUSA CONCLUÍDA"
+                : r.phase === "short"
                 ? "PAUSA CURTA"
                 : "PAUSA LONGA") + (paused ? " · PAUSADO" : "");
-      var done = P.cycle - 1 + (brk ? 1 : 0),
+      var done = P.cycle - 1 + (brk && !breakEnded ? 1 : 0),
         dots = "";
       for (var i = 1; i <= P.every; i++)
         dots +=
@@ -207,9 +235,9 @@
           dependencies.esc(P.focus) +
           " min</button>";
       } else {
-        ctrl =
-          (r.tag || r.topic || r.studyType || r.intent
-            ? '<div style="display:flex;flex-direction:column;gap:6px;align-items:center">' +
+        var runDetails =
+          r.tag || r.topic || r.studyType || r.intent
+            ? '<div class="pomo-run-details">' +
               (r.tag ? dependencies.chip(r.tag) : "") +
               (r.topic ? '<span class="m">Assunto: ' + dependencies.esc(r.topic) + "</span>" : "") +
               (dependencies.studyTypeLabel(r.studyType)
@@ -217,19 +245,33 @@
                 : "") +
               (r.intent ? '<span class="m">' + dependencies.esc(r.intent) + "</span>" : "") +
               "</div>"
-            : "") +
-          '<div class="rowflex" style="justify-content:center"><button class="btn pri" data-a="pomo-pause">' +
-          (paused ? "▶ Retomar" : "❚❚ Pausar") +
-          "</button>" +
-          (brk
-            ? '<button class="btn" data-a="pomo-skip">Pular pausa</button>'
-            : '<button class="btn" data-a="pomo-plus">+5 min</button><button class="btn" data-a="pomo-stop">Encerrar e salvar</button><button class="btn dng" data-a="pomo-cancel">Descartar sessão</button>') +
-          "</div>" +
-          (brk
-            ? '<p class="m pomo-break-hint">Pausa de ' +
-              Math.round(r.dur / 60) +
-              " min. O bloco de foco anterior foi salvo automaticamente.</p>"
-            : '<p class="m pomo-discard-hint">Encerrar e salvar registra o tempo focado como bloco incompleto; descartar encerra sem criar uma sessão.</p>');
+            : "";
+        if (breakEnded) {
+          ctrl =
+            runDetails +
+            '<div class="pomo-overtime-panel pomo-break-ended-panel" role="status"><div><strong>A pausa terminou</strong><p class="m">Você pode começar o próximo bloco agora ou finalizar o estudo.</p></div><div class="rowflex"><button class="btn pri" data-a="pomo-next-focus">Iniciar próximo bloco</button><button class="btn" data-a="pomo-finish-study">Finalizar estudo</button></div></div>';
+        } else if (overtime) {
+          ctrl =
+            runDetails +
+            '<div class="pomo-overtime-panel" role="status"><div><strong>O tempo do foco terminou</strong><p class="m">Seu bloco está salvo. A contagem extra continua até você iniciar a pausa ou finalizar o estudo.</p></div><div class="rowflex"><button class="btn pri" data-a="pomo-start-break">Iniciar pausa</button><button class="btn" data-a="pomo-finish-study">Finalizar estudo</button><button class="btn" data-a="pomo-pause">' +
+            (paused ? "▶ Retomar contagem" : "❚❚ Pausar contagem") +
+            "</button></div></div>";
+        } else {
+          ctrl =
+            runDetails +
+            '<div class="rowflex" style="justify-content:center"><button class="btn pri" data-a="pomo-pause">' +
+            (paused ? "▶ Retomar" : "❚❚ Pausar") +
+            "</button>" +
+            (brk
+              ? '<button class="btn" data-a="pomo-skip">Pular pausa</button>'
+              : '<button class="btn" data-a="pomo-plus">+5 min</button><button class="btn" data-a="pomo-stop">Encerrar e salvar</button><button class="btn dng" data-a="pomo-cancel">Descartar sessão</button>') +
+            "</div>" +
+            (brk
+              ? '<p class="m pomo-break-hint">Pausa de ' +
+                Math.round(r.dur / 60) +
+                " min. O bloco de foco anterior foi salvo automaticamente.</p>"
+              : '<p class="m pomo-discard-hint">Encerrar e salvar registra o tempo focado como bloco incompleto; descartar encerra sem criar uma sessão.</p>');
+        }
       }
       var ratePanel = ratePend
         ? '<div class="card rate" style="width:100%"><h2>Como foi seu foco no último bloco?</h2><div class="rowflex" style="justify-content:center">' +
@@ -249,6 +291,8 @@
       var main =
         '<div class="card pcard' +
         (brk ? " brk" : "") +
+        (overtime ? " overtime" : "") +
+        (breakEnded ? " break-ended" : "") +
         (paused ? " pau" : "") +
         '"><div class="ptop"><span class="pill ' +
         pillCls +
@@ -263,9 +307,9 @@
         '<div class="dial' +
         (running ? " run" : "") +
         '">' +
-        dialSvg(frac, brk, paused) +
+        dialSvg(frac, brk, paused, overtime) +
         '<div class="c"><b id="pclock">' +
-        dependencies.fmtClock(rem) +
+        timeText +
         '</b><span id="pphase">' +
         blocks.length +
         " de " +
@@ -348,7 +392,7 @@
       return (
         dependencies.head(
           "Pomodoro",
-          "Método Pomodoro: blocos de foco com pausas. Ao concluir, o bloco é salvo automaticamente; se encerrar antes, você pode salvar o tempo focado como bloco incompleto ou descartar a sessão.",
+          "Método Pomodoro: blocos de foco com pausas. Ao concluir, o bloco é salvo e o tempo continua contando até você iniciar a pausa.",
         ) +
         '<div class="pomo-page">' +
         kpisHtml +
