@@ -81,6 +81,30 @@
         dependencies.getUserId(),
       );
       S = dependencies.getState();
+      var activeStrengthSession = (S.strengthSessions || []).find(function (session) {
+        return session.status === "active";
+      });
+      var activeStrengthExercises = activeStrengthSession
+        ? activeStrengthSession.exercises || []
+        : [];
+      var activeStrengthDoneSets = activeStrengthExercises.reduce(function (total, exercise) {
+        return total + (exercise.sets || []).filter(function (set) {
+          return set.completed;
+        }).length;
+      }, 0);
+      var activeStrengthTotalSets = activeStrengthExercises.reduce(function (total, exercise) {
+        return total + (exercise.sets || []).length;
+      }, 0);
+      var activeStrengthProgress = activeStrengthExercises.length
+        ? activeStrengthDoneSets + " de " + activeStrengthTotalSets + " séries registradas"
+        : "Nenhum exercício adicionado ainda";
+      var activeWorkoutHtml = activeStrengthSession
+        ? '<section class="card home-active-workout" aria-labelledby="home-active-workout-title"><div class="home-active-workout-copy"><p class="eyebrow">TREINO EM ANDAMENTO</p><h2 id="home-active-workout-title">' +
+          esc(activeStrengthSession.name || "Treino") +
+          '</h2><p class="m">' +
+          activeStrengthProgress +
+          ' · salvo automaticamente</p></div><button class="btn pri" type="button" data-strength-action="resume">Continuar treino</button></section>'
+        : "";
       var isAreaEnabled = function (tabId) {
         var areaId = ["foco", "temas", "desempenho"].indexOf(tabId) !== -1
           ? "estudo"
@@ -287,6 +311,7 @@
               " · semana de " +
               fmtD(ws),
           ) +
+          activeWorkoutHtml +
           '<section class="card welcome-state"><div class="welcome-kicker">PRIMEIROS PASSOS</div><h2>Seu espaço está pronto</h2><p>Registre uma sessão ou escolha uma ação para começar. Seus indicadores e gráficos aparecem aqui conforme você avança.</p><div class="welcome-actions">' +
           startActionsHtml +
           "</div></section>" +
@@ -456,6 +481,7 @@
             " · semana de " +
             fmtD(ws),
         ) +
+        activeWorkoutHtml +
         quickActionsHtml +
         kpis +
         '<div class="today-grid"><div class="card"><h2>Atividades pendentes</h2>' +

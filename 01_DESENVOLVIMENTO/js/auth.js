@@ -266,13 +266,36 @@
 
     function openApp() {
       var appScript = document.createElement("script");
+      var appRuntimeError = null;
+      function captureAppRuntimeError(event) {
+        if (event && (event.error || event.message)) {
+          appRuntimeError = event.error || new Error(event.message);
+        }
+      }
+      window.addEventListener("error", captureAppRuntimeError, true);
+
       appScript.src = appSource;
       appScript.onload = function () {
+        window.removeEventListener("error", captureAppRuntimeError, true);
+        if (appRuntimeError) {
+          console.error("Erro ao inicializar o aplicativo:", appRuntimeError);
+          appStarted = false;
+          if (shell) shell.style.display = "none";
+          if (bottom) bottom.style.display = "none";
+          root.style.display = "";
+          setAuthMode("login", "");
+          setAuthMessage(
+            "Não foi possível abrir o aplicativo. Recarregue esta página e tente novamente. Seus dados foram mantidos.",
+            "error",
+          );
+          return;
+        }
         root.style.display = "none";
         if (shell) shell.style.display = "";
         if (bottom) bottom.style.display = "";
       };
       appScript.onerror = function () {
+        window.removeEventListener("error", captureAppRuntimeError, true);
         appStarted = false;
         message.textContent = "Não foi possível carregar o app. Tente novamente.";
         form.hidden = false;
