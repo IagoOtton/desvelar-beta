@@ -111,7 +111,7 @@
 
       <p id="auth-message" role="status" aria-live="polite"></p>
       <p class="auth-note">Sua conta mantém seus dados sincronizados entre dispositivos. Evite registrar informações pessoais ou financeiras sensíveis.</p>
-      <p class="auth-privacy-link"><a href="./privacidade.html">Leia o aviso de privacidade</a></p>
+      <p class="auth-privacy-link"><a href="./estudos.html">Conheça a área de Estudos</a> · <a href="./privacidade.html">Aviso de privacidade</a></p>
     </section>
   `;
 
