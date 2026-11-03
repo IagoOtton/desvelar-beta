@@ -478,7 +478,33 @@
     ) {
       throw new Error("Sessão do Pomodoro inválida");
     }
-    if (o.pomoRun) normalizeStudyMetadata(o.pomoRun);
+    if (o.pomoRun) {
+      normalizeStudyMetadata(o.pomoRun);
+      if (
+        typeof o.pomoRun.overtimeSince !== "number" ||
+        !Number.isFinite(o.pomoRun.overtimeSince) ||
+        o.pomoRun.overtimeSince <= 0
+      ) {
+        delete o.pomoRun.overtimeSince;
+      }
+      if (
+        typeof o.pomoRun.overtimePausedAt !== "number" ||
+        !Number.isFinite(o.pomoRun.overtimePausedAt) ||
+        o.pomoRun.overtimePausedAt <= 0
+      ) {
+        delete o.pomoRun.overtimePausedAt;
+      }
+      if (
+        typeof o.pomoRun.breakEndedAt !== "number" ||
+        !Number.isFinite(o.pomoRun.breakEndedAt) ||
+        o.pomoRun.breakEndedAt <= 0
+      ) {
+        delete o.pomoRun.breakEndedAt;
+      }
+      if (typeof o.pomoRun.savedSessionId !== "string") {
+        delete o.pomoRun.savedSessionId;
+      }
+    }
 
     delete o.subjects;
     delete o.ach;

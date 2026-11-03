@@ -2,7 +2,7 @@
   "use strict";
 
   function create(dependencies) {
-    var required = ["getState", "getTab", "persist", "render", "toast", "pad"];
+    var required = ["getState", "getTab", "persist", "showPomodoroDecision", "toast", "pad"];
     if (
       !dependencies ||
       required.some(function (key) {
@@ -15,10 +15,12 @@
 
     var PomodoroDomain = dependencies.domain;
     var persist = dependencies.persist;
-    var render = dependencies.render;
+    var showPomodoroDecision = dependencies.showPomodoroDecision;
     var toast = dependencies.toast;
     var PC = 2 * Math.PI * 118;
     var S = null;
+    var audioContext = null;
+    var announcedFocusEnd = "";
 
     function phaseName(run) {
       return PomodoroDomain.phaseName(run);
@@ -26,12 +28,19 @@
     function pomoRem(run) {
       return PomodoroDomain.remaining(run, Date.now());
     }
+    function pomoOvertime(run) {
+      return PomodoroDomain.overtimeSeconds(run, Date.now());
+    }
+    function pomoPaused(run) {
+      return PomodoroDomain.isPaused(run);
+    }
     function fmtClock(sec) {
+      sec = Math.max(0, Math.floor(Number(sec) || 0));
       return dependencies.pad(Math.floor(sec / 60)) + ":" + dependencies.pad(sec % 60);
     }
 
     function pomoComplete(atMs, targetState) {
-      PomodoroDomain.complete(targetState || dependencies.getState(), atMs);
+      return PomodoroDomain.complete(targetState || dependencies.getState(), atMs);
     }
     function pomoStart(tag, intent, targetState, topic, studyType) {
       PomodoroDomain.start(
@@ -42,6 +51,7 @@
         topic,
         studyType,
       );
+      unlockAudio();
       try {
         if (window.Notification && Notification.permission === "default")
           Notification.requestPermission();
@@ -50,21 +60,56 @@
     function pomoPause(targetState) {
       PomodoroDomain.pause(targetState || dependencies.getState(), Date.now());
     }
-    function beep() {
+    function getAudioContext() {
       try {
-        var C = window.AudioContext || window.webkitAudioContext,
-          a = new C();
-        [0, 0.28, 0.56].forEach(function (t, i) {
-          var o = a.createOscillator(),
-            g = a.createGain();
-          o.frequency.value = i === 2 ? 880 : 660;
-          o.connect(g);
-          g.connect(a.destination);
-          g.gain.setValueAtTime(0.0001, a.currentTime + t);
-          g.gain.exponentialRampToValueAtTime(0.25, a.currentTime + t + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + t + 0.22);
-          o.start(a.currentTime + t);
-          o.stop(a.currentTime + t + 0.25);
+        var Audio = window.AudioContext || window.webkitAudioContext;
+        if (!Audio) return null;
+        if (!audioContext) audioContext = new Audio();
+        if (audioContext.state === "suspended") {
+          var resumed = audioContext.resume();
+          if (resumed && typeof resumed.catch === "function") resumed.catch(function () {});
+        }
+        return audioContext;
+      } catch (e) {}
+      return null;
+    }
+    function unlockAudio() {
+      var context = getAudioContext();
+      if (!context) return;
+      try {
+        var oscillator = context.createOscillator();
+        var gain = context.createGain();
+        oscillator.frequency.value = 440;
+        gain.gain.setValueAtTime(0.0001, context.currentTime);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(context.currentTime);
+        oscillator.stop(context.currentTime + 0.03);
+      } catch (e) {}
+    }
+    function beep(strong) {
+      var context = getAudioContext();
+      if (!context) return;
+      try {
+        var pattern = strong
+          ? [740, 880, 1046, 740, 880, 1046, 740, 880, 1046]
+          : [660, 660, 880];
+        var spacing = strong ? 0.34 : 0.28;
+        var duration = strong ? 0.25 : 0.22;
+        var volume = strong ? 0.38 : 0.25;
+        var startAt = context.currentTime + 0.03;
+        pattern.forEach(function (frequency, index) {
+          var at = startAt + index * spacing;
+          var oscillator = context.createOscillator();
+          var gain = context.createGain();
+          oscillator.frequency.value = frequency;
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+          gain.gain.setValueAtTime(0.0001, at);
+          gain.gain.exponentialRampToValueAtTime(volume, at + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+          oscillator.start(at);
+          oscillator.stop(at + duration + 0.01);
         });
       } catch (e) {}
     }
@@ -73,6 +118,22 @@
         if (window.Notification && Notification.permission === "granted")
           new Notification(title, { body: body });
       } catch (e) {}
+    }
+    function announceFocusEnd(run, saved) {
+      if (!run || !run.overtimeSince) return;
+      var key = String(run.overtimeSince);
+      if (announcedFocusEnd === key) return;
+      announcedFocusEnd = key;
+      beep(true);
+      try {
+        if (navigator.vibrate) navigator.vibrate([350, 150, 350, 150, 700]);
+      } catch (e) {}
+      var message = saved
+        ? "O tempo de foco acabou. O bloco foi salvo; inicie a pausa quando quiser."
+        : "O tempo de foco acabou, mas não foi possível sincronizar o bloco. A contagem extra continua.";
+      notify("Tempo de foco encerrado", message);
+      if (dependencies.getTab() === "foco") burst();
+      toast(message);
     }
     function burst() {
       try {
@@ -142,43 +203,59 @@
     }
     function tick() {
       S = dependencies.getState();
-      var fin = null;
-      while (S.pomoRun && S.pomoRun.end && S.pomoRun.end <= Date.now()) {
-        fin = S.pomoRun.phase;
-        pomoComplete(S.pomoRun.end);
-      }
-      if (fin) {
-        var saved = persist();
-        var msg;
-  
-        if (fin === "focus") {
-          msg = saved
-            ? "Foco concluído e salvo. Hora da pausa."
-            : "Foco concluído, mas não foi possível salvar os dados. Verifique a sincronização na tela Sistema.";
-        } else {
-          msg = saved
-            ? "Pausa terminou. Pronto para o próximo foco?"
-            : "Pausa terminou, mas não foi possível salvar os dados. Verifique a sincronização na tela Sistema.";
-        }
-  
-        beep();
-        notify("DESVELAR", msg);
-        render();
-        toast(msg);
-  
-        if (fin === "focus" && dependencies.getTab() === "foco") burst();
-  
+      var now = Date.now();
+      if (
+        S.pomoRun &&
+        S.pomoRun.phase === "focus" &&
+        S.pomoRun.end &&
+        S.pomoRun.end <= now &&
+        PomodoroDomain.markFocusComplete(S, S.pomoRun.end)
+      ) {
+        var focusSaved = persist();
+        showPomodoroDecision();
+        announceFocusEnd(S.pomoRun, focusSaved);
         return;
+      }
+      if (S.pomoRun && S.pomoRun.phase === "focus" && S.pomoRun.overtimeSince) {
+        announceFocusEnd(S.pomoRun, true);
+      }
+      if (
+        S.pomoRun &&
+        S.pomoRun.phase !== "focus" &&
+        S.pomoRun.end &&
+        S.pomoRun.end <= Date.now()
+      ) {
+        if (PomodoroDomain.markBreakComplete(S, S.pomoRun.end)) {
+          var saved = persist();
+          var msg = saved
+            ? "A pausa terminou. Inicie o próximo bloco ou finalize o estudo."
+            : "A pausa terminou, mas não foi possível salvar. Verifique a sincronização na tela Sistema.";
+          showPomodoroDecision();
+          beep(false);
+          notify("Pausa concluída", msg);
+          try {
+            if (navigator.vibrate) navigator.vibrate([250, 120, 250]);
+          } catch (e) {}
+          toast(msg);
+          return;
+        }
       }
       var r = S.pomoRun,
         el;
       if (r) {
-        var rem = pomoRem(r),
-          txt = fmtClock(rem);
-        document.title = txt + " · " + phaseName(r) + " — DESVELAR";
+        var overtime = r.phase === "focus" && !!r.overtimeSince;
+        var paused = PomodoroDomain.isPaused(r);
+        var rem = pomoRem(r);
+        var txt = overtime
+          ? "+" + fmtClock(pomoOvertime(r))
+          : fmtClock(rem);
+        document.title = (overtime ? "⚠ " : "") +
+          (paused ? "Pausado · " : "") + txt + " · " + phaseName(r) + " — DESVELAR";
         if ((el = document.getElementById("pclock"))) el.textContent = txt;
         if ((el = document.getElementById("mclock"))) el.textContent = txt;
+        if ((el = document.getElementById("pomo-overtime-clock"))) el.textContent = txt;
         if (r.end) setArc(Math.max(0, Math.min(1, rem / r.dur)));
+        else if (overtime) setArc(1);
       } else document.title = "DESVELAR";
     }
     function startClock() {
@@ -189,6 +266,8 @@
       circumference: PC,
       phaseName: phaseName,
       remaining: pomoRem,
+      overtimeSeconds: pomoOvertime,
+      isPaused: pomoPaused,
       formatClock: fmtClock,
       complete: pomoComplete,
       start: pomoStart,

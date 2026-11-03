@@ -20,6 +20,9 @@
       "pomoStart",
       "pomoPause",
       "pomoComplete",
+      "pomoFinishStudy",
+      "pomoEndBreak",
+      "refreshPomodoro",
       "render",
       "commit",
       "isTabEnabled",
@@ -214,6 +217,38 @@
         );
       } else if (action === "pomo-pause") {
         dependencies.pomoPause(state);
+      } else if (action === "pomo-start-break") {
+        var waitingFocus = state.pomoRun;
+        if (
+          waitingFocus &&
+          waitingFocus.phase === "focus" &&
+          waitingFocus.overtimeSince &&
+          dependencies.pomoComplete(Date.now(), state)
+        ) {
+          message = "Pausa iniciada. O tempo extra foi incluído no bloco.";
+        } else {
+          return;
+        }
+      } else if (action === "pomo-next-focus") {
+        var endedBreak = state.pomoRun;
+        if (
+          !endedBreak ||
+          !endedBreak.breakEndedAt ||
+          (endedBreak.phase !== "short" && endedBreak.phase !== "long")
+        ) {
+          return;
+        }
+        dependencies.pomoStart(
+          endedBreak.tag || "",
+          endedBreak.intent || "",
+          state,
+          endedBreak.topic || "",
+          endedBreak.studyType || "",
+        );
+        message = "Próximo bloco de foco iniciado.";
+      } else if (action === "pomo-finish-study") {
+        if (!dependencies.pomoFinishStudy(state, Date.now())) return;
+        message = "Estudo finalizado. Seu progresso foi salvo.";
       } else if (action === "pomo-plus") {
         var activeRun = state.pomoRun;
         activeRun.dur += 300;
@@ -221,8 +256,8 @@
         else activeRun.left += 300;
         message = "+5 minutos";
       } else if (action === "pomo-skip") {
-        dependencies.pomoComplete(Date.now(), state);
-        message = "pausa pulada";
+        dependencies.pomoEndBreak(state, Date.now(), true);
+        message = "Pausa encerrada. Comece outro bloco ou finalize o estudo.";
       } else if (action === "pomo-stop") {
         var stoppedRun = state.pomoRun;
         var minutes = Math.round(
@@ -542,7 +577,17 @@
         }
         return;
       }
-      dependencies.commit(message, saved);
+      var keepCurrentPage =
+        ui.tab !== "foco" &&
+        (action === "pomo-start-break" ||
+          action === "pomo-next-focus" ||
+          action === "pomo-finish-study");
+      dependencies.commit(
+        message,
+        saved,
+        keepCurrentPage ? { skipRender: true } : undefined,
+      );
+      if (keepCurrentPage) dependencies.refreshPomodoro();
     }
 
     return Object.freeze({ handleClick: handleClick });

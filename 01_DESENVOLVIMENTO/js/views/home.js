@@ -33,6 +33,7 @@
       "brainGraph",
       "phaseName",
       "pomoRemaining",
+      "pomoOvertime",
       "formatClock",
     ];
     if (
@@ -74,6 +75,7 @@
     var accByTag = dependencies.accuracyByTag;
     var phaseName = dependencies.phaseName;
     var pomoRem = dependencies.pomoRemaining;
+    var pomoOvertime = dependencies.pomoOvertime;
     var fmtClock = dependencies.formatClock;
 
     async function homePage() {
@@ -284,12 +286,16 @@
         timer;
       if (pr) {
         timer =
-          '<div class="card timer on"><h2>' +
+          '<div class="card timer on' +
+          (pr.overtimeSince ? " pomo-overtime" : "") +
+          '"><h2>' +
           phaseName(pr) +
           "</h2>" +
           (pr.tag ? chip(pr.tag) : "") +
           '<div class="clock" id="mclock">' +
-          fmtClock(pomoRem(pr)) +
+          (pr.overtimeSince
+            ? "+" + fmtClock(pomoOvertime(pr))
+            : fmtClock(pomoRem(pr))) +
           '</div><div class="rowflex"><button class="btn pri" data-a="tab" data-tab="foco">Abrir Foco</button></div></div>';
       } else {
         timer =

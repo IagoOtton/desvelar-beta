@@ -1919,6 +1919,17 @@ svg.graph .pulse {
     transparent
   );
 }
+.pcard.overtime {
+  border-color: color-mix(in srgb, var(--warn) 70%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 18%, transparent);
+}
+.pcard.overtime::before {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--warn) 32%, transparent),
+    transparent
+  );
+}
 .pcard > * {
   position: relative;
 }
@@ -1949,6 +1960,11 @@ svg.graph .pulse {
 .pill.p {
   color: var(--warn);
   border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+}
+.pill.o {
+  color: var(--surface);
+  border-color: var(--warn);
+  background: var(--warn);
 }
 .dial {
   position: relative;
@@ -2000,6 +2016,119 @@ svg.graph .pulse {
 }
 .dial.run .glow {
   animation: breathe 3.2s ease-in-out infinite;
+}
+.pcard.overtime .dial {
+  filter: drop-shadow(0 0 13px color-mix(in srgb, var(--warn) 55%, transparent));
+  animation: pomo-overtime-pulse 1.5s ease-in-out infinite;
+}
+.pcard.overtime .dial .tickl.on {
+  stroke: var(--warn);
+}
+.pomo-run-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+@keyframes pomo-overtime-pulse {
+  50% {
+    filter: drop-shadow(0 0 23px color-mix(in srgb, var(--warn) 75%, transparent));
+  }
+}
+.pomo-overtime-panel {
+  display: grid;
+  gap: 10px;
+  padding: 13px 15px;
+  border: 2px solid color-mix(in srgb, var(--warn) 62%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--warn) 11%, var(--surface));
+  text-align: left;
+}
+.pomo-overtime-panel strong {
+  color: var(--warn);
+}
+.pomo-overtime-panel p {
+  margin: 4px 0 0;
+}
+.pomo-overtime-panel .rowflex {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.pomo-overtime-panel .btn {
+  min-height: 46px;
+  padding-inline: 10px;
+  border-radius: 999px;
+}
+.pomo-break-ended-panel {
+  border-color: color-mix(in srgb, var(--good) 58%, var(--line));
+  background: color-mix(in srgb, var(--good) 10%, var(--surface));
+}
+.pomo-break-ended-panel strong {
+  color: var(--good);
+}
+.pomo-overdue-banner {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 var(--space-3);
+  padding: 13px 16px;
+  border: 2px solid color-mix(in srgb, var(--warn) 62%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface));
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.pomo-overdue-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 12px;
+}
+.pomo-overdue-copy > strong,
+.pomo-overdue-copy > p {
+  grid-column: 1;
+}
+.pomo-overdue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.pomo-overdue-banner strong {
+  color: var(--warn);
+  font-size: 16px;
+}
+.pomo-break-ended-banner {
+  border-color: color-mix(in srgb, var(--good) 62%, var(--line));
+  background: color-mix(in srgb, var(--good) 12%, var(--surface));
+}
+.pomo-break-ended-banner strong {
+  color: var(--good);
+}
+.pomo-overdue-banner p {
+  margin: 3px 0 0;
+  color: var(--muted);
+}
+.pomo-overdue-clock {
+  color: var(--warn);
+  font: 700 22px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.pomo-overdue-banner .btn {
+  min-height: 46px;
+}
+.pomo-overdue-actions .btn {
+  min-width: min(220px, 100%);
+}
+.timer.pomo-overtime {
+  border-color: color-mix(in srgb, var(--warn) 62%, var(--line));
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+}
+.timer.pomo-overtime .clock {
+  color: var(--warn);
 }
 @keyframes breathe {
   50% {
@@ -4611,6 +4740,11 @@ body:has(#view .study-heading--notebook) .study-heading--notebook {
   color: var(--warn);
 }
 
+.pomo-page .pill.o {
+  background: var(--warn);
+  color: var(--surface);
+}
+
 .pomo-stage {
   display: grid;
   grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.15fr);
@@ -4929,6 +5063,20 @@ body.zen .shell > main {
   color: var(--warn);
 }
 
+#view:has(.pomo-zen-page) .pill.o {
+  background: var(--warn);
+  color: var(--surface);
+}
+
+#view:has(.pomo-zen-page) .pomo-overtime-panel {
+  gap: clamp(5px, 0.8vh, 9px);
+  padding: clamp(8px, 1.2vh, 12px);
+}
+
+#view:has(.pomo-zen-page) .pomo-overtime-panel p {
+  font-size: 12px;
+}
+
 #view:has(.pomo-zen-page) .pomo-stage {
   grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.05fr);
   flex: 1;
@@ -5018,6 +5166,20 @@ body.zen .shell > main {
 }
 
 @media (max-width: 600px) {
+  .pomo-overdue-banner {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .pomo-overdue-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pomo-overdue-clock {
+    font-size: 19px;
+  }
+
   body.zen .shell {
     padding: 6px;
   }
@@ -5076,6 +5238,16 @@ body.zen .shell > main {
   #view:has(.pomo-zen-page) .pomo-controls .pform input,
   #view:has(.pomo-zen-page) .pomo-controls .pform select {
     min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pcard.overtime .dial {
+    animation: none;
+  }
+
+  .pcard.overtime .dial .glow {
+    animation: none;
   }
 }
 
