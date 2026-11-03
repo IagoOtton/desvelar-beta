@@ -64,6 +64,7 @@
         '<div class="card"><h2>Sincronização</h2><p id="cloud-sync-status" role="status">' +
         dependencies.esc(dependencies.getCloudSyncStatus()) +
         '</p><p class="m">Use a mesma conta em cada dispositivo. Sem conexão, as alterações ficam guardadas neste navegador e tentam sincronizar quando a conexão voltar.</p></div>' +
+        '<section class="card privacy-settings-card"><h2>Privacidade e segurança</h2><p>Seu progresso pessoal, incluindo os registros de Estudos, fica associado à sua conta e não é publicado automaticamente na comunidade. Publicações, comentários e dados do perfil comunitário têm visibilidade própria para os usuários autenticados.</p><a class="btn" href="./privacidade.html">Ler aviso de privacidade</a></section>' +
         '<div class="card"><h2>Conta</h2><p class="m">Sair encerra sua sessão sem apagar o progresso. O app tenta sincronizar antes de sair; se não conseguir, seus dados permanecem neste navegador.</p><button class="btn" data-a="signout">Sair da conta</button></div>' +
         '<div class="card"><h2>Perfil</h2><form class="row" data-form="profile"><label class="f grow">Nome completo (privado)<input id="p-name" class="grow" name="name" maxlength="80" value="' +
         dependencies.esc(state.name) +
@@ -90,4 +91,5 @@
   }
   window.DesvelarSystemViews = Object.freeze({ create: create });
 })();
+
 

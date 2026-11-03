@@ -338,7 +338,7 @@
               .join("") +
             "</ul>"
           : '<p class="empty">Nenhuma sessão ainda.</p>') +
-        "</section></div>"
+        '</section></div><aside class="study-privacy-note"><div><strong>Seu progresso de Estudos é privado.</strong><span>Ele fica associado à sua conta e não é compartilhado automaticamente na comunidade.</span></div><a href="./privacidade.html">Privacidade e segurança</a></aside>'
       );
     }
 
@@ -613,5 +613,6 @@
   }
   window.DesvelarLearningViews = Object.freeze({ create: create });
 })();
+
 
 
