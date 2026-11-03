@@ -38,6 +38,8 @@
   var TAGGED = DataModel.TAGGED;
   var normalize = DataModel.normalize;
   var mergeLegacyData = DataModel.mergeLegacyData;
+  var UsageAnalytics = window.DesvelarUsageAnalytics.create(window.desvelarSupabase);
+  var isUsageAdmin = false;
   var PomodoroDomain = window.DesvelarPomodoroDomain.create({
     uid: uid,
     dateKey: ds,
@@ -243,11 +245,22 @@
   function navHtml(heads) {
     var state = stateStore.getState();
     var enabledTabs = state ? state.enabledTabs || {} : {};
+    var visibleTabs = ModuleRegistry.visibleTabs(enabledTabs);
+    if (isUsageAdmin) {
+      visibleTabs = visibleTabs.concat([
+        [
+          "painel_controle",
+          "Painel de controle",
+          "M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z",
+          "Administração",
+        ],
+      ]);
+    }
     var activeNavTab = ["foco", "temas", "desempenho"].indexOf(tab) !== -1
       ? "estudo"
       : tab;
     return N.render(
-      ModuleRegistry.visibleTabs(enabledTabs),
+      visibleTabs,
       activeNavTab,
       heads,
     );
@@ -354,6 +367,7 @@
     groupRepository: window.DesvelarGroupRepository,
     communityRepository: window.DesvelarCommunityRepository,
     modules: ModuleRegistry.systemModules,
+    usageAnalytics: UsageAnalytics,
     circumference: PC,
     phaseName: phaseName,
     pomoRemaining: pomoRem,
@@ -418,7 +432,9 @@
           window.DesvelarCommunityRepository.invalidateFeed();
           window.DesvelarCommunityRepository.invalidatePage();
         }
+        var previousTab = tab;
         tab = updates.tab;
+        if (tab !== previousTab) UsageAnalytics.recordArea(tab);
       }
       if (Object.prototype.hasOwnProperty.call(updates, "zen")) {
         zen = updates.zen;
@@ -451,6 +467,7 @@
     commit: commit,
     moduleIds: DataModel.MODULE_IDS,
     isTabEnabled: function (tabId) {
+      if (tabId === "painel_controle") return isUsageAdmin;
       if (tabId === "inicio" || tabId === "sistema" || tabId === "grupos") {
         return true;
       }
@@ -476,7 +493,21 @@
       return activityView;
     },
     setActivityView: function (view) {
+      var previousView = activityView;
       activityView = view;
+      if (tab === "atividade_fisica" && view !== previousView) {
+        var usageAreaByView = {
+          training: "atividade_treino",
+          active: "atividade_treino",
+          summary: "atividade_treino",
+          routines: "atividade_rotinas",
+          "routine-editor": "atividade_rotinas",
+          history: "atividade_historico",
+          performance: "atividade_desempenho",
+          measurements: "atividade_medidas",
+        };
+        UsageAnalytics.recordArea(usageAreaByView[view]);
+      }
     },
     setActiveTab: function (activeTab) {
       tab = activeTab;
@@ -603,7 +634,7 @@
         currentTab,
       ) !== -1;
     var pageTicker = function () {
-      return zen || currentTab === "inicio" || currentTab === "atividade_fisica" || isStudyTab
+      return zen || currentTab === "inicio" || currentTab === "atividade_fisica" || currentTab === "painel_controle" || isStudyTab
         ? ""
         : tickerHtml();
     };
@@ -745,6 +776,11 @@
 
   /* ---------- ações ---------- */
   document.addEventListener("click", function (event) {
+    if (event.target.closest('[data-a="site-analytics-refresh"]')) {
+      render();
+      return;
+    }
+
     var openMobileMore = document.querySelector("#botnav details.mobile-more[open]");
     if (openMobileMore && !openMobileMore.contains(event.target)) {
       openMobileMore.open = false;
@@ -798,6 +834,51 @@
     });
   });
   document.addEventListener("change", function (event) {
+    var usageConsentInput = event.target.closest("#usage-analytics-consent");
+    if (usageConsentInput) {
+      var consentEnabled = usageConsentInput.checked;
+      var consentStatus = document.getElementById("usage-analytics-status");
+      usageConsentInput.disabled = true;
+      window.desvelarSupabase.auth.updateUser({
+        data: { usage_analytics_consent: consentEnabled },
+      }).then(function (authResult) {
+        if (authResult.error) return { ok: false, error: authResult.error };
+        return UsageAnalytics.setConsent(consentEnabled).then(function (result) {
+          if (result.ok) return result;
+          return window.desvelarSupabase.auth.updateUser({
+            data: { usage_analytics_consent: !consentEnabled },
+          }).then(function () {
+            return result;
+          }).catch(function () {
+            return result;
+          });
+        });
+      }).catch(function (error) {
+        return { ok: false, error: error };
+      }).then(function (result) {
+        usageConsentInput.disabled = false;
+        if (!result.ok) {
+          usageConsentInput.checked = !consentEnabled;
+          if (consentStatus) {
+            consentStatus.textContent = "Não foi possível salvar sua escolha. Tente novamente.";
+          }
+          toast("Não foi possível atualizar sua preferência de métricas.");
+          return;
+        }
+
+        if (consentStatus) {
+          consentStatus.textContent = consentEnabled
+            ? "Métricas ativadas nesta conta."
+            : "Métricas desativadas e histórico associado removido.";
+        }
+        if (consentEnabled) {
+          UsageAnalytics.recordArea(tab, true);
+          UsageAnalytics.recordPresence();
+        }
+      });
+      return;
+    }
+
     if (event.target.closest("[data-strength-set-field], [data-strength-measurement-metric], [data-strength-measurement-range], [data-strength-performance-exercise], [data-strength-performance-metric], [data-strength-weekly-target], [data-strength-exercise-group]")) {
       try {
         StrengthController.change(event);
@@ -907,6 +988,24 @@
   var legacyMigration = localData.hasLegacyMigration();
   var migrationFinalized = localData.finalizeLegacyMigration(initSaved);
   render();
+
+  UsageAnalytics.isAdmin().then(function (admin) {
+    var tabChanged = !admin && tab === "painel_controle";
+    isUsageAdmin = admin;
+    if (tabChanged) tab = "inicio";
+    if (admin || tabChanged) render();
+  });
+
+  UsageAnalytics.initialize(tab).catch(function () {});
+  window.setInterval(function () {
+    if (document.visibilityState === "visible") UsageAnalytics.recordPresence();
+  }, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") UsageAnalytics.recordPresence();
+  });
+  window.addEventListener("focus", function () {
+    UsageAnalytics.recordPresence();
+  });
 
   if (legacyMigration) {
     toast(

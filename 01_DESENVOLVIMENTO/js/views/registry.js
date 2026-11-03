@@ -18,6 +18,7 @@
       "getZen",
       "getCloudSyncStatus",
       "getWipeArm",
+      "usageAnalytics",
       "getActivityView",
       "getEditingRoutineId",
       "getSelectedMeasurementMetric",
@@ -303,6 +304,8 @@
       head: head,
       esc: formatting.esc,
       modules: dependencies.modules,
+      usageAnalytics: dependencies.usageAnalytics,
+      feedbackRepository: window.DesvelarFeedbackRepository,
     });
     var agenda = window.DesvelarAgendaViews.create({
       getState: stateStore.getState,
@@ -383,6 +386,7 @@
           return community.communityPage(dependencies.getUserId());
         },
         sistema: system.systemPage,
+        painel_controle: system.controlPanelPage,
       }),
       tickerHtml: insights.tickerHtml,
     });

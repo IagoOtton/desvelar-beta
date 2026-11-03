@@ -160,6 +160,7 @@ const MOCK_SDK = `
           type: "signUp",
           email: credentials.email,
           emailRedirectTo: credentials.options.emailRedirectTo,
+          data: credentials.options.data,
         });
         return { data: { user }, error: window.__testSignUpError || null };
       },
@@ -1108,6 +1109,7 @@ test("bloqueia cadastro se os e-mails digitados não coincidem", async () => {
 
   try {
     await page.locator("#auth-toggle").click();
+    await page.locator("#auth-privacy-acceptance").check();
     await page.locator("#auth-email").fill(USER.email);
     await page.locator("#auth-email-confirm").fill("outro@desvelar.local");
     await page.locator("#auth-password").fill("senha-forte-2026");
@@ -1133,6 +1135,7 @@ test("exige senha nova de 8 caracteres sem bloquear senhas antigas no login", as
 
   try {
     await page.locator("#auth-toggle").click();
+    await page.locator("#auth-privacy-acceptance").check();
     await page.locator("#auth-email").fill(USER.email);
     await page.locator("#auth-email-confirm").fill(USER.email);
     await page.locator("#auth-password").fill("1234567");
@@ -1161,6 +1164,14 @@ test("cadastra com redirecionamento estável e permite reenviar a confirmação"
     await page.locator("#auth-email-confirm").fill(USER.email);
     await page.locator("#auth-password").fill("senha-forte-2026");
     await page.locator("#auth-submit").click();
+    assert.equal(
+      await page.evaluate(() =>
+        window.__mockCalls.some((call) => call.type === "signUp"),
+      ),
+      false,
+    );
+    await page.locator("#auth-privacy-acceptance").check();
+    await page.locator("#auth-submit").click();
 
     await page
       .getByText(/Se o cadastro puder ser concluído/)
@@ -1171,6 +1182,11 @@ test("cadastra com redirecionamento estável e permite reenviar a confirmação"
       window.__mockCalls.find((call) => call.type === "signUp"),
     );
     assert.equal(signUpCall.email, USER.email);
+    assert.deepEqual(signUpCall.data, {
+      privacy_notice_accepted: true,
+      privacy_notice_version: "2026-11-03",
+      usage_analytics_consent: false,
+    });
     assert.equal(
       signUpCall.emailRedirectTo,
       new URL(page.url()).origin + new URL(page.url()).pathname,
@@ -1224,6 +1240,7 @@ test("não expõe detalhes do servidor ao falhar cadastro", async () => {
 
   try {
     await page.locator("#auth-toggle").click();
+    await page.locator("#auth-privacy-acceptance").check();
     await page.locator("#auth-email").fill(USER.email);
     await page.locator("#auth-email-confirm").fill(USER.email);
     await page.locator("#auth-password").fill("senha-forte-2026");
@@ -1246,6 +1263,7 @@ test("mostra espera amigável para limite de reenvio sem expor o erro bruto", as
 
   try {
     await page.locator("#auth-toggle").click();
+    await page.locator("#auth-privacy-acceptance").check();
     await page.locator("#auth-email").fill(USER.email);
     await page.locator("#auth-email-confirm").fill(USER.email);
     await page.locator("#auth-password").fill("senha-forte-2026");

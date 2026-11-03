@@ -14,6 +14,8 @@ O build usa esbuild para minificar o JavaScript e o CSS, gerar nomes de arquivo 
 
 O bundle de autenticação registra um service worker apenas em HTTPS. Ele usa cache-first somente para JavaScript e CSS de produção em `assets/` cujos nomes incluem hash de conteúdo; o HTML, as fontes externas e as respostas do Supabase continuam fora desse cache. O build deriva o identificador do cache dos nomes dos bundles. A ativação mantém a geração atual e a anterior para arquivos referenciados por um HTML ainda em cache e remove gerações mais antigas.
 
+As métricas de uso são opcionais e ficam desativadas até a pessoa ativá-las em Perfil. O cliente envia apenas um identificador de área permitido; os registros ficam no schema privado `private`, com retenção de 90 dias. A tela de administração recebe somente totais agregados através de funções `SECURITY DEFINER` que verificam uma lista privada de administradores. Não inclua conteúdo dos registros pessoais, publicações ou mensagens nessas métricas.
+
 ## Responsabilidades
 
 | Camada | Responsabilidade |

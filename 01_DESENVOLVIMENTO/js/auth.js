@@ -61,6 +61,22 @@
             <small id="auth-password-hint" class="auth-field-hint" hidden>Use pelo menos 8 caracteres.</small>
           </div>
 
+          <div id="auth-privacy-acceptance-wrap" class="auth-usage-consent auth-privacy-acceptance" hidden>
+            <label class="auth-usage-consent__label" for="auth-privacy-acceptance">
+              <input id="auth-privacy-acceptance" type="checkbox" aria-describedby="auth-privacy-acceptance-note">
+              <span>Li e aceito o Aviso de Privacidade do DESVELAR.</span>
+            </label>
+            <p id="auth-privacy-acceptance-note">Necessário para criar a conta. <a href="./privacidade.html" target="_blank" rel="noopener noreferrer">Leia o Aviso de Privacidade</a>. A autorização de métricas é uma escolha separada e opcional.</p>
+          </div>
+
+          <div id="auth-usage-consent-wrap" class="auth-usage-consent" hidden>
+            <label class="auth-usage-consent__label" for="auth-usage-consent">
+              <input id="auth-usage-consent" type="checkbox" aria-describedby="auth-usage-consent-note">
+              <span>Autorizo o uso de métricas para ajudar a melhorar o DESVELAR.</span>
+            </label>
+            <p id="auth-usage-consent-note">Opcional. Não inclui o conteúdo do seu progresso e pode ser revogado em Perfil. <a href="./privacidade.html#metricas-de-uso">Leia como funciona</a>.</p>
+          </div>
+
           <div class="auth-actions">
             <button id="auth-submit" class="btn pri" type="submit">Entrar</button>
             <button id="auth-toggle" class="btn sm" type="button">Criar uma conta</button>
@@ -116,6 +132,7 @@
   `;
 
   var MIN_PASSWORD_LENGTH = 8;
+  var PRIVACY_NOTICE_VERSION = "2026-11-03";
   var isSignUp = false;
   var form = document.getElementById("auth-form");
   var message = document.getElementById("auth-message");
@@ -124,6 +141,10 @@
   var modeHint = document.getElementById("auth-mode-hint");
   var emailConfirmWrap = document.getElementById("auth-email-confirm-wrap");
   var emailConfirm = document.getElementById("auth-email-confirm");
+  var privacyAcceptanceWrap = document.getElementById("auth-privacy-acceptance-wrap");
+  var privacyAcceptanceInput = document.getElementById("auth-privacy-acceptance");
+  var usageConsentWrap = document.getElementById("auth-usage-consent-wrap");
+  var usageConsentInput = document.getElementById("auth-usage-consent");
   var passwordHint = document.getElementById("auth-password-hint");
   var submit = document.getElementById("auth-submit");
   var toggle = document.getElementById("auth-toggle");
@@ -135,6 +156,8 @@
   var passwordRecoverySubmit = document.getElementById("password-recovery-submit");
   var appStarted = false;
   var authRequestInFlight = false;
+  var signupSettingsSyncUserId = null;
+  var signupSettingsSyncInFlight = false;
   var recoveryFlow = isRecoveryRedirect();
   var recoveryVerified = false;
 
@@ -166,6 +189,9 @@
     resendConfirmation.hidden = true;
     var signupMode = mode === "signup";
     emailConfirmWrap.hidden = !signupMode;
+    privacyAcceptanceWrap.hidden = !signupMode;
+    privacyAcceptanceInput.required = signupMode;
+    usageConsentWrap.hidden = !signupMode;
     emailConfirm.required = signupMode;
     loginPassword.minLength = signupMode ? MIN_PASSWORD_LENGTH : 6;
     loginPassword.autocomplete = signupMode ? "new-password" : "current-password";
@@ -251,6 +277,56 @@
 
   function startApp(user) {
     if (!user || appStarted || recoveryFlow) return;
+
+    var signupMetadata = user.user_metadata || {};
+    var signupConsent = signupMetadata.usage_analytics_consent;
+    var acceptedPrivacyNotice =
+      signupMetadata.privacy_notice_accepted === true &&
+      signupMetadata.privacy_notice_version === PRIVACY_NOTICE_VERSION;
+    var hasSignupPreferences =
+      typeof signupConsent === "boolean" || acceptedPrivacyNotice;
+
+    if (hasSignupPreferences && signupSettingsSyncUserId !== user.id) {
+      if (signupSettingsSyncInFlight) return;
+      signupSettingsSyncInFlight = true;
+      var signupSyncTasks = [];
+
+      if (typeof signupConsent === "boolean") {
+        signupSyncTasks.push(
+          window.desvelarSupabase.rpc("set_my_usage_analytics_consent", {
+            p_enabled: signupConsent,
+          }).then(function (result) {
+            if (result.error || result.data !== true) {
+              console.warn("Não foi possível salvar a escolha de métricas feita no cadastro.", result.error);
+            }
+          }).catch(function (error) {
+            console.warn("Não foi possível salvar a escolha de métricas feita no cadastro.", error);
+          }),
+        );
+      }
+
+      if (acceptedPrivacyNotice) {
+        signupSyncTasks.push(
+          window.desvelarSupabase.rpc("record_my_privacy_notice_acceptance", {
+            p_notice_version: PRIVACY_NOTICE_VERSION,
+          }).then(function (result) {
+            if (result.error || result.data !== true) {
+              console.warn("Não foi possível registrar o aviso de privacidade aceito.", result.error);
+            }
+          }).catch(function (error) {
+            console.warn("Não foi possível registrar o aviso de privacidade aceito.", error);
+          }),
+        );
+      }
+
+      Promise.all(signupSyncTasks).finally(function () {
+        signupSettingsSyncUserId = user.id;
+        signupSettingsSyncInFlight = false;
+        startApp(user);
+      });
+      return;
+    }
+
     appStarted = true;
     window.desvelarUser = user;
     message.textContent = "Carregando seus dados…";
@@ -350,6 +426,10 @@
 
   toggle.addEventListener("click", function () {
     isSignUp = !isSignUp;
+    if (isSignUp) {
+      privacyAcceptanceInput.checked = false;
+      usageConsentInput.checked = false;
+    }
     submit.textContent = isSignUp ? "Cadastrar" : "Entrar";
     toggle.textContent = isSignUp ? "Já tenho uma conta" : "Criar uma conta";
     setAuthMode(isSignUp ? "signup" : "login");
@@ -558,6 +638,11 @@
             password: password,
             options: {
               emailRedirectTo: authRedirectUrl(),
+              data: {
+                privacy_notice_accepted: privacyAcceptanceInput.checked,
+                privacy_notice_version: PRIVACY_NOTICE_VERSION,
+                usage_analytics_consent: usageConsentInput.checked,
+              },
             },
           })
         : await window.desvelarSupabase.auth.signInWithPassword({
