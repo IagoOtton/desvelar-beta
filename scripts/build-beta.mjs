@@ -129,6 +129,27 @@ const privacyHtml = sourcePrivacyHtml.replace(
 ).replaceAll('href="./desvelar-v1-corrigido.html"', 'href="./index.html"');
 writeFileSync(join(outputRoot, "privacidade.html"), privacyHtml);
 
+const sourceStudyHtml = readFileSync(
+  join(appRoot, "estudos.html"),
+  "utf8",
+);
+
+if (!stylesheetPattern.test(sourceStudyHtml)) {
+  throw new Error("Não foi possível localizar a folha de estilos da página de Estudos.");
+}
+
+const studyHtml = sourceStudyHtml
+  .replace(stylesheetPattern, `<link rel="stylesheet" href="${styleUrl}" />`)
+  .replaceAll('href="./desvelar-v1-corrigido.html"', 'href="./index.html"');
+writeFileSync(join(outputRoot, "estudos.html"), studyHtml);
+
+for (const publicFile of ["robots.txt", "sitemap.xml"]) {
+  writeFileSync(
+    join(outputRoot, publicFile),
+    readFileSync(join(appRoot, publicFile), "utf8"),
+  );
+}
+
 const bundleSizes = Object.entries({ auth: authUrl, app: appUrl, style: styleUrl })
   .map(([name, url]) => {
     const filePath = join(outputRoot, url.replace(/^\.\//, ""));

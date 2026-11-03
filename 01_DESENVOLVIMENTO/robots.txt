@@ -1,0 +1,6 @@
+# O site atual e uma GitHub Pages de projeto (/desvelar-beta/).
+# Para aplicar estas regras, o arquivo precisa ficar na raiz do host: /robots.txt.
+User-agent: *
+Allow: /
+
+Sitemap: https://iagootton.github.io/desvelar-beta/sitemap.xml
