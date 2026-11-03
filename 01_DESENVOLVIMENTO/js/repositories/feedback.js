@@ -33,5 +33,19 @@
       .insert({ category: category, message: message });
   }
 
-  window.DesvelarFeedbackRepository = Object.freeze({ submit: submit });
+  function listForAdmin() {
+    if (!window.desvelarSupabase) {
+      return Promise.resolve({
+        data: null,
+        error: new Error("O serviço de feedback não está disponível."),
+      });
+    }
+
+    return window.desvelarSupabase.rpc("get_admin_app_feedback");
+  }
+
+  window.DesvelarFeedbackRepository = Object.freeze({
+    submit: submit,
+    listForAdmin: listForAdmin,
+  });
 })();

@@ -16,6 +16,7 @@ import "../components/study-fields.js";
 import "../repositories/groups.js";
 import "../repositories/feedback.js";
 import "../repositories/community.js";
+import "../repositories/usage-analytics.js";
 import "../views/groups.js";
 import "../views/community.js";
 import "../views/tasks.js";
