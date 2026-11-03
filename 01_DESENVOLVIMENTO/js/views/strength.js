@@ -239,6 +239,7 @@
     }
 
     function sessionMeta(session) {
+      if (session.checkIn) return "Check-in · sem exercícios registrados";
       var doneExercises = exerciseCount(session);
       var totalExercises = (session.exercises || []).length;
       var incompleteSets = (session.exercises || []).some(function (exercise) {
@@ -340,11 +341,11 @@
         '</h2><p class="m">' +
         (active
           ? "Você pode continuar do ponto em que parou. As séries registradas ficam salvas na sua conta."
-          : "Registre seus exercícios e veja o que mudou desde a última sessão.") +
+          : "Registre seus exercícios ou marque presença se acompanha o treino em outro app.") +
         '</p><div class="strength-start-actions">' +
         (active
           ? '<button class="btn pri" type="button" data-strength-action="resume">Continuar treino</button>'
-          : '<button class="btn pri" type="button" data-strength-action="start-empty">Iniciar treino livre</button>') +
+          : '<button class="btn pri" type="button" data-strength-action="start-empty">Iniciar treino livre</button><button class="btn" type="button" data-strength-action="quick-check-in">Marcar presença</button>') +
         '<button class="btn" type="button" data-strength-view="routines">' +
         (routines.length ? "Ver rotinas" : "Criar rotina") +
         '</button></div></article><div class="strength-week-card card"><div><span class="l">Treinos esta semana</span><strong class="v">' +
@@ -368,9 +369,11 @@
             " · " +
             safe(sessionMeta(latest)) +
             '</span></div><span class="strength-session-duration">' +
-            safe(dependencies.formatDuration(
-              dependencies.sessionDurationSeconds(latest),
-            )) +
+            (latest.checkIn
+              ? "Check-in"
+              : safe(dependencies.formatDuration(
+                  dependencies.sessionDurationSeconds(latest),
+                ))) +
             "</span></div>"
           : '<p class="empty">Seus treinos concluídos aparecerão aqui.</p>') +
         "</section>"
@@ -506,42 +509,51 @@
         " · " +
         safe(sessionMeta(session)) +
         '</small></span><span class="strength-session-duration">' +
-        safe(dependencies.formatDuration(
-          dependencies.sessionDurationSeconds(session),
-        )) +
-        '</span></summary><div class="strength-history-exercises">' +
-        (session.exercises || [])
-          .map(function (exercise) {
-            var sets = (exercise.sets || []).filter(function (set) {
-              return set.completed;
-            });
-            if (!sets.length) return "";
-            return (
-              '<div><strong>' +
-              safe(exercise.name) +
-              '</strong><span class="m">' +
-              sets
-                .map(function (set) {
-                  return (
-                    (set.weight !== null ? safe(set.weight) + " kg" : "") +
-                    (set.weight !== null && set.reps !== null ? " × " : "") +
-                    (set.reps !== null ? safe(set.reps) + " reps" : "")
-                  );
-                })
-                .join(" · ") +
-              "</span></div>"
-            );
-          })
-          .join("") +
-        '</div>' +
+        (session.checkIn
+          ? "Check-in"
+          : safe(dependencies.formatDuration(
+              dependencies.sessionDurationSeconds(session),
+            ))) +
+        '</span></summary>' +
+        (session.checkIn
+          ? '<p class="m strength-history-feedback">Presença registrada sem salvar exercícios ou duração.</p>'
+          : '<div class="strength-history-exercises">' +
+            (session.exercises || [])
+              .map(function (exercise) {
+                var sets = (exercise.sets || []).filter(function (set) {
+                  return set.completed;
+                });
+                if (!sets.length) return "";
+                return (
+                  '<div><strong>' +
+                  safe(exercise.name) +
+                  '</strong><span class="m">' +
+                  sets
+                    .map(function (set) {
+                      return (
+                        (set.weight !== null ? safe(set.weight) + " kg" : "") +
+                        (set.weight !== null && set.reps !== null ? " × " : "") +
+                        (set.reps !== null ? safe(set.reps) + " reps" : "")
+                      );
+                    })
+                    .join(" · ") +
+                  "</span></div>"
+                );
+              })
+              .join("") +
+            '</div>') +
         (session.effort || session.note
           ? '<p class="strength-history-feedback">' +
             (session.effort ? '<strong>Esforço ' + safe(session.effort) + "/10</strong> " : "") +
             safe(session.note || "") + "</p>"
           : "") +
-        '<div class="strength-history-edit-actions"><button class="btn sm" type="button" data-strength-action="edit-history" data-id="' +
-        safe(session.id) +
-        '" aria-expanded="false">Corrigir registros</button><button class="btn sm" type="button" data-a="del" data-k="strengthSessions" data-id="' +
+        '<div class="strength-history-edit-actions">' +
+        (session.checkIn
+          ? ""
+          : '<button class="btn sm" type="button" data-strength-action="edit-history" data-id="' +
+            safe(session.id) +
+            '" aria-expanded="false">Corrigir registros</button>') +
+        '<button class="btn sm" type="button" data-a="del" data-k="strengthSessions" data-id="' +
         safe(session.id) +
         '" data-confirm="Deseja apagar este treino do histórico? Depois da confirmação, você ainda poderá desfazer a ação por alguns segundos.">Apagar treino</button></div><div class="strength-history-edit-container" data-strength-edit-container hidden></div></details>'
       );

@@ -196,6 +196,7 @@
       session.status === "active" || session.status === "completed"
         ? session.status
         : "completed";
+    session.checkIn = session.checkIn === true;
     session.finishedAt =
       typeof session.finishedAt === "string" ? session.finishedAt : "";
     session.restUntil = boundedInteger(session.restUntil, 0, 0, 9007199254740991);

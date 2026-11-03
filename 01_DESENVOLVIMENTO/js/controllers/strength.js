@@ -616,6 +616,32 @@
       var state = dependencies.stateStore.createDraft();
       var session = activeSession(state);
 
+      if (action === "quick-check-in") {
+        if (session) {
+          dependencies.toast("Finalize ou saia do treino em andamento antes de marcar presença.");
+          return true;
+        }
+        var checkedInAt = new Date().toISOString();
+        state.strengthSessions.unshift({
+          id: dependencies.uid(),
+          name: "Check-in",
+          routineId: "",
+          date: dependencies.today(),
+          startedAt: checkedInAt,
+          finishedAt: checkedInAt,
+          status: "completed",
+          checkIn: true,
+          restUntil: 0,
+          effort: null,
+          note: "",
+          exercises: [],
+        });
+        dependencies.setActivityView("training");
+        dependencies.setEditingRoutineId("");
+        commitDraft(state, "Check-in de treino registrado.");
+        return true;
+      }
+
       if (action === "start-empty") {
         startSession(null);
         return true;
@@ -724,7 +750,9 @@
       }
       if (action === "edit-history") {
         var historySession = (state.strengthSessions || []).find(function (item) {
-          return item.id === button.dataset.id && item.status === "completed";
+          return item.id === button.dataset.id &&
+            item.status === "completed" &&
+            !item.checkIn;
         });
         var details = button.closest("details");
         var editHost = details && details.querySelector("[data-strength-edit-container]");

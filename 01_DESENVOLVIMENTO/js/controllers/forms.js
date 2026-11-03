@@ -142,14 +142,40 @@
         state.sessions.push(session);
         message = "sessão registrada";
       } else if (kind === "book") {
+        var bookTotal = Number(values.total);
+        var initialPage = values.read === "" ? 0 : Number(values.read);
+        if (!Number.isInteger(bookTotal) || bookTotal < 1 || bookTotal > 5000) {
+          reportFieldError(
+            form,
+            form.querySelector('input[name="total"]'),
+            "Informe um total de páginas entre 1 e 5000.",
+            'input[name="total"]',
+          );
+          return;
+        }
+        if (
+          !Number.isInteger(initialPage) ||
+          initialPage < 0 ||
+          initialPage > bookTotal
+        ) {
+          reportFieldError(
+            form,
+            form.querySelector('input[name="read"]'),
+            "A página atual precisa ficar entre 0 e o total de páginas do livro.",
+            'input[name="read"]',
+          );
+          return;
+        }
         state.books.push({
           id: dependencies.uid(),
           title: values.title.trim(),
           tag: tag,
-          total: Number(values.total),
-          read: 0,
+          total: bookTotal,
+          read: initialPage,
         });
-        message = "livro adicionado na página 0";
+        message = initialPage
+          ? "Livro adicionado na página " + initialPage + ". O progresso anterior não entrou nas leituras de hoje."
+          : "Livro adicionado.";
       } else if (kind === "read") {
         var book = state.books.find(function (item) {
           return item.id === values.id;

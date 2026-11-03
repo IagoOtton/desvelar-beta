@@ -599,6 +599,7 @@
         dependencies.tagInput("b-tag", "ex.: Fisiologia, Romance") +
         "</label>" +
         '<label class="f">Total de páginas<input id="b-total" type="number" name="total" min="1" max="5000" required></label>' +
+        '<label class="f">Já li até a página<input id="b-read" type="number" name="read" min="0" max="5000" step="1" value="0" required><span class="m">O progresso anterior não será contado como leitura de hoje.</span></label>' +
         '<button class="btn pri" type="submit">Adicionar</button></form></div>' +
         (cards || '<p class="empty">Nenhum livro cadastrado.</p>')
       );
