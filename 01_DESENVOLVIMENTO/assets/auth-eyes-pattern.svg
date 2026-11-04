@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="250" viewBox="0 0 320 250" fill="none">
+  <defs>
+    <g id="eye" stroke="#839185" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1.5 9C5.4 3.5 10.3 1 16 1s10.6 2.5 14.5 8c-3.9 5.5-8.8 8-14.5 8s-10.6-2.5-14.5-8Z" stroke-width="1.35"/>
+      <circle cx="16" cy="9" r="3.5" fill="#9ab39a" stroke="none"/>
+      <circle cx="17.2" cy="7.8" r=".9" fill="#101310" stroke="none"/>
+    </g>
+    <g id="eye-warm" stroke="#b8795d" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1.5 9C5.4 3.5 10.3 1 16 1s10.6 2.5 14.5 8c-3.9 5.5-8.8 8-14.5 8S5.4 14.5 1.5 9Z" stroke-width="1.35"/>
+      <circle cx="16" cy="9" r="3.5" fill="#b8795d" stroke="none"/>
+      <circle cx="17.2" cy="7.8" r=".9" fill="#17120f" stroke="none"/>
+    </g>
+  </defs>
+  <g opacity=".31">
+    <use href="#eye" transform="translate(8 9) rotate(-8 16 9)"/>
+    <use href="#eye" transform="translate(72 17) scale(.66)" opacity=".8"/>
+    <use href="#eye" transform="translate(151 5) rotate(7 16 9) scale(.78)"/>
+    <use href="#eye" transform="translate(245 24) scale(.58)" opacity=".78"/>
+    <use href="#eye" transform="translate(30 66) scale(.72)" opacity=".76"/>
+    <use href="#eye" transform="translate(110 55) rotate(9 16 9)"/>
+    <use href="#eye" transform="translate(207 72) scale(.62)" opacity=".84"/>
+    <use href="#eye" transform="translate(278 87) rotate(-9 16 9) scale(.76)"/>
+    <use href="#eye" transform="translate(5 128) scale(.58)" opacity=".82"/>
+    <use href="#eye" transform="translate(76 112) rotate(-6 16 9)"/>
+    <use href="#eye" transform="translate(163 132) scale(.7)" opacity=".82"/>
+    <use href="#eye" transform="translate(244 132) rotate(8 16 9)"/>
+    <use href="#eye" transform="translate(37 195) rotate(7 16 9) scale(.78)"/>
+    <use href="#eye" transform="translate(122 189) scale(.57)" opacity=".78"/>
+    <use href="#eye" transform="translate(202 203) rotate(-7 16 9)"/>
+    <use href="#eye" transform="translate(278 190) scale(.64)" opacity=".82"/>
+  </g>
+  <g opacity=".29">
+    <use href="#eye-warm" transform="translate(39 36) scale(.52)"/>
+    <use href="#eye-warm" transform="translate(185 92) rotate(-7 16 9) scale(.52)"/>
+    <use href="#eye-warm" transform="translate(276 157) rotate(8 16 9) scale(.52)"/>
+  </g>
+</svg>
