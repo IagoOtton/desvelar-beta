@@ -2,19 +2,32 @@
   "use strict";
 
   window.DesvelarNavigation = (function () {
-    var PRIMARY_MOBILE_TAB_IDS = ["inicio", "agenda", "estudo", "leitura"];
+    var PRIMARY_MOBILE_TAB_IDS = [
+      "inicio",
+      "agenda",
+      "estudo",
+      "atividade_fisica",
+    ];
     var MORE_ICON = "M4 6h16M4 12h16M4 18h16";
 
-    function renderTab(tab, activeTab) {
+    function renderTab(tab, activeTab, isMobile) {
+      var label = tab[1];
+      var accessibleLabel = "";
+      if (isMobile && tab[0] === "atividade_fisica") {
+        label = "Atividade";
+        accessibleLabel = ' aria-label="Atividade física"';
+      }
+
       return (
-        '<button class="nb" data-a="tab" data-tab="' +
+        '<button class="nb" type="button" data-a="tab" data-tab="' +
         tab[0] +
         '"' +
+        accessibleLabel +
         (activeTab === tab[0] ? ' aria-current="page"' : "") +
         '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' +
         tab[2] +
         '"/></svg><span class="nb-label">' +
-        tab[1] +
+        label +
         "</span></button>"
       );
     }
@@ -91,7 +104,7 @@
       return (
         primaryTabs
           .map(function (tab) {
-            return renderTab(tab, activeTab);
+            return renderTab(tab, activeTab, true);
           })
           .join("") +
         '<details class="mobile-more"><summary class="nb" aria-label="Mais abas"' +

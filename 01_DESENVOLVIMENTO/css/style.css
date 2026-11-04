@@ -2564,12 +2564,18 @@ nav.bottom {
   align-items: center;
 }
 .toast {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(560px, calc(100vw - 32px));
   background: var(--ink);
   color: var(--bg);
-  padding: 8px 16px;
-  border-radius: 99px;
+  padding: 10px 16px;
+  border-radius: 16px;
   font-weight: 600;
   font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  text-align: center;
   box-shadow: var(--shadow);
   animation: tin 0.2s ease-out;
 }
@@ -7810,5 +7816,142 @@ body.zen .shell > main {
   .site-notifications-trigger,
   .site-control-panel .card {
     transition: none;
+  }
+}
+
+/* Refinamentos globais de legibilidade, foco e áreas de interação. */
+body {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+h2 {
+  font-size: 19px;
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+
+.sub {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.m {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+label.f {
+  font-size: 13px;
+}
+
+.chip,
+.sync {
+  font-size: 13px;
+}
+
+.auth-note {
+  font-size: 13px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  vertical-align: middle;
+  min-height: 44px;
+  padding-block: 10px;
+  font-size: 15px;
+}
+
+.btn.sm {
+  min-height: 40px;
+  padding: 7px 12px;
+  font-size: 14px;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+a:not(.btn) {
+  color: var(--a1);
+  text-decoration-color: color-mix(in srgb, currentColor 58%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:not(.btn):visited {
+  color: var(--a2);
+}
+
+a:not(.btn):hover {
+  color: var(--ink);
+  text-decoration-color: var(--a1);
+  text-decoration-thickness: 2px;
+}
+
+@media (max-width: 860px) {
+  .shell {
+    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+  }
+
+  nav.bottom .nb {
+    font-size: 11.5px;
+  }
+
+  nav.bottom .mobile-more-menu .nb {
+    font-size: 14px;
+  }
+
+  #toasts {
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  textarea {
+    min-height: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.page-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 140px;
+  color: var(--muted);
+}
+
+.page-loading-spinner {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border: 2px solid var(--line);
+  border-top-color: var(--a1);
+  border-radius: 50%;
+  animation: page-loading-spin 0.8s linear infinite;
+}
+
+@keyframes page-loading-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
