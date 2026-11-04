@@ -10,6 +10,8 @@
       "esc",
       "usageAnalytics",
       "feedbackRepository",
+      "siteMessagesRepository",
+      "areaChart",
     ];
     if (
       !dependencies ||
@@ -80,39 +82,81 @@
       var daily = Array.isArray(metrics.daily_active_users)
         ? metrics.daily_active_users
         : [];
-      var maxDaily = daily.reduce(function (max, item) {
-        return Math.max(max, Number(item.users) || 0);
+      var registered = Math.max(0, Number(metrics.registered_users) || 0);
+      var consented = Math.min(
+        registered,
+        Math.max(0, Number(metrics.consented_users) || 0),
+      );
+      var withoutConsent = Math.max(0, registered - consented);
+      var consentPercent = registered ? Math.round((consented / registered) * 100) : 0;
+      var maxAreaOpens = areas.reduce(function (max, item) {
+        return Math.max(max, Number(item.opens) || 0);
       }, 0);
       var areaRows = areas.length
         ? areas.map(function (item) {
+            var opens = Math.max(0, Number(item.opens) || 0);
+            var areaPercent = maxAreaOpens
+              ? Math.max(2, Math.round((opens / maxAreaOpens) * 100))
+              : 0;
             return (
-              '<li class="site-usage-area"><span>' +
+              '<li class="site-usage-area"><div class="site-usage-area__meta"><strong>' +
               dependencies.esc(areaLabel(item.area)) +
-              '</span><strong>' +
-              count(item.opens) +
-              ' aberturas</strong><small>' +
+              '</strong><span>' +
               count(item.users) +
               (Number(item.users) === 1 ? " pessoa" : " pessoas") +
-              "</small></li>"
+              '</span></div><div class="site-usage-area__track" role="progressbar" aria-label="Aberturas em ' +
+              dependencies.esc(areaLabel(item.area)) +
+              '" aria-valuemin="0" aria-valuemax="' +
+              String(maxAreaOpens) +
+              '" aria-valuenow="' +
+              String(opens) +
+              '"><i style="--area-width:' +
+              areaPercent +
+              '%"></i></div><small>' +
+              count(opens) +
+              " aberturas</small></li>"
             );
           }).join("")
-        : '<li class="m">Ainda não há atividade compartilhada. Os indicadores consideram apenas quem ativou as métricas no Perfil.</li>';
-      var bars = daily.map(function (item) {
-        var users = Number(item.users) || 0;
-        var height = maxDaily ? Math.max(3, Math.round((users / maxDaily) * 100)) : 3;
-        var day = String(item.date || "");
+        : '<li class="site-usage-empty">Ainda não há atividade compartilhada. As métricas por área consideram apenas contas que autorizaram essa coleta.</li>';
+      var dailyValues = daily.map(function (item) {
+        return Math.max(0, Number(item.users) || 0);
+      });
+      var dailyLabels = daily.map(function (item) {
+        var parts = String(item.date || "").split("-");
+        return parts.length === 3
+          ? parts[2] + "/" + parts[1]
+          : String(item.date || "");
+      });
+      var dailyChart = dependencies.areaChart(dailyValues, dailyLabels, {
+        label: "Contas que usaram o app por dia nos últimos 30 dias",
+        H: 224,
+        formatValue: function (value) { return count(value); },
+        emptyText: "Ainda não há uso autorizado para exibir neste período.",
+      });
+      var activityWindows = [
+        { label: "Agora · 15 min", value: Number(metrics.active_users_15m) || 0 },
+        { label: "Últimos 7 dias", value: Number(metrics.active_users_7d) || 0 },
+        { label: "Últimos 30 dias", value: Number(metrics.active_users_30d) || 0 },
+      ];
+      var maxActive = activityWindows.reduce(function (max, item) {
+        return Math.max(max, item.value);
+      }, 0);
+      var activityBars = activityWindows.map(function (item) {
+        var width = maxActive ? Math.max(2, Math.round((item.value / maxActive) * 100)) : 0;
         return (
-          '<span class="site-usage-bar" style="--usage-height:' +
-          height +
-          '%" title="' +
-          dependencies.esc(day) +
-          ': ' +
-          count(users) +
-          ' ativos" aria-label="' +
-          dependencies.esc(day) +
-          ': ' +
-          count(users) +
-          ' ativos"></span>'
+          '<div class="site-usage-window"><div><span>' +
+          dependencies.esc(item.label) +
+          '</span><strong>' +
+          count(item.value) +
+          '</strong></div><div class="site-usage-window__track" role="progressbar" aria-label="' +
+          dependencies.esc(item.label) +
+          '" aria-valuemin="0" aria-valuemax="' +
+          String(maxActive) +
+          '" aria-valuenow="' +
+          String(item.value) +
+          '"><i style="--area-width:' +
+          width +
+          '%"></i></div></div>'
         );
       }).join("");
       var generatedAt = metrics.generated_at
@@ -121,28 +165,83 @@
 
       return (
         '<section class="card site-usage-dashboard" aria-labelledby="site-usage-title">' +
-        '<div class="site-usage-heading"><div><p class="eyebrow">SOMENTE ADMINISTRADOR</p><h2 id="site-usage-title">Visão do DESVELAR</h2></div><button class="btn sm" type="button" data-a="site-analytics-refresh">Atualizar</button></div>' +
-        '<p class="m">O painel mostra números agregados. A atividade considera apenas contas que autorizaram as métricas; nenhum nome ou registro pessoal é exibido.</p>' +
+        '<div class="site-usage-heading"><div><p class="site-control-eyebrow">SOMENTE ADMINISTRADOR · VISÃO PRIVADA</p><h2 id="site-usage-title">Visão do DESVELAR</h2></div><button class="btn sm" type="button" data-a="site-analytics-refresh">Atualizar dados</button></div>' +
+        '<p class="site-control-copy">Contas cadastradas são mostradas separadamente das contas que autorizaram métricas. O restante não é contado como uso e nenhuma informação pessoal é exibida nestes gráficos.</p>' +
         '<div class="site-usage-kpis">' +
-        '<article><small>Contas cadastradas</small><strong>' +
-        count(metrics.registered_users) +
-        '</strong></article><article><small>Autorizaram métricas</small><strong>' +
-        count(metrics.consented_users) +
-        '</strong></article><article><small>Ativos em 7 dias</small><strong>' +
+        '<article class="site-usage-kpi"><small>Contas cadastradas</small><strong>' +
+        count(registered) +
+        '</strong><span>Todas as contas existentes</span></article><article class="site-usage-kpi"><small>Autorizaram métricas</small><strong>' +
+        count(consented) +
+        '</strong><span>' +
+        consentPercent +
+        '% do total</span></article><article class="site-usage-kpi"><small>Sem métricas ativas</small><strong>' +
+        count(withoutConsent) +
+        '</strong><span>Opt-out ou sem escolha</span></article><article class="site-usage-kpi"><small>Ativos em 7 dias</small><strong>' +
         count(metrics.active_users_7d) +
-        '</strong></article><article><small>Ativos em 30 dias</small><strong>' +
+        '</strong><span>Entre quem autorizou</span></article><article class="site-usage-kpi"><small>Ativos em 30 dias</small><strong>' +
         count(metrics.active_users_30d) +
-        '</strong></article><article><small>Ativos nos últimos 15 min</small><strong>' +
-        count(metrics.active_users_15m) +
-        '</strong><small>Estimativa baseada em atividade recente</small></article></div>' +
-        '<div class="site-usage-details"><section><h3>Áreas mais abertas · 30 dias</h3><ul class="site-usage-areas">' +
+        '</strong><span>Entre quem autorizou</span></article></div>' +
+        '<div class="site-control-chart-grid"><section class="site-control-chart-card site-consent-chart"><div><p class="site-control-eyebrow">ADESÃO ÀS MÉTRICAS</p><h3>Consentimento</h3><p>Contas com métricas ativadas, em relação ao total cadastrado.</p></div><div class="site-consent-chart__content"><div class="site-consent-donut" style="--consent-pct:' +
+        consentPercent +
+        '%" role="img" aria-label="' +
+        consentPercent +
+        '% das contas autorizaram as métricas"><div><strong>' +
+        consentPercent +
+        '%</strong><span>autorizaram</span></div></div><div class="site-consent-legend"><div><i class="is-enabled"></i><span>Com consentimento</span><strong>' +
+        count(consented) +
+        '</strong></div><div><i class="is-disabled"></i><span>Sem métricas ativas</span><strong>' +
+        count(withoutConsent) +
+        '</strong></div><div class="site-consent-legend__total"><span>Total de contas</span><strong>' +
+        count(registered) +
+        '</strong></div></div></div></section>' +
+        '<section class="site-control-chart-card"><div><p class="site-control-eyebrow">TENDÊNCIA</p><h3>Atividade diária</h3><p>Contas com métricas ativas que abriram o DESVELAR.</p></div><div class="site-usage-area-chart">' +
+        dailyChart +
+        '</div></section><section class="site-control-chart-card"><div><p class="site-control-eyebrow">ENGAJAMENTO</p><h3>Janela de atividade</h3><p>Comparação das contas ativas. Todas as janelas dependem do consentimento de métricas.</p></div><div class="site-usage-windows">' +
+        activityBars +
+        '</div></section><section class="site-control-chart-card"><div><p class="site-control-eyebrow">USO POR ÁREA · 30 DIAS</p><h3>O que as pessoas abrem</h3><p>Mais aberturas entre contas que ativaram as métricas.</p></div><ol class="site-usage-areas">' +
         areaRows +
-        '</ul></section><section><h3>Usuários ativos por dia · 30 dias</h3><div class="site-usage-chart" role="img" aria-label="Usuários ativos por dia nos últimos 30 dias">' +
-        bars +
-        '</div><div class="site-usage-chart-labels"><span>30 dias atrás</span><span>Hoje</span></div></section></div>' +
+        '</ol></section></div>' +
         '<p class="m site-usage-updated">' +
         (generatedAt ? "Atualizado em " + dependencies.esc(generatedAt) : "") +
         "</p></section>"
+      );
+    }
+
+    function broadcastCard(result) {
+      var failed = !result || result.error;
+      var messages = !failed && Array.isArray(result.data) ? result.data : [];
+      var history = messages.length
+        ? messages.map(function (item) {
+            var date = new Date(item.created_at);
+            var dateLabel = Number.isNaN(date.getTime())
+              ? "Data indisponível"
+              : date.toLocaleString("pt-BR");
+            return (
+              '<article class="site-broadcast-history-item"><div><strong>' +
+              dependencies.esc(item.title || "Aviso") +
+              '</strong><time datetime="' +
+              dependencies.esc(item.created_at || "") +
+              '">' + dependencies.esc(dateLabel) +
+              '</time></div><p>' + dependencies.esc(item.body || "") +
+              '</p><small>Disponibilizado para ' +
+              count(item.recipient_count) +
+              (Number(item.recipient_count) === 1 ? " conta" : " contas") +
+              "</small></article>"
+            );
+          }).join("")
+        : '<p class="site-control-copy">' +
+          (failed
+            ? "O histórico não pôde ser carregado agora. Você ainda pode preparar e enviar um aviso."
+            : "Nenhum aviso foi enviado ainda.") +
+          "</p>";
+
+      return (
+        '<section class="card site-broadcast-card" aria-labelledby="site-broadcast-title"><div class="site-usage-heading"><div><p class="site-control-eyebrow">COMUNICAÇÃO COM USUÁRIOS</p><h2 id="site-broadcast-title">Avisos para todos</h2></div><span class="site-broadcast-stamp">ENVIO ADMINISTRATIVO</span></div>' +
+        '<p class="site-control-copy">Escreva uma mensagem e revise a prévia antes de enviar. O aviso aparece na caixa “Avisos” dentro do app e alcança as contas existentes no momento do envio.</p>' +
+        '<form class="site-broadcast-form" data-form="site-broadcast"><label class="f">Título<input name="title" maxlength="120" required placeholder="Ex.: Atualização do DESVELAR" autocomplete="off"></label><label class="f">Mensagem<textarea name="body" maxlength="3000" rows="5" required placeholder="Escreva uma mensagem clara e direta para seus usuários."></textarea><small>Até 3.000 caracteres. A mensagem será salva e ficará disponível ao entrar no app.</small></label><div class="site-broadcast-form__footer"><span>O envio exige confirmação na próxima etapa.</span><button class="btn pri" type="submit">Revisar e enviar</button></div></form>' +
+        '<div class="site-broadcast-history"><div class="site-broadcast-history__heading"><h3>Envios recentes</h3><span>' +
+        count(messages.length) +
+        " / 30</span></div>" + history + "</div></section>"
       );
     }
 
@@ -210,13 +309,23 @@
             .catch(function (error) {
               return { data: null, error: error };
             }),
+          Promise.resolve()
+            .then(function () {
+              return dependencies.siteMessagesRepository.listForAdmin();
+            })
+            .catch(function (error) {
+              return { data: null, error: error };
+            }),
         ]).then(function (results) {
           return (
-            dependencies.head("Painel de controle", "Indicadores e feedbacks do DESVELAR.") +
+            '<div class="site-control-panel">' +
+            dependencies.head("Painel de controle", "Indicadores, consentimentos e comunicação com usuários.") +
             (results[0]
               ? dashboardCard(results[0])
               : '<section class="card"><h2>Indicadores</h2><p class="m">Não foi possível carregar os indicadores. Tente atualizar o painel.</p></section>') +
-            feedbackCard(results[1])
+            broadcastCard(results[2]) +
+            feedbackCard(results[1]) +
+            "</div>"
           );
         });
       });
