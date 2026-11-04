@@ -23,7 +23,6 @@
       "getEditingRoutineId",
       "getSelectedMeasurementMetric",
       "groupRepository",
-      "communityRepository",
     ];
     if (
       !dependencies ||
@@ -154,11 +153,19 @@
       esc: formatting.esc,
       repository: dependencies.groupRepository,
     });
-    var community = window.DesvelarCommunityViews.create({
-      head: head,
-      esc: formatting.esc,
-      repository: dependencies.communityRepository,
-    });
+    var community = null;
+    function getCommunityViews() {
+      if (community) return community;
+      if (!window.DesvelarCommunityViews || !window.DesvelarCommunityRepository) {
+        throw new Error("Os recursos da comunidade não foram carregados.");
+      }
+      community = window.DesvelarCommunityViews.create({
+        head: head,
+        esc: formatting.esc,
+        repository: window.DesvelarCommunityRepository,
+      });
+      return community;
+    }
     var tasks = window.DesvelarTaskViews.create({
       getState: stateStore.getState,
       today: date.today,
@@ -323,28 +330,36 @@
       months: date.MES,
       weekdays: date.DIAS,
     });
-    var strength = window.DesvelarStrengthViews.create({
-      getState: stateStore.getState,
-      getActivityView: dependencies.getActivityView,
-      getEditingRoutineId: dependencies.getEditingRoutineId,
-      getSelectedMeasurementMetric: dependencies.getSelectedMeasurementMetric,
-      getSelectedMeasurementRange: dependencies.getSelectedMeasurementRange,
-      getSelectedPerformanceExercise: dependencies.getSelectedPerformanceExercise,
-      getSelectedPerformanceMetric: dependencies.getSelectedPerformanceMetric,
-      exerciseCatalog: window.DesvelarStrengthTraining.catalog,
-      measurementFields: window.DesvelarBodyMeasurements.FIELDS,
-      exerciseKey: window.DesvelarStrengthTraining.exerciseKey,
-      lastPerformance: window.DesvelarStrengthTraining.lastPerformance,
-      sessionDurationSeconds: window.DesvelarStrengthTraining.sessionDurationSeconds,
-      formatDuration: window.DesvelarStrengthTraining.formatDuration,
-      today: date.today,
-      wkStart: date.wkStart,
-      addDays: date.addDays,
-      weekdays: date.DIAS,
-      fmtD: date.fmtD,
-      esc: formatting.esc,
-      head: strengthHead,
-    });
+    var strength = null;
+    function getStrengthViews() {
+      if (strength) return strength;
+      if (!window.DesvelarStrengthViews) {
+        throw new Error("Os recursos de atividade física não foram carregados.");
+      }
+      strength = window.DesvelarStrengthViews.create({
+        getState: stateStore.getState,
+        getActivityView: dependencies.getActivityView,
+        getEditingRoutineId: dependencies.getEditingRoutineId,
+        getSelectedMeasurementMetric: dependencies.getSelectedMeasurementMetric,
+        getSelectedMeasurementRange: dependencies.getSelectedMeasurementRange,
+        getSelectedPerformanceExercise: dependencies.getSelectedPerformanceExercise,
+        getSelectedPerformanceMetric: dependencies.getSelectedPerformanceMetric,
+        exerciseCatalog: window.DesvelarStrengthTraining.catalog,
+        measurementFields: window.DesvelarBodyMeasurements.FIELDS,
+        exerciseKey: window.DesvelarStrengthTraining.exerciseKey,
+        lastPerformance: window.DesvelarStrengthTraining.lastPerformance,
+        sessionDurationSeconds: window.DesvelarStrengthTraining.sessionDurationSeconds,
+        formatDuration: window.DesvelarStrengthTraining.formatDuration,
+        today: date.today,
+        wkStart: date.wkStart,
+        addDays: date.addDays,
+        weekdays: date.DIAS,
+        fmtD: date.fmtD,
+        esc: formatting.esc,
+        head: strengthHead,
+      });
+      return strength;
+    }
 
     function underConstruction(title, subtitle, message) {
       return function () {
@@ -363,7 +378,9 @@
       pages: Object.freeze({
         inicio: home.homePage,
         agenda: agenda.agendaPage,
-        atividade_fisica: strength.page,
+        atividade_fisica: function () {
+          return getStrengthViews().page();
+        },
         foco: focus.focusPage,
         temas: learning.themesPage,
         financas: life.financePage,
@@ -385,7 +402,7 @@
           return groups.groupsPage(dependencies.getUserId());
         },
         comunidade: function () {
-          return community.communityPage(dependencies.getUserId());
+          return getCommunityViews().communityPage(dependencies.getUserId());
         },
         sistema: system.systemPage,
         painel_controle: system.controlPanelPage,

@@ -1,5 +1,59 @@
 (function () {
   "use strict";
+  var appScript = document.currentScript;
+  var lazyBundleSources = {
+    fitness: appScript && appScript.getAttribute("data-fitness-src"),
+    community: appScript && appScript.getAttribute("data-community-src"),
+  };
+  var lazyBundlePromises = Object.create(null);
+
+  function loadLazyBundle(name, isLoaded) {
+    if (isLoaded()) return Promise.resolve();
+    if (lazyBundlePromises[name]) return lazyBundlePromises[name];
+
+    var source = lazyBundleSources[name];
+    if (!source) {
+      return Promise.reject(new Error("O recurso solicitado não está disponível."));
+    }
+
+    var promise = new Promise(function (resolve, reject) {
+      var script = document.createElement("script");
+      script.src = source;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = function () {
+        reject(new Error("Não foi possível carregar o recurso solicitado."));
+      };
+      document.head.appendChild(script);
+    }).catch(function (error) {
+      delete lazyBundlePromises[name];
+      throw error;
+    });
+
+    lazyBundlePromises[name] = promise;
+    return promise;
+  }
+
+  function loadTabBundle(tabId) {
+    if (tabId === "atividade_fisica") {
+      return loadLazyBundle("fitness", function () {
+        return Boolean(
+          window.DesvelarStrengthViews && window.DesvelarStrengthController,
+        );
+      });
+    }
+    if (tabId === "comunidade") {
+      return loadLazyBundle("community", function () {
+        return Boolean(
+          window.DesvelarCommunityViews &&
+            window.DesvelarCommunityController &&
+            window.DesvelarCommunityRepository,
+        );
+      });
+    }
+    return Promise.resolve();
+  }
+
   var U = window.DesvelarUtils;
 
   if (!U) {
@@ -374,7 +428,6 @@
     getCloudSyncStatus: cloudSync.getStatusLabel,
     getWipeArm: function () { return wipeArm; },
     groupRepository: window.DesvelarGroupRepository,
-    communityRepository: window.DesvelarCommunityRepository,
     siteMessagesRepository: window.DesvelarSiteMessagesRepository,
     modules: ModuleRegistry.systemModules,
     usageAnalytics: UsageAnalytics,
@@ -439,8 +492,10 @@
     setUiState: function (updates) {
       if (Object.prototype.hasOwnProperty.call(updates, "tab")) {
         if (updates.tab === "comunidade") {
-          window.DesvelarCommunityRepository.invalidateFeed();
-          window.DesvelarCommunityRepository.invalidatePage();
+          if (window.DesvelarCommunityRepository) {
+            window.DesvelarCommunityRepository.invalidateFeed();
+            window.DesvelarCommunityRepository.invalidatePage();
+          }
         }
         var previousTab = tab;
         tab = updates.tab;
@@ -489,80 +544,97 @@
       return !state || !state.enabledTabs || state.enabledTabs[tabId] !== false;
     },
   });
-  var CommunityController = window.DesvelarCommunityController.create({
-    repository: window.DesvelarCommunityRepository,
-    getUserId: function () {
-      return window.desvelarUser.id;
-    },
-    toast: toast,
-    render: render,
-  });
-  var StrengthController = window.DesvelarStrengthController.create({
-    stateStore: stateStore,
-    getActivityView: function () {
-      return activityView;
-    },
-    setActivityView: function (view) {
-      var previousView = activityView;
-      activityView = view;
-      if (tab === "atividade_fisica" && view !== previousView) {
-        var usageAreaByView = {
-          training: "atividade_treino",
-          active: "atividade_treino",
-          summary: "atividade_treino",
-          routines: "atividade_rotinas",
-          "routine-editor": "atividade_rotinas",
-          history: "atividade_historico",
-          performance: "atividade_desempenho",
-          measurements: "atividade_medidas",
-        };
-        UsageAnalytics.recordArea(usageAreaByView[view]);
-      }
-    },
-    setActiveTab: function (activeTab) {
-      tab = activeTab;
-    },
-    getEditingRoutineId: function () {
-      return editingStrengthRoutineId;
-    },
-    setEditingRoutineId: function (id) {
-      editingStrengthRoutineId = id;
-    },
-    getSelectedMeasurementMetric: function () {
-      return selectedMeasurementMetric;
-    },
-    setSelectedMeasurementMetric: function (metric) {
-      selectedMeasurementMetric = metric;
-    },
-    getSelectedMeasurementRange: function () {
-      return selectedMeasurementRange;
-    },
-    setSelectedMeasurementRange: function (range) {
-      selectedMeasurementRange = range;
-    },
-    getSelectedPerformanceExercise: function () {
-      return selectedPerformanceExercise;
-    },
-    setSelectedPerformanceExercise: function (exercise) {
-      selectedPerformanceExercise = exercise;
-    },
-    getSelectedPerformanceMetric: function () {
-      return selectedPerformanceMetric;
-    },
-    setSelectedPerformanceMetric: function (metric) {
-      selectedPerformanceMetric = metric;
-    },
-    uid: uid,
-    today: today,
-    commit: commit,
-    toast: toast,
-    confirm: function (message) {
-      return window.confirm(message);
-    },
-    measurementFields: window.DesvelarBodyMeasurements.FIELDS,
-    exerciseKey: window.DesvelarStrengthTraining.exerciseKey,
-    lastPerformance: window.DesvelarStrengthTraining.lastPerformance,
-  });
+  var CommunityController = null;
+  function ensureCommunityController() {
+    if (CommunityController) return CommunityController;
+    if (!window.DesvelarCommunityController || !window.DesvelarCommunityRepository) {
+      throw new Error("Os recursos da comunidade não foram carregados.");
+    }
+    CommunityController = window.DesvelarCommunityController.create({
+      repository: window.DesvelarCommunityRepository,
+      getUserId: function () {
+        return window.desvelarUser.id;
+      },
+      toast: toast,
+      render: render,
+    });
+    return CommunityController;
+  }
+
+  var StrengthController = null;
+  function ensureStrengthController() {
+    if (StrengthController) return StrengthController;
+    if (!window.DesvelarStrengthController) {
+      throw new Error("Os recursos de atividade física não foram carregados.");
+    }
+    StrengthController = window.DesvelarStrengthController.create({
+      stateStore: stateStore,
+      getActivityView: function () {
+        return activityView;
+      },
+      setActivityView: function (view) {
+        var previousView = activityView;
+        activityView = view;
+        if (tab === "atividade_fisica" && view !== previousView) {
+          var usageAreaByView = {
+            training: "atividade_treino",
+            active: "atividade_treino",
+            summary: "atividade_treino",
+            routines: "atividade_rotinas",
+            "routine-editor": "atividade_rotinas",
+            history: "atividade_historico",
+            performance: "atividade_desempenho",
+            measurements: "atividade_medidas",
+          };
+          UsageAnalytics.recordArea(usageAreaByView[view]);
+        }
+      },
+      setActiveTab: function (activeTab) {
+        tab = activeTab;
+      },
+      getEditingRoutineId: function () {
+        return editingStrengthRoutineId;
+      },
+      setEditingRoutineId: function (id) {
+        editingStrengthRoutineId = id;
+      },
+      getSelectedMeasurementMetric: function () {
+        return selectedMeasurementMetric;
+      },
+      setSelectedMeasurementMetric: function (metric) {
+        selectedMeasurementMetric = metric;
+      },
+      getSelectedMeasurementRange: function () {
+        return selectedMeasurementRange;
+      },
+      setSelectedMeasurementRange: function (range) {
+        selectedMeasurementRange = range;
+      },
+      getSelectedPerformanceExercise: function () {
+        return selectedPerformanceExercise;
+      },
+      setSelectedPerformanceExercise: function (exercise) {
+        selectedPerformanceExercise = exercise;
+      },
+      getSelectedPerformanceMetric: function () {
+        return selectedPerformanceMetric;
+      },
+      setSelectedPerformanceMetric: function (metric) {
+        selectedPerformanceMetric = metric;
+      },
+      uid: uid,
+      today: today,
+      commit: commit,
+      toast: toast,
+      confirm: function (message) {
+        return window.confirm(message);
+      },
+      measurementFields: window.DesvelarBodyMeasurements.FIELDS,
+      exerciseKey: window.DesvelarStrengthTraining.exerciseKey,
+      lastPerformance: window.DesvelarStrengthTraining.lastPerformance,
+    });
+    return StrengthController;
+  }
 
   function focusRenderedTarget(options) {
     if (!options) return;
@@ -654,6 +726,11 @@
 
     Promise.resolve()
       .then(function () {
+        return loadTabBundle(currentTab);
+      })
+      .then(function () {
+        if (currentTab === "atividade_fisica") ensureStrengthController();
+        if (currentTab === "comunidade") ensureCommunityController();
         return VIEWS[currentTab]();
       })
       .then(function (html) {
@@ -851,7 +928,7 @@
 
     if (event.target.closest("[data-strength-action], [data-strength-view]")) {
       try {
-        StrengthController.handleClick(event);
+        ensureStrengthController().handleClick(event);
       } catch (error) {
         console.error("Erro ao processar treino de musculação:", error);
         toast("Não foi possível concluir esta ação. Seus dados salvos foram mantidos.");
@@ -860,7 +937,7 @@
     }
 
     if (event.target.closest("[data-community-action]")) {
-      CommunityController.handleClick(event).catch(function (error) {
+      ensureCommunityController().handleClick(event).catch(function (error) {
         console.error("Erro ao processar ação:", error);
         toast("Não foi possível concluir esta ação. Tente novamente.");
       });
@@ -881,7 +958,7 @@
 
     if (event.target.closest("form[data-strength-form]")) {
       try {
-        StrengthController.submit(event);
+        ensureStrengthController().submit(event);
       } catch (error) {
         console.error("Erro ao salvar treino de musculação:", error);
         toast("Não foi possível salvar esta informação. Tente novamente.");
@@ -890,7 +967,7 @@
     }
 
     if (event.target.closest("form[data-community-form]")) {
-      CommunityController.submit(event).catch(function (error) {
+      ensureCommunityController().submit(event).catch(function (error) {
         console.error("Erro ao processar formulário:", error);
         toast("Não foi possível concluir esta ação. Tente novamente.");
       });
@@ -950,7 +1027,7 @@
 
     if (event.target.closest("[data-strength-set-field], [data-strength-measurement-metric], [data-strength-measurement-range], [data-strength-performance-exercise], [data-strength-performance-metric], [data-strength-weekly-target], [data-strength-exercise-group]")) {
       try {
-        StrengthController.change(event);
+        ensureStrengthController().change(event);
       } catch (error) {
         console.error("Erro ao salvar série de musculação:", error);
         toast("Não foi possível salvar esta série. Tente novamente.");
@@ -960,7 +1037,7 @@
   document.addEventListener("input", function (event) {
     if (event.target.closest("[data-strength-exercise-search], [data-strength-history-filter]")) {
       try {
-        StrengthController.input(event);
+        ensureStrengthController().input(event);
       } catch (error) {
         console.error("Erro ao filtrar treinos:", error);
       }
@@ -1050,7 +1127,7 @@
 
   PomodoroRuntime.startClock();
   window.setInterval(function () {
-    if (tab === "atividade_fisica") StrengthController.tick();
+    if (tab === "atividade_fisica" && StrengthController) StrengthController.tick();
   }, 1000);
 
   var initSaved = persist();
