@@ -40,6 +40,15 @@
   var mergeLegacyData = DataModel.mergeLegacyData;
   var UsageAnalytics = window.DesvelarUsageAnalytics.create(window.desvelarSupabase);
   var isUsageAdmin = false;
+  var SiteMessagesController = window.DesvelarSiteMessagesController.create({
+    repository: window.DesvelarSiteMessagesRepository,
+    esc: esc,
+    isAdmin: function () { return isUsageAdmin; },
+    toast: function (message) { toast(message); },
+    onSent: function () {
+      if (tab === "painel_controle") render();
+    },
+  });
   var PomodoroDomain = window.DesvelarPomodoroDomain.create({
     uid: uid,
     dateKey: ds,
@@ -366,6 +375,7 @@
     getWipeArm: function () { return wipeArm; },
     groupRepository: window.DesvelarGroupRepository,
     communityRepository: window.DesvelarCommunityRepository,
+    siteMessagesRepository: window.DesvelarSiteMessagesRepository,
     modules: ModuleRegistry.systemModules,
     usageAnalytics: UsageAnalytics,
     circumference: PC,
@@ -827,6 +837,8 @@
 
   /* ---------- ações ---------- */
   document.addEventListener("click", function (event) {
+    if (SiteMessagesController.handleClick(event)) return;
+
     if (event.target.closest('[data-a="site-analytics-refresh"]')) {
       render();
       return;
@@ -861,6 +873,12 @@
     });
   });
   document.addEventListener("submit", function (event) {
+    if (event.target.closest('form[data-form="site-broadcast"]')) {
+      event.preventDefault();
+      SiteMessagesController.prepareBroadcast(event.target);
+      return;
+    }
+
     if (event.target.closest("form[data-strength-form]")) {
       try {
         StrengthController.submit(event);
@@ -1039,6 +1057,7 @@
   var legacyMigration = localData.hasLegacyMigration();
   var migrationFinalized = localData.finalizeLegacyMigration(initSaved);
   render();
+  SiteMessagesController.mount();
 
   UsageAnalytics.isAdmin().then(function (admin) {
     var tabChanged = !admin && tab === "painel_controle";

@@ -306,6 +306,8 @@
       modules: dependencies.modules,
       usageAnalytics: dependencies.usageAnalytics,
       feedbackRepository: window.DesvelarFeedbackRepository,
+      siteMessagesRepository: dependencies.siteMessagesRepository,
+      areaChart: charts.areaChart,
     });
     var agenda = window.DesvelarAgendaViews.create({
       getState: stateStore.getState,
