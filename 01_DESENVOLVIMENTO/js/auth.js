@@ -3,6 +3,8 @@
 
   var authScript = document.currentScript;
   var appScriptSrc = authScript && authScript.getAttribute("data-app-src");
+  var fitnessScriptSrc = authScript && authScript.getAttribute("data-fitness-src");
+  var communityScriptSrc = authScript && authScript.getAttribute("data-community-src");
   var root = document.getElementById("auth-root");
   if (!root) return;
 
@@ -351,6 +353,12 @@
       window.addEventListener("error", captureAppRuntimeError, true);
 
       appScript.src = appSource;
+      if (fitnessScriptSrc) {
+        appScript.setAttribute("data-fitness-src", fitnessScriptSrc);
+      }
+      if (communityScriptSrc) {
+        appScript.setAttribute("data-community-src", communityScriptSrc);
+      }
       appScript.onload = function () {
         window.removeEventListener("error", captureAppRuntimeError, true);
         if (appRuntimeError) {
