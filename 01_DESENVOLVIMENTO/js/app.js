@@ -735,6 +735,57 @@
       el.remove();
     }, duration);
   }
+  function showPendingUsageConsentPrompt() {
+    return UsageAnalytics.getPendingConsentPrompt().then(function (prompt) {
+      if (!prompt.pending || document.getElementById("usage-consent-prompt")) return;
+
+      var dialog = document.createElement("dialog");
+      dialog.id = "usage-consent-prompt";
+      dialog.className = "usage-consent-prompt";
+      dialog.setAttribute("aria-labelledby", "usage-consent-prompt-title");
+      dialog.setAttribute("aria-describedby", "usage-consent-prompt-copy");
+      dialog.innerHTML =
+        '<p class="usage-consent-prompt__eyebrow">SUA ESCOLHA</p>' +
+        '<h2 id="usage-consent-prompt-title">Ajude a melhorar o DESVELAR</h2>' +
+        '<p id="usage-consent-prompt-copy">Você pode autorizar o registro de métricas básicas, como as áreas abertas e a atividade aproximada. Elas não incluem anotações nem o conteúdo do seu progresso; aparecem para a equipe em indicadores agregados e são removidas após 90 dias. <a href="./privacidade.html#metricas-de-uso" target="_blank" rel="noopener noreferrer">Saiba mais no Aviso de Privacidade</a>. Você pode mudar sua escolha a qualquer momento em Perfil.</p>' +
+        '<p class="usage-consent-prompt__status" role="status" aria-live="polite"></p>' +
+        '<div class="usage-consent-prompt__actions">' +
+        '<button class="btn" type="button" data-usage-consent-choice="false">Agora não</button>' +
+        '<button class="btn pri" type="button" data-usage-consent-choice="true">Autorizar métricas</button>' +
+        "</div>";
+
+      if (typeof dialog.showModal !== "function") return;
+
+      dialog.addEventListener("cancel", function (event) {
+        event.preventDefault();
+      });
+      dialog.querySelectorAll("[data-usage-consent-choice]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          var enabled = button.dataset.usageConsentChoice === "true";
+          var buttons = dialog.querySelectorAll("[data-usage-consent-choice]");
+          var status = dialog.querySelector(".usage-consent-prompt__status");
+          buttons.forEach(function (item) { item.disabled = true; });
+          status.textContent = "Salvando sua escolha…";
+
+          UsageAnalytics.setConsent(enabled).then(function (result) {
+            if (!result.ok) {
+              buttons.forEach(function (item) { item.disabled = false; });
+              status.textContent = "Não foi possível salvar sua escolha. Tente novamente.";
+              return;
+            }
+
+            if (enabled) UsageAnalytics.recordArea(tab, true);
+            dialog.close();
+            dialog.remove();
+          });
+        });
+      });
+
+      document.body.appendChild(dialog);
+      dialog.showModal();
+      dialog.querySelector('[data-usage-consent-choice="false"]').focus();
+    });
+  }
   function commit(msg, savedResult, renderOptions) {
     var saved =
       typeof savedResult === "boolean" ? savedResult : persist();
@@ -996,7 +1047,9 @@
     if (admin || tabChanged) render();
   });
 
-  UsageAnalytics.initialize(tab).catch(function () {});
+  UsageAnalytics.initialize(tab)
+    .then(showPendingUsageConsentPrompt)
+    .catch(function () {});
   window.setInterval(function () {
     if (document.visibilityState === "visible") UsageAnalytics.recordPresence();
   }, 5 * 60 * 1000);

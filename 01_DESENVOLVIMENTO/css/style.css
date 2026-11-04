@@ -926,6 +926,56 @@ textarea {
   color: var(--a1);
   text-underline-offset: 3px;
 }
+.usage-consent-prompt {
+  width: min(520px, calc(100% - 32px));
+  max-height: min(86dvh, 720px);
+  margin: auto;
+  padding: clamp(22px, 5vw, 34px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.usage-consent-prompt::backdrop {
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(4px);
+}
+.usage-consent-prompt__eyebrow {
+  margin: 0 0 8px;
+  color: var(--a1);
+  font: 700 11px/1.4 var(--mono);
+  letter-spacing: 0.1em;
+}
+.usage-consent-prompt h2 {
+  margin: 0 0 12px;
+  font: 700 clamp(21px, 5vw, 27px)/1.2 var(--display);
+}
+#usage-consent-prompt-copy {
+  color: var(--muted);
+  line-height: 1.65;
+}
+#usage-consent-prompt-copy a {
+  color: var(--a1);
+  text-underline-offset: 3px;
+}
+.usage-consent-prompt__status {
+  min-height: 1.5em;
+  margin: 12px 0 0;
+  color: var(--bad);
+  font-size: 13px;
+}
+.usage-consent-prompt__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.usage-consent-prompt__actions .btn {
+  min-height: 46px;
+}
 .auth-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
