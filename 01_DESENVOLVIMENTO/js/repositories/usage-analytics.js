@@ -45,6 +45,15 @@
       });
     }
 
+    function getPendingConsentPrompt() {
+      return client.rpc("get_my_usage_analytics_consent_prompt").then(function (result) {
+        if (result.error) return { pending: false, error: result.error };
+        return { pending: result.data === true, error: null };
+      }).catch(function (error) {
+        return { pending: false, error: error };
+      });
+    }
+
     function setConsent(enabled) {
       if (typeof enabled !== "boolean") {
         return Promise.resolve({ ok: false, error: new Error("Escolha inválida.") });
@@ -128,6 +137,7 @@
 
     return Object.freeze({
       getConsent: getConsent,
+      getPendingConsentPrompt: getPendingConsentPrompt,
       setConsent: setConsent,
       initialize: initialize,
       recordArea: recordArea,
