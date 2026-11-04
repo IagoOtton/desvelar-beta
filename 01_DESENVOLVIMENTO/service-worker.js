@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "desvelar-static-";
 const CACHE_NAME = `${CACHE_PREFIX}__CACHE_VERSION__`;
-const HASHED_ASSET_PATH = /\/assets\/[^/]+-[a-z0-9_-]{8,}\.(?:css|js)$/i;
+const HASHED_ASSET_PATH = /\/assets\/[^/]+-[a-z0-9_-]{8,}\.(?:css|js|svg|png|webp)$/i;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
