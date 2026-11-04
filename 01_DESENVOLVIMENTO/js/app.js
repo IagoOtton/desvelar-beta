@@ -647,6 +647,7 @@
     }
     if (!target) return;
 
+    if (target.tabIndex < 0) target.setAttribute("tabindex", "-1");
     target.focus({ preventScroll: true });
     if (options.focusId && target.id === options.focusId) {
       target.scrollIntoView({
@@ -720,9 +721,15 @@
         ? ""
         : tickerHtml();
     };
-    document.getElementById("view").innerHTML =
-      pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() +
-      '<div class="card"><p class="m">Carregando...</p></div>';
+    var view = document.getElementById("view");
+    view.setAttribute("aria-busy", "true");
+    view.innerHTML =
+      pageTicker() +
+      cloudSyncMobileStatusHtml() +
+      pomodoroDecisionBannerHtml() +
+      '<div class="card page-loading" role="status" aria-live="polite">' +
+      '<span class="page-loading-spinner" aria-hidden="true"></span>' +
+      "<span>Carregando…</span></div>";
 
     Promise.resolve()
       .then(function () {
@@ -735,7 +742,7 @@
       })
       .then(function (html) {
         if (tab === currentTab) {
-          document.getElementById("view").innerHTML =
+          view.innerHTML =
             pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() + html;
           if (isStudyTab) {
             var studyMobileBrand = document.querySelector(
@@ -779,6 +786,7 @@
             }
           }
           tick();
+          view.setAttribute("aria-busy", "false");
           focusRenderedTarget(options);
         }
       })
@@ -786,9 +794,10 @@
         console.error("Erro ao carregar a tela " + currentTab + ":", error);
         if (tab !== currentTab) return;
 
-        document.getElementById("view").innerHTML =
+        view.innerHTML =
           pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() +
           '<div class="card"><h2 tabindex="-1">Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
+        view.setAttribute("aria-busy", "false");
         focusRenderedTarget(options);
       });
   }
@@ -799,7 +808,34 @@
     text.textContent = msg;
     el.appendChild(text);
 
-    var duration = 2400;
+    var duration = Math.min(7500, Math.max(4200, 3000 + String(msg).length * 22));
+    var remaining = duration;
+    var removeTimer = null;
+    var scheduledAt = 0;
+
+    function removeToast() {
+      if (removeTimer !== null) window.clearTimeout(removeTimer);
+      removeTimer = null;
+      el.remove();
+    }
+
+    function pauseAutoDismiss() {
+      if (removeTimer === null) return;
+      window.clearTimeout(removeTimer);
+      remaining = Math.max(0, remaining - (Date.now() - scheduledAt));
+      removeTimer = null;
+    }
+
+    function resumeAutoDismiss() {
+      if (removeTimer !== null || !el.isConnected) return;
+      if (remaining <= 0) {
+        removeToast();
+        return;
+      }
+      scheduledAt = Date.now();
+      removeTimer = window.setTimeout(removeToast, remaining);
+    }
+
     if (action && action.type === "undo-delete") {
       el.classList.add("toast-actionable");
       var button = document.createElement("button");
@@ -809,18 +845,21 @@
       button.dataset.undoToken = action.token;
       button.textContent = action.label || "Desfazer";
       button.addEventListener("click", function () {
-        window.setTimeout(function () {
-          el.remove();
-        }, 0);
+        window.setTimeout(removeToast, 0);
       });
       el.appendChild(button);
-      duration = 5000;
+      duration = Math.min(9000, Math.max(duration, 6500));
+      remaining = duration;
+      el.addEventListener("mouseenter", pauseAutoDismiss);
+      el.addEventListener("mouseleave", resumeAutoDismiss);
+      el.addEventListener("focusin", pauseAutoDismiss);
+      el.addEventListener("focusout", function (event) {
+        if (!el.contains(event.relatedTarget)) resumeAutoDismiss();
+      });
     }
 
     document.getElementById("toasts").appendChild(el);
-    setTimeout(function () {
-      el.remove();
-    }, duration);
+    resumeAutoDismiss();
   }
   function showPendingUsageConsentPrompt() {
     return UsageAnalytics.getPendingConsentPrompt().then(function (prompt) {
