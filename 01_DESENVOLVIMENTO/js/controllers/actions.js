@@ -360,8 +360,17 @@
         var changedBooks = [];
         state.books.forEach(function (book) {
           if (book.id === entry.bookId && book.read === entry.to) {
-            changedBooks.push({ id: book.id, previousRead: book.read });
+            changedBooks.push({
+              id: book.id,
+              previousRead: book.read,
+              previousStatus: book.status,
+              previousFinishedAt: book.finishedAt || "",
+            });
             book.read = entry.from;
+            if (entry.to >= book.total && book.status === "completed") {
+              book.status = entry.from > 0 ? "reading" : "planned";
+              book.finishedAt = "";
+            }
           }
         });
         state.readlog.splice(entryIndex, 1);
@@ -374,6 +383,8 @@
             });
             if (book && book.read === entry.from) {
               book.read = change.previousRead;
+              book.status = change.previousStatus;
+              book.finishedAt = change.previousFinishedAt;
             }
           });
         };

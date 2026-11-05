@@ -448,6 +448,22 @@
       var t = dependencies.today(),
         ws = dependencies.wkStart(t),
         we = dependencies.addDays(ws, 6);
+      var currentYear = t.slice(0, 4);
+      var readingSettings = state.readingSettings || { annualGoal: 12 };
+      var annualGoal = Number(readingSettings.annualGoal) || 12;
+      var finishedThisYear = state.books.filter(function (book) {
+        return book.status === "completed" &&
+          typeof book.finishedAt === "string" &&
+          book.finishedAt.slice(0, 4) === currentYear;
+      }).length;
+      var annualProgress = Math.min(100, Math.round((finishedThisYear / annualGoal) * 100));
+      var statusLabels = {
+        planned: "Quero ler",
+        reading: "Lendo",
+        paused: "Pausado",
+        completed: "Concluído",
+        abandoned: "Abandonei",
+      };
       var d14 = [];
       for (var i = 13; i >= 0; i--) {
         var d = dependencies.addDays(t, -i);
@@ -470,13 +486,22 @@
                 60),
           )
         : 0;
+      var statusOrder = { reading: 0, planned: 1, paused: 2, completed: 3, abandoned: 4 };
       var cards = state.books
+        .slice()
+        .sort(function (a, b) {
+          var orderA = statusOrder[a.status] === undefined ? 5 : statusOrder[a.status];
+          var orderB = statusOrder[b.status] === undefined ? 5 : statusOrder[b.status];
+          return orderA - orderB ||
+            String(a.title || "").localeCompare(String(b.title || ""), "pt-BR");
+        })
         .map(function (b) {
           var p = b.total
               ? Math.min(100, Math.round((b.read / b.total) * 100))
               : 0,
             lg = dependencies.bookLog(b),
-            fin = b.total && b.read >= b.total,
+            status = statusLabels[b.status] ? b.status : "planned",
+            fin = status === "completed",
             last = lg[lg.length - 1];
           var rate = dependencies.pagesRangeBook(b, dependencies.addDays(t, -13), t) / 14,
             rem = b.total - b.read;
@@ -508,6 +533,9 @@
                 " págs" +
                 (r.min ? " · " + dependencies.esc(r.min) + " min" : "") +
                 "</span></span>" +
+                (r.note
+                  ? '<span class="reading-log-note">' + dependencies.esc(r.note) + "</span>"
+                  : "") +
                 (last && r.id === last.id
                   ? '<button class="ico" data-a="del-read" data-id="' +
                     dependencies.esc(r.id) +
@@ -518,11 +546,14 @@
             })
             .join("");
           return (
-            '<div class="card book"><div class="rowflex" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><div style="min-width:0"><h3>' +
+            '<div class="card book" data-book-card data-book-status="' + dependencies.esc(status) + '"><div class="rowflex" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><div style="min-width:0"><h3>' +
             dependencies.esc(b.title) +
             "</h3>" +
-            dependencies.chip(b.tag) +
-            (fin ? ' <span class="badge">concluído</span>' : "") +
+            (b.author ? '<p class="book-author">' + dependencies.esc(b.author) + "</p>" : "") +
+            (b.tag ? dependencies.chip(b.tag) : "") +
+            ' <span class="badge book-status-badge">' +
+            dependencies.esc(statusLabels[status]) +
+            "</span>" +
             '</div><button class="ico" data-a="del" data-k="books" data-id="' +
             dependencies.esc(b.id) +
             '" aria-label="Remover leitura">×</button></div>' +
@@ -542,6 +573,17 @@
             "</b>págs por leitura</div><div><b>" +
             eta +
             "</b>previsão (ritmo de 14 dias)</div></div>" +
+            '<form class="row book-status-form" data-form="book-status"><input type="hidden" name="id" value="' +
+            dependencies.esc(b.id) +
+            '"><label class="f">Estante<select name="status">' +
+            Object.keys(statusLabels).map(function (value) {
+              return '<option value="' + value + '"' + (status === value ? " selected" : "") + ">" + statusLabels[value] + "</option>";
+            }).join("") +
+            "</select></label>" +
+            (status === "completed"
+              ? '<label class="f">Concluído em <span class="m">opcional, para a meta anual</span><input type="date" name="finishedAt" value="' + dependencies.esc(b.finishedAt || "") + '"></label>'
+              : "") +
+            '<button class="btn sm" type="submit">Salvar estante</button></form>' +
             (fin
               ? ""
               : '<form class="row" data-form="read"><input type="hidden" name="id" value="' +
@@ -560,7 +602,18 @@
                 dependencies.esc(b.id) +
                 '" type="date" name="date" value="' +
                 t +
-                '" required></label><button class="btn pri" type="submit">Registrar leitura</button></form>') +
+                '" required></label><details class="reading-note-editor"><summary>Anotar esta leitura <span class="m">opcional</span></summary><label class="f">Nota privada<textarea name="note" maxlength="600" rows="2" placeholder="Uma ideia, trecho ou impressão para lembrar…"></textarea></label></details><button class="btn pri" type="submit">Registrar leitura</button></form>') +
+            '<details class="book-review"><summary>Dados e avaliação privada' +
+            (b.rating ? ' · ' + dependencies.esc("★".repeat(b.rating)) : "") +
+            '</summary><form class="row" data-form="book-review"><input type="hidden" name="id" value="' +
+            dependencies.esc(b.id) +
+            '"><label class="f grow">Autor <span class="m">Só você vê</span><input name="author" maxlength="120" value="' + dependencies.esc(b.author || "") + '" placeholder="Nome do autor"></label><label class="f">Nota<select name="rating"><option value="0"' + (b.rating ? "" : " selected") + '>Sem nota</option>' +
+            [1, 2, 3, 4, 5].map(function (value) {
+              return '<option value="' + value + '"' + (Number(b.rating) === value ? " selected" : "") + ">" + value + " / 5" + (value === 1 ? " · Não gostei" : value === 5 ? " · Adorei" : "") + "</option>";
+            }).join("") +
+            '</select></label><label class="f grow">Minha resenha <span class="m">Só você vê</span><textarea name="review" maxlength="1200" rows="3" placeholder="O que ficou com você depois da leitura?">' +
+            dependencies.esc(b.review || "") +
+            '</textarea></label><button class="btn sm" type="submit">Salvar dados</button></form></details>' +
             (hist ? '<ul class="list hist">' + hist + "</ul>" : "") +
             "</div>"
           );
@@ -569,8 +622,14 @@
       return (
         dependencies.head(
           "Leitura",
-          "Todo livro começa na página 0. A cada leitura, diga em que página parou: eu calculo quantas páginas você leu.",
+          "Organize sua estante, acompanhe cada leitura e registre impressões privadas.",
         ) +
+        '<section class="card reading-goal-card"><div><p class="eyebrow">DESAFIO DE ' +
+        dependencies.esc(currentYear) +
+        '</p><h2>Uma leitura de cada vez</h2><p class="m">' + finishedThisYear +
+        ' de ' + annualGoal + (annualGoal === 1 ? ' livro concluído' : ' livros concluídos') +
+        '</p><div class="bar" role="progressbar" aria-label="Progresso da meta anual" aria-valuemin="0" aria-valuemax="' + annualGoal + '" aria-valuenow="' + Math.min(finishedThisYear, annualGoal) + '"><b style="width:' + annualProgress + '%"></b></div><span class="m">A meta considera livros concluídos com a data registrada.</span></div>' +
+        '<form class="row" data-form="reading-goal"><label class="f">Meta de livros no ano<input name="annualGoal" type="number" min="1" max="365" value="' + annualGoal + '" required></label><button class="btn sm" type="submit">Salvar meta</button></form></section>' +
         '<div class="tiles"><div class="tile"><div class="l">Hoje</div><div class="v num">' +
         dependencies.pagesRange(t, t) +
         '</div><div class="n">páginas</div></div>' +
@@ -595,12 +654,20 @@
         "</div>" +
         '<div class="card"><h2>Novo livro ou leitura</h2><form class="row" data-form="book">' +
         '<label class="f grow">Título<input id="b-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Dom Casmurro"></label>' +
+        '<label class="f grow">Autor <span class="m">opcional</span><input class="grow" name="author" maxlength="120" placeholder="ex.: Machado de Assis"></label>' +
         '<label class="f grow">Tag' +
         dependencies.tagInput("b-tag", "ex.: Fisiologia, Romance") +
         "</label>" +
         '<label class="f">Total de páginas<input id="b-total" type="number" name="total" min="1" max="5000" required></label>' +
         '<label class="f">Já li até a página<input id="b-read" type="number" name="read" min="0" max="5000" step="1" value="0" required><span class="m">O progresso anterior não será contado como leitura de hoje.</span></label>' +
         '<button class="btn pri" type="submit">Adicionar</button></form></div>' +
+        (state.books.length
+          ? '<div class="reading-shelf-tools"><label class="f">Estante<select id="reading-shelf-filter"><option value="all">Todos os livros</option>' +
+            Object.keys(statusLabels).map(function (value) {
+              return '<option value="' + value + '">' + statusLabels[value] + '</option>';
+            }).join("") +
+            '</select></label><span id="reading-shelf-count" class="m" aria-live="polite">' + state.books.length + (state.books.length === 1 ? ' livro na estante' : ' livros na estante') + '</span></div>'
+          : "") +
         (cards || '<p class="empty">Nenhum livro cadastrado.</p>')
       );
     }

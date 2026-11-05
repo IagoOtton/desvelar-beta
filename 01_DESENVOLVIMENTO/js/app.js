@@ -1019,6 +1019,24 @@
     });
   });
   document.addEventListener("change", function (event) {
+    var readingShelfFilter = event.target.closest("#reading-shelf-filter");
+    if (readingShelfFilter) {
+      var visibleBooks = 0;
+      var bookCards = document.querySelectorAll("#view [data-book-card]");
+      bookCards.forEach(function (card) {
+        var visible = readingShelfFilter.value === "all" ||
+          card.dataset.bookStatus === readingShelfFilter.value;
+        card.hidden = !visible;
+        if (visible) visibleBooks += 1;
+      });
+      var shelfCount = document.getElementById("reading-shelf-count");
+      if (shelfCount) {
+        shelfCount.textContent = visibleBooks +
+          (visibleBooks === 1 ? " livro exibido" : " livros exibidos");
+      }
+      return;
+    }
+
     var usageConsentInput = event.target.closest("#usage-analytics-consent");
     if (usageConsentInput) {
       var consentEnabled = usageConsentInput.checked;
