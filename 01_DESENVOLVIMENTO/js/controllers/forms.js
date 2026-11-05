@@ -169,9 +169,19 @@
         state.books.push({
           id: dependencies.uid(),
           title: values.title.trim(),
+          author: (values.author || "").trim(),
           tag: tag,
           total: bookTotal,
           read: initialPage,
+          status:
+            initialPage >= bookTotal
+              ? "completed"
+              : initialPage > 0
+                ? "reading"
+                : "planned",
+          finishedAt: "",
+          rating: 0,
+          review: "",
         });
         message = initialPage
           ? "Livro adicionado na página " + initialPage + ". O progresso anterior não entrou nas leituras de hoje."
@@ -201,9 +211,78 @@
           to: page,
           pages: page - book.read,
           min: values.min ? Number(values.min) : 0,
+          note: (values.note || "").trim().slice(0, 600),
         });
         message = "+" + (page - book.read) + " páginas lidas";
         book.read = page;
+        if (page >= book.total) {
+          book.status = "completed";
+          book.finishedAt = values.date;
+          message = "Livro concluído! " + message;
+        } else if (book.status === "planned" || book.status === "paused") {
+          book.status = "reading";
+        }
+      } else if (kind === "book-status") {
+        var statusBook = state.books.find(function (item) {
+          return item.id === values.id;
+        });
+        var allowedBookStatuses = [
+          "planned",
+          "reading",
+          "paused",
+          "completed",
+          "abandoned",
+        ];
+        if (!statusBook || allowedBookStatuses.indexOf(values.status) === -1) return;
+
+        var finishDate = (values.finishedAt || "").trim();
+        var finishTimestamp = /^\d{4}-\d{2}-\d{2}$/.test(finishDate)
+          ? Date.parse(finishDate + "T00:00:00Z")
+          : NaN;
+        if (
+          finishDate &&
+          (!Number.isFinite(finishTimestamp) ||
+            new Date(finishTimestamp).toISOString().slice(0, 10) !== finishDate ||
+            finishDate > dependencies.today())
+        ) {
+          reportFieldError(
+            form,
+            form.querySelector('input[name="finishedAt"]'),
+            "Informe uma data válida, que não esteja no futuro.",
+            'input[name="finishedAt"]',
+          );
+          return;
+        }
+
+        var wasCompleted = statusBook.status === "completed";
+        statusBook.status = values.status;
+        statusBook.finishedAt = values.status === "completed"
+          ? finishDate || (wasCompleted ? statusBook.finishedAt : dependencies.today())
+          : "";
+        message = "Estante do livro atualizada.";
+      } else if (kind === "book-review") {
+        var reviewBook = state.books.find(function (item) {
+          return item.id === values.id;
+        });
+        var rating = Number(values.rating || 0);
+        if (!reviewBook || !Number.isInteger(rating) || rating < 0 || rating > 5) return;
+        reviewBook.author = (values.author || "").trim().slice(0, 120);
+        reviewBook.rating = rating;
+        reviewBook.review = (values.review || "").trim().slice(0, 1200);
+        message = "Dados e avaliação privada foram salvos.";
+      } else if (kind === "reading-goal") {
+        var annualGoal = Number(values.annualGoal);
+        if (!Number.isInteger(annualGoal) || annualGoal < 1 || annualGoal > 365) {
+          reportFieldError(
+            form,
+            form.querySelector('input[name="annualGoal"]'),
+            "Escolha uma meta entre 1 e 365 livros.",
+            'input[name="annualGoal"]',
+          );
+          return;
+        }
+        state.readingSettings.annualGoal = annualGoal;
+        message = "Meta anual atualizada.";
       } else if (kind === "event") {
         state.events.push({
           id: dependencies.uid(),

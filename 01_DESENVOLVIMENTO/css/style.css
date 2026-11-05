@@ -147,6 +147,28 @@ body::before {
   margin: 0;
   padding-block: 22px;
 }
+.skip-link {
+  position: fixed;
+  z-index: 2000;
+  top: max(8px, env(safe-area-inset-top, 0px));
+  left: max(8px, env(safe-area-inset-left, 0px));
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--a1);
+  color: var(--on-a);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+}
+.skip-link:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+  transform: translateY(0);
+}
 nav.side {
   position: fixed;
   top: 22px;
@@ -1814,6 +1836,112 @@ svg.ch .chart-hit {
   color: var(--muted);
   line-height: 1.6;
   padding: 5px 0;
+}
+.reading-goal-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+}
+.reading-goal-card h2 {
+  margin: 2px 0 4px;
+}
+.reading-goal-card .eyebrow {
+  margin: 0;
+  color: var(--a1);
+  font: 600 11px/1.4 var(--mono);
+  letter-spacing: 0.08em;
+}
+.reading-goal-card form {
+  justify-content: flex-end;
+}
+.reading-goal-card input {
+  width: 116px;
+}
+.book-author {
+  margin: -2px 0 7px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.book-status-badge {
+  margin: 4px 0;
+}
+.book-status-form {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.book-status-form label {
+  flex: 0 1 180px;
+}
+.reading-shelf-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px;
+  margin: 18px 2px 10px;
+}
+.reading-shelf-tools label {
+  flex: 0 1 240px;
+}
+.reading-shelf-tools > span {
+  padding-bottom: 9px;
+}
+[data-book-card][hidden] {
+  display: none !important;
+}
+.book-review,
+.reading-note-editor {
+  margin-top: 12px;
+}
+.book-review > summary,
+.reading-note-editor > summary {
+  width: fit-content;
+  color: var(--a1);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.book-review form {
+  margin-top: 12px;
+}
+.book-review textarea,
+.reading-note-editor textarea {
+  min-height: 74px;
+}
+.reading-note-editor label {
+  margin-top: 10px;
+}
+.reading-log-note {
+  display: block;
+  margin: 4px 0 4px 84px;
+  color: var(--ink);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .reading-goal-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .reading-goal-card form {
+    justify-content: flex-start;
+  }
+  .book-status-form label {
+    flex: 1 1 150px;
+  }
+  .reading-shelf-tools {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .reading-shelf-tools label {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+  .reading-log-note {
+    margin-left: 0;
+  }
 }
 .brand .wm {
   font: 600 15px var(--display);

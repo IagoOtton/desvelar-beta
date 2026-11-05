@@ -58,11 +58,14 @@
   var STUDY_TYPES = ["theory", "questions", "class", "review", "other"];
   function emptyState() {
     return {
-      v: 8,
+      v: 9,
       name: "",
       goalH: 20,
       sessions: [],
       books: [],
+      readingSettings: {
+        annualGoal: 12,
+      },
       events: [],
       tasks: [],
       questions: [],
@@ -380,6 +383,41 @@
         : "";
     }
 
+    function normalizeBook(book) {
+      book.title =
+        typeof book.title === "string" ? book.title.trim().slice(0, 120) : "";
+      book.author =
+        typeof book.author === "string" ? book.author.trim().slice(0, 120) : "";
+      book.total = boundedInteger(Number(book.total), 1, 1, 5000);
+      book.read = boundedInteger(Number(book.read), 0, 0, book.total);
+      book.rating = boundedInteger(Number(book.rating), 0, 0, 5);
+      book.review =
+        typeof book.review === "string" ? book.review.trim().slice(0, 1200) : "";
+
+      var validStatuses = ["planned", "reading", "paused", "completed", "abandoned"];
+      if (validStatuses.indexOf(book.status) === -1) {
+        book.status = book.read >= book.total
+          ? "completed"
+          : book.read > 0
+            ? "reading"
+            : "planned";
+      }
+
+      book.finishedAt = normalizeReviewDate(book.finishedAt);
+      if (book.status === "completed" && !book.finishedAt) {
+        book.finishedAt = completionDateByBook[book.id] || "";
+      }
+    }
+
+    function normalizeReadingSettings(value) {
+      var settings = value && typeof value === "object" && !Array.isArray(value)
+        ? value
+        : {};
+      return {
+        annualGoal: boundedInteger(settings.annualGoal, 12, 1, 365),
+      };
+    }
+
     function normalizeStudyReviewMetadata(theme) {
       if (theme.nextReview !== undefined) {
         theme.nextReview = normalizeReviewDate(theme.nextReview);
@@ -435,11 +473,28 @@
     o.sessions.forEach(normalizeStudyMetadata);
     o.questions.forEach(normalizeStudyMetadata);
     o.mistakes.forEach(normalizeMistake);
+    var bookTotalsById = Object.create(null);
+    o.books.forEach(function (book) {
+      if (book.id != null) bookTotalsById[book.id] = Number(book.total) || 0;
+    });
+    var completionDateByBook = Object.create(null);
+    o.readlog.forEach(function (entry) {
+      var total = bookTotalsById[entry.bookId];
+      var date = normalizeReviewDate(entry.date);
+      if (total && Number(entry.to) >= total && date > (completionDateByBook[entry.bookId] || "")) {
+        completionDateByBook[entry.bookId] = date;
+      }
+      entry.note = typeof entry.note === "string"
+        ? entry.note.trim().slice(0, 600)
+        : "";
+    });
+    o.books.forEach(normalizeBook);
     o.themes.forEach(normalizeStudyReviewMetadata);
     o.strengthRoutines.forEach(normalizeStrengthRoutine);
     o.strengthSessions.forEach(normalizeStrengthSession);
     o.bodyMeasurements.forEach(normalizeBodyMeasurement);
     o.strengthSettings = normalizeStrengthSettings(o.strengthSettings);
+    o.readingSettings = normalizeReadingSettings(o.readingSettings);
 
     delete o.timer;
 
@@ -513,7 +568,7 @@
     o.name = typeof o.name === "string" ? o.name : "";
     delete o.lastBackup;
 
-    o.v = 8;
+    o.v = 9;
 
     return o;
   }
