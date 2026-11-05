@@ -455,7 +455,11 @@
       };
       var annualGoal = Number(readingSettings.annualGoal) || 12;
       var dailyPageGoal = Number(readingSettings.dailyPageGoal) || 10;
-      var pagesToday = dependencies.pagesRange(t, t);
+      function pagesOn(date) {
+        var pages = dependencies.pagesRange(date, date);
+        return Number.isFinite(pages) ? Math.max(0, pages) : 0;
+      }
+      var pagesToday = pagesOn(t);
       var dailyProgress = Math.min(
         100,
         Math.round((pagesToday / dailyPageGoal) * 100),
@@ -463,7 +467,7 @@
       var streakDate = pagesToday >= dailyPageGoal ? t : dependencies.addDays(t, -1);
       var readingStreak = 0;
       while (readingStreak <= state.readlog.length) {
-        if (dependencies.pagesRange(streakDate, streakDate) < dailyPageGoal) break;
+        if (pagesOn(streakDate) < dailyPageGoal) break;
         readingStreak++;
         streakDate = dependencies.addDays(streakDate, -1);
       }
