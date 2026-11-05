@@ -1464,7 +1464,7 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
       .waitFor({ state: "visible" });
 
     await page.locator('#sidenav [data-tab="leitura"]').click();
-    await page.locator('#view [data-reading-view="shelf"]').click();
+    await page.locator('#view nav.reading-area-tabs [data-reading-view="shelf"]').click();
     await page.locator("#b-title").fill("Livro do módulo acadêmico");
     await page.locator("#b-total").fill("100");
     await page.locator("#b-tag").fill("Neuroanatomia");
