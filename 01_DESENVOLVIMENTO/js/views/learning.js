@@ -449,8 +449,30 @@
         ws = dependencies.wkStart(t),
         we = dependencies.addDays(ws, 6);
       var currentYear = t.slice(0, 4);
-      var readingSettings = state.readingSettings || { annualGoal: 12 };
+      var readingSettings = state.readingSettings || {
+        annualGoal: 12,
+        dailyPageGoal: 10,
+      };
       var annualGoal = Number(readingSettings.annualGoal) || 12;
+      var dailyPageGoal = Number(readingSettings.dailyPageGoal) || 10;
+      var pagesToday = dependencies.pagesRange(t, t);
+      var dailyProgress = Math.min(
+        100,
+        Math.round((pagesToday / dailyPageGoal) * 100),
+      );
+      var streakDate = pagesToday >= dailyPageGoal ? t : dependencies.addDays(t, -1);
+      var readingStreak = 0;
+      while (readingStreak <= state.readlog.length) {
+        if (dependencies.pagesRange(streakDate, streakDate) < dailyPageGoal) break;
+        readingStreak++;
+        streakDate = dependencies.addDays(streakDate, -1);
+      }
+      var dailyGoalHint = pagesToday >= dailyPageGoal
+        ? "Meta diária alcançada."
+        : "Faltam " + (dailyPageGoal - pagesToday) + " páginas para alcançar a meta.";
+      var streakHint = pagesToday < dailyPageGoal && readingStreak
+        ? "Sua sequência segue ativa até o fim do dia."
+        : "A sequência considera dias que atingiram a meta atual.";
       var finishedThisYear = state.books.filter(function (book) {
         return book.status === "completed" &&
           typeof book.finishedAt === "string" &&
@@ -624,12 +646,13 @@
           "Leitura",
           "Organize sua estante, acompanhe cada leitura e registre impressões privadas.",
         ) +
-        '<section class="card reading-goal-card"><div><p class="eyebrow">DESAFIO DE ' +
+        '<section class="card reading-goal-card"><div class="reading-goal-overview"><div class="reading-annual-goal"><p class="eyebrow">DESAFIO DE ' +
         dependencies.esc(currentYear) +
         '</p><h2>Uma leitura de cada vez</h2><p class="m">' + finishedThisYear +
         ' de ' + annualGoal + (annualGoal === 1 ? ' livro concluído' : ' livros concluídos') +
         '</p><div class="bar" role="progressbar" aria-label="Progresso da meta anual" aria-valuemin="0" aria-valuemax="' + annualGoal + '" aria-valuenow="' + Math.min(finishedThisYear, annualGoal) + '"><b style="width:' + annualProgress + '%"></b></div><span class="m">A meta considera livros concluídos com a data registrada.</span></div>' +
-        '<form class="row" data-form="reading-goal"><label class="f">Meta de livros no ano<input name="annualGoal" type="number" min="1" max="365" value="' + annualGoal + '" required></label><button class="btn sm" type="submit">Salvar meta</button></form></section>' +
+        '<div class="reading-daily-goal"><div class="reading-daily-copy"><p class="eyebrow">META DIÁRIA</p><h3>' + pagesToday + ' de ' + dailyPageGoal + ' páginas hoje</h3><div class="bar" role="progressbar" aria-label="Progresso da meta diária de leitura" aria-valuemin="0" aria-valuemax="' + dailyPageGoal + '" aria-valuenow="' + Math.min(pagesToday, dailyPageGoal) + '"><b style="width:' + dailyProgress + '%"></b></div><p class="m">' + dailyGoalHint + '</p></div><div class="reading-streak"><strong class="num">' + readingStreak + '</strong><span>' + (readingStreak === 1 ? 'dia seguido' : 'dias seguidos') + '</span></div><p class="m reading-streak-hint">' + streakHint + '</p></div></div>' +
+        '<form class="row reading-goal-settings" data-form="reading-goal"><label class="f">Livros no ano<input name="annualGoal" type="number" min="1" max="365" value="' + annualGoal + '" required></label><label class="f">Páginas por dia<input name="dailyPageGoal" type="number" min="1" max="500" value="' + dailyPageGoal + '" required></label><button class="btn sm" type="submit">Salvar metas</button></form></section>' +
         '<div class="tiles"><div class="tile"><div class="l">Hoje</div><div class="v num">' +
         dependencies.pagesRange(t, t) +
         '</div><div class="n">páginas</div></div>' +
@@ -681,6 +704,7 @@
   }
   window.DesvelarLearningViews = Object.freeze({ create: create });
 })();
+
 
 
 
