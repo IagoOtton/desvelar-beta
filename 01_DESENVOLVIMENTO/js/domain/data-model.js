@@ -65,6 +65,7 @@
       books: [],
       readingSettings: {
         annualGoal: 12,
+        dailyPageGoal: 10,
       },
       events: [],
       tasks: [],
@@ -415,6 +416,7 @@
         : {};
       return {
         annualGoal: boundedInteger(settings.annualGoal, 12, 1, 365),
+        dailyPageGoal: boundedInteger(settings.dailyPageGoal, 10, 1, 500),
       };
     }
 
@@ -770,6 +772,7 @@
     mergeForSync: mergeForSync,
   });
 })();
+
 
 
 
