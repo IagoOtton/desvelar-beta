@@ -1464,6 +1464,7 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
       .waitFor({ state: "visible" });
 
     await page.locator('#sidenav [data-tab="leitura"]').click();
+    await page.locator('#view nav.reading-area-tabs [data-reading-view="shelf"]').click();
     await page.locator("#b-title").fill("Livro do módulo acadêmico");
     await page.locator("#b-total").fill("100");
     await page.locator("#b-tag").fill("Neuroanatomia");
@@ -1472,8 +1473,11 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
       .locator(".card.book")
       .filter({ hasText: "Livro do módulo acadêmico" });
     await book.waitFor({ state: "visible" });
-    await book.locator('form[data-form="read"] input[name="to"]').fill("20");
-    await book.locator('form[data-form="read"] button[type="submit"]').click();
+    await page.locator('#view nav.reading-area-tabs [data-reading-view="session"]').click();
+    await page.locator('#view form[data-form="read"] input[name="to"]').fill("20");
+    await page.locator('#view form[data-form="read"] button[type="submit"]').click();
+    await page.locator('#view nav.reading-area-tabs [data-reading-view="shelf"]').click();
+    await book.locator(".book-history > summary").click();
     await book
       .locator(".hist")
       .filter({ hasText: "p.0 → p.20" })

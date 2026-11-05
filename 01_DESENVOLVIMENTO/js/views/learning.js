@@ -449,8 +449,34 @@
         ws = dependencies.wkStart(t),
         we = dependencies.addDays(ws, 6);
       var currentYear = t.slice(0, 4);
-      var readingSettings = state.readingSettings || { annualGoal: 12 };
+      var readingSettings = state.readingSettings || {
+        annualGoal: 12,
+        dailyPageGoal: 10,
+      };
       var annualGoal = Number(readingSettings.annualGoal) || 12;
+      var dailyPageGoal = Number(readingSettings.dailyPageGoal) || 10;
+      function pagesOn(date) {
+        var pages = dependencies.pagesRange(date, date);
+        return Number.isFinite(pages) ? Math.max(0, pages) : 0;
+      }
+      var pagesToday = pagesOn(t);
+      var dailyProgress = Math.min(
+        100,
+        Math.round((pagesToday / dailyPageGoal) * 100),
+      );
+      var streakDate = pagesToday >= dailyPageGoal ? t : dependencies.addDays(t, -1);
+      var readingStreak = 0;
+      while (readingStreak <= state.readlog.length) {
+        if (pagesOn(streakDate) < dailyPageGoal) break;
+        readingStreak++;
+        streakDate = dependencies.addDays(streakDate, -1);
+      }
+      var dailyGoalHint = pagesToday >= dailyPageGoal
+        ? "Meta diária alcançada."
+        : "Faltam " + (dailyPageGoal - pagesToday) + " páginas para alcançar a meta.";
+      var streakHint = pagesToday < dailyPageGoal && readingStreak
+        ? "Sua sequência segue ativa até o fim do dia."
+        : "A sequência considera dias que atingiram a meta atual.";
       var finishedThisYear = state.books.filter(function (book) {
         return book.status === "completed" &&
           typeof book.finishedAt === "string" &&
@@ -473,7 +499,7 @@
           return x.v;
         }),
         withMin = state.readlog.filter(function (r) {
-          return r.min > 0;
+          return r.min > 0 && r.pages > 0;
         });
       var pph = withMin.length
         ? Math.round(
@@ -486,6 +512,34 @@
                 60),
           )
         : 0;
+      var readingTimerBooks = state.books.filter(function (book) { return book.status !== "abandoned"; });
+      var readingRun = state.readingRun || null;
+      var readingTimerBook = readingRun ? readingTimerBooks.find(function (book) { return book.id === readingRun.bookId; }) : null;
+      var defaultTimerBook = state.books.filter(function (book) {
+        return book.status === "reading";
+      })[0] || readingTimerBooks[0] || null;
+      var selectedTimerBookId = readingRun ? readingRun.bookId : (defaultTimerBook ? defaultTimerBook.id : "");
+      var readingTimerElapsedMs = readingRun ? Math.max(0, Number(readingRun.elapsedMs) || 0) : 0;
+      if (readingRun && readingRun.status === "running") readingTimerElapsedMs += Math.max(0, Date.now() - Number(readingRun.startedAt || 0));
+      var readingTimerSeconds = Math.floor(readingTimerElapsedMs / 1000);
+      var readingTimerHours = Math.floor(readingTimerSeconds / 3600);
+      var readingTimerMinutes = Math.floor((readingTimerSeconds % 3600) / 60);
+      var readingTimerRemainder = readingTimerSeconds % 60;
+      function timerPad(value) { return String(value).padStart(2, "0"); }
+      var readingTimerClock = readingTimerHours ? timerPad(readingTimerHours) + ":" + timerPad(readingTimerMinutes) + ":" + timerPad(readingTimerRemainder) : timerPad(readingTimerMinutes) + ":" + timerPad(readingTimerRemainder);
+      var readingTimerButtons = !readingRun
+        ? '<button class="btn pri" type="button" data-a="reading-start">Iniciar sessão</button>'
+        : (readingRun.status === "running" ? '<button class="btn" type="button" data-a="reading-pause">Pausar</button>' : '<button class="btn" type="button" data-a="reading-resume">Retomar</button>') +
+            '<button class="btn pri" type="button" data-a="reading-finish">Encerrar e salvar</button>' +
+            '<button class="btn sm" type="button" data-a="reading-cancel">Descartar sessão</button>';
+      var readingTimerMarkup = '<section class="card reading-timer-card"><div class="reading-timer-intro"><p class="eyebrow">SESSÃO DE LEITURA</p><h2>Leia no seu ritmo</h2><p class="m">O tempo é registrado no histórico do livro; a página atual só muda quando você registrar o progresso.</p>' +
+        (readingTimerBook ? '<p class="reading-timer-book-label">Livro atual: <strong>' + dependencies.esc(readingTimerBook.title) + '</strong></p>' : '') +
+        '</div>' +
+        (readingTimerBooks.length
+          ? '<div class="reading-timer-controls"><label class="f">Livro<select id="reading-timer-book"' + (readingRun ? ' disabled' : '') + '>' + readingTimerBooks.map(function (book) { return '<option value="' + dependencies.esc(book.id) + '"' + (book.id === selectedTimerBookId ? ' selected' : '') + '>' + dependencies.esc(book.title) + '</option>'; }).join('') + '</select></label><output id="reading-timer-clock" class="reading-timer-clock" data-reading-clock data-running="' + (readingRun && readingRun.status === "running" ? 'true' : 'false') + '" data-started-at="' + (readingRun && readingRun.status === "running" ? Number(readingRun.startedAt) : 0) + '" data-elapsed-ms="' + readingTimerElapsedMs + '" aria-label="Tempo da sessão">' + readingTimerClock + '</output><div class="reading-timer-actions">' + readingTimerButtons + '</div></div>'
+          : '<p class="empty reading-timer-empty">Adicione um livro ou atualize a estante para iniciar uma sessão.</p>') +
+        '</section>';
+
       var statusOrder = { reading: 0, planned: 1, paused: 2, completed: 3, abandoned: 4 };
       var cards = state.books
         .slice()
@@ -524,22 +578,20 @@
               return (
                 '<li><span class="m num">' +
                 dependencies.fmtD(r.date) +
-                '</span><span class="t">p.' +
-                dependencies.esc(r.from) +
-                " → p." +
-                dependencies.esc(r.to) +
-                ' <span class="m">· +' +
-                dependencies.esc(r.pages) +
-                " págs" +
-                (r.min ? " · " + dependencies.esc(r.min) + " min" : "") +
-                "</span></span>" +
+                '</span><span class="t">' +
+                (r.timed === true
+                  ? '<span class="m">Sessão cronometrada · ' + dependencies.esc(r.min) + ' min</span>'
+                  : 'p.' + dependencies.esc(r.from) + " → p." + dependencies.esc(r.to) +
+                    ' <span class="m">· +' + dependencies.esc(r.pages) + " págs" +
+                    (r.min ? " · " + dependencies.esc(r.min) + " min" : "") + "</span>") +
+                "</span>" +
                 (r.note
                   ? '<span class="reading-log-note">' + dependencies.esc(r.note) + "</span>"
                   : "") +
                 (last && r.id === last.id
                   ? '<button class="ico" data-a="del-read" data-id="' +
                     dependencies.esc(r.id) +
-                    '" aria-label="Desfazer esta leitura">×</button>'
+                    '" aria-label="Desfazer registro">×</button>'
                   : "") +
                 "</li>"
               );
@@ -573,7 +625,7 @@
             "</b>págs por leitura</div><div><b>" +
             eta +
             "</b>previsão (ritmo de 14 dias)</div></div>" +
-            '<form class="row book-status-form" data-form="book-status"><input type="hidden" name="id" value="' +
+            '<details class="book-shelf-edit"><summary>Editar situação na estante</summary><form class="row book-status-form" data-form="book-status"><input type="hidden" name="id" value="' +
             dependencies.esc(b.id) +
             '"><label class="f">Estante<select name="status">' +
             Object.keys(statusLabels).map(function (value) {
@@ -583,26 +635,7 @@
             (status === "completed"
               ? '<label class="f">Concluído em <span class="m">opcional, para a meta anual</span><input type="date" name="finishedAt" value="' + dependencies.esc(b.finishedAt || "") + '"></label>'
               : "") +
-            '<button class="btn sm" type="submit">Salvar estante</button></form>' +
-            (fin
-              ? ""
-              : '<form class="row" data-form="read"><input type="hidden" name="id" value="' +
-                dependencies.esc(b.id) +
-                '"><label class="f">Parei na página<input id="r-' +
-                dependencies.esc(b.id) +
-                '" type="number" name="to" min="' +
-                dependencies.esc(Number(b.read) + 1) +
-                '" max="' +
-                dependencies.esc(b.total) +
-                '" placeholder="' +
-                dependencies.esc(Number(b.read) + 1) +
-                '+" required></label><label class="f">Minutos (opcional)<input id="rm-' +
-                dependencies.esc(b.id) +
-                '" type="number" name="min" min="1" max="720"></label><label class="f">Data<input id="rd-' +
-                dependencies.esc(b.id) +
-                '" type="date" name="date" value="' +
-                t +
-                '" required></label><details class="reading-note-editor"><summary>Anotar esta leitura <span class="m">opcional</span></summary><label class="f">Nota privada<textarea name="note" maxlength="600" rows="2" placeholder="Uma ideia, trecho ou impressão para lembrar…"></textarea></label></details><button class="btn pri" type="submit">Registrar leitura</button></form>') +
+            '<button class="btn sm" type="submit">Salvar estante</button></form></details>' +
             '<details class="book-review"><summary>Dados e avaliação privada' +
             (b.rating ? ' · ' + dependencies.esc("★".repeat(b.rating)) : "") +
             '</summary><form class="row" data-form="book-review"><input type="hidden" name="id" value="' +
@@ -614,62 +647,115 @@
             '</select></label><label class="f grow">Minha resenha <span class="m">Só você vê</span><textarea name="review" maxlength="1200" rows="3" placeholder="O que ficou com você depois da leitura?">' +
             dependencies.esc(b.review || "") +
             '</textarea></label><button class="btn sm" type="submit">Salvar dados</button></form></details>' +
-            (hist ? '<ul class="list hist">' + hist + "</ul>" : "") +
+            (hist ? '<details class="book-history"><summary>Histórico recente · ' + lg.length + '</summary><ul class="list hist">' + hist + "</ul></details>" : '<p class="book-history-empty m">Ainda não há leituras registradas.</p>') +
             "</div>"
           );
         })
         .join("");
-      return (
-        dependencies.head(
-          "Leitura",
-          "Organize sua estante, acompanhe cada leitura e registre impressões privadas.",
-        ) +
-        '<section class="card reading-goal-card"><div><p class="eyebrow">DESAFIO DE ' +
+      var currentReadingBooks = state.books.filter(function (book) {
+        return book.status === "reading";
+      });
+      var currentBook = (readingRun && state.books.filter(function (book) {
+        return book.id === readingRun.bookId;
+      })[0]) || currentReadingBooks[0] || state.books.filter(function (book) {
+        return book.status === "paused";
+      })[0] || state.books.filter(function (book) {
+        return book.status === "planned";
+      })[0] || null;
+      var progressBooks = state.books.filter(function (book) {
+        return book.status !== "completed" && book.status !== "abandoned" &&
+          Number(book.read) < Number(book.total);
+      });
+      var progressBook = progressBooks.filter(function (book) {
+        return book.status === "reading";
+      })[0] || progressBooks[0] || null;
+      var readingView = typeof dependencies.getReadingView === "function"
+        ? dependencies.getReadingView()
+        : "overview";
+      if (["overview", "session", "shelf", "progress"].indexOf(readingView) === -1) {
+        readingView = "overview";
+      }
+      var readingNavigation = [
+        ["overview", "Visão geral"],
+        ["session", "Ler agora"],
+        ["shelf", "Estante"],
+        ["progress", "Progresso"],
+      ].map(function (item) {
+        return '<button class="area-tab" type="button" data-a="reading-view" data-reading-view="' + item[0] + '"' +
+          (readingView === item[0] ? ' aria-current="page"' : "") + ">" + item[1] + "</button>";
+      }).join("");
+
+      var goalMarkup = '<section class="card reading-goal-card"><div class="reading-goal-overview"><div class="reading-annual-goal"><p class="eyebrow">DESAFIO DE ' +
         dependencies.esc(currentYear) +
         '</p><h2>Uma leitura de cada vez</h2><p class="m">' + finishedThisYear +
         ' de ' + annualGoal + (annualGoal === 1 ? ' livro concluído' : ' livros concluídos') +
         '</p><div class="bar" role="progressbar" aria-label="Progresso da meta anual" aria-valuemin="0" aria-valuemax="' + annualGoal + '" aria-valuenow="' + Math.min(finishedThisYear, annualGoal) + '"><b style="width:' + annualProgress + '%"></b></div><span class="m">A meta considera livros concluídos com a data registrada.</span></div>' +
-        '<form class="row" data-form="reading-goal"><label class="f">Meta de livros no ano<input name="annualGoal" type="number" min="1" max="365" value="' + annualGoal + '" required></label><button class="btn sm" type="submit">Salvar meta</button></form></section>' +
-        '<div class="tiles"><div class="tile"><div class="l">Hoje</div><div class="v num">' +
-        dependencies.pagesRange(t, t) +
-        '</div><div class="n">páginas</div></div>' +
-        '<div class="tile"><div class="l">Semana</div><div class="v num">' +
-        dependencies.pagesRange(ws, we) +
-        '</div><div class="n">páginas</div></div>' +
+        '<div class="reading-daily-goal"><div class="reading-daily-copy"><p class="eyebrow">META DIÁRIA</p><h3>' + pagesToday + ' de ' + dailyPageGoal + ' páginas hoje</h3><div class="bar" role="progressbar" aria-label="Progresso da meta diária de leitura" aria-valuemin="0" aria-valuemax="' + dailyPageGoal + '" aria-valuenow="' + Math.min(pagesToday, dailyPageGoal) + '"><b style="width:' + dailyProgress + '%"></b></div><p class="m">' + dailyGoalHint + '</p></div><div class="reading-streak"><strong class="num">' + readingStreak + '</strong><span>' + (readingStreak === 1 ? 'dia seguido' : 'dias seguidos') + '</span></div><p class="m reading-streak-hint">' + streakHint + '</p></div></div>' +
+        '<form class="row reading-goal-settings" data-form="reading-goal"><label class="f">Livros no ano<input name="annualGoal" type="number" min="1" max="365" value="' + annualGoal + '" required></label><label class="f">Páginas por dia<input name="dailyPageGoal" type="number" min="1" max="500" value="' + dailyPageGoal + '" required></label><button class="btn sm" type="submit">Salvar metas</button></form></section>';
+
+      var progressTiles = '<div class="tiles"><div class="tile"><div class="l">Hoje</div><div class="v num">' +
+        dependencies.pagesRange(t, t) + '</div><div class="n">páginas</div></div>' +
+        '<div class="tile"><div class="l">Esta semana</div><div class="v num">' +
+        dependencies.pagesRange(ws, we) + '</div><div class="n">páginas</div></div>' +
         '<div class="tile"><div class="l">Média diária · 14 dias</div><div class="v num">' +
-        Math.round(p14 / 14) +
-        '</div><div class="n">páginas por dia</div></div>' +
-        '<div class="tile"><div class="l">Ritmo</div><div class="v num">' +
-        (pph || "–") +
-        '</div><div class="n">' +
-        (pph ? "páginas por hora" : "informe os minutos") +
-        "</div></div></div>" +
-        '<div class="card"><h2>Páginas por dia · 14 dias</h2>' +
+        Math.round(p14 / 14) + '</div><div class="n">páginas por dia</div></div>' +
+        '<div class="tile"><div class="l">Ritmo de leitura</div><div class="v num">' +
+        (pph || "–") + '</div><div class="n">' + (pph ? "páginas por hora" : "informe os minutos") + "</div></div></div>";
+      var progressChart = '<section class="card"><h2>Páginas por dia · últimos 14 dias</h2>' +
         dependencies.barChart(d14, {
           label: "Páginas lidas por dia nos últimos 14 dias",
           unit: "pág.",
           emptyText: "Registre uma leitura para preencher este gráfico.",
           H: 190,
-        }) +
-        "</div>" +
-        '<div class="card"><h2>Novo livro ou leitura</h2><form class="row" data-form="book">' +
+        }) + "</section>";
+
+      var readingProgressForm = progressBooks.length
+        ? '<section class="card reading-progress-entry"><div><p class="eyebrow">REGISTRO MANUAL</p><h2>Atualizar páginas</h2><p class="m">Informe até onde chegou. O DESVELAR calcula as páginas lidas a partir do último registro.</p></div><form class="row" data-form="read"><label class="f grow">Livro<select id="reading-progress-book" name="id">' +
+          progressBooks.map(function (book) {
+            return '<option value="' + dependencies.esc(book.id) + '" data-current="' + dependencies.esc(book.read) + '" data-total="' + dependencies.esc(book.total) + '"' + (progressBook && book.id === progressBook.id ? " selected" : "") + ">" + dependencies.esc(book.title) + "</option>";
+          }).join("") +
+          '</select><span class="m" id="reading-progress-position">Você parou na página ' + dependencies.esc(progressBook ? progressBook.read : 0) + ' de ' + dependencies.esc(progressBook ? progressBook.total : 0) + '.</span></label><label class="f">Até a página<input id="reading-progress-page" type="number" name="to" min="' + dependencies.esc(progressBook ? Number(progressBook.read) + 1 : 1) + '" max="' + dependencies.esc(progressBook ? progressBook.total : 1) + '" placeholder="' + dependencies.esc(progressBook ? Number(progressBook.read) + 1 : 1) + '" required></label><label class="f">Minutos <span class="m">opcional</span><input type="number" name="min" min="1" max="720"></label><label class="f">Data<input type="date" name="date" value="' + t + '" required></label><details class="reading-note-editor"><summary>Anotar esta leitura <span class="m">opcional</span></summary><label class="f">Nota privada<textarea name="note" maxlength="600" rows="2" placeholder="Uma ideia, trecho ou impressão para lembrar…"></textarea></label></details><button class="btn pri" type="submit">Salvar progresso</button></form></section>'
+        : '<section class="card reading-progress-entry"><h2>Registrar páginas</h2><p class="m">Adicione um livro ou escolha um que ainda esteja em andamento para registrar seu progresso.</p><button class="btn pri" type="button" data-a="reading-view" data-reading-view="shelf">Abrir estante</button></section>';
+
+      var newBookMarkup = '<section class="card reading-add-book"><p class="eyebrow">SUA ESTANTE</p><h2>Adicionar livro</h2><p class="m">Comece pelo título e pelo total de páginas. Você pode registrar o progresso depois.</p><form class="row" data-form="book">' +
         '<label class="f grow">Título<input id="b-title" class="grow" name="title" maxlength="120" required placeholder="ex.: Dom Casmurro"></label>' +
         '<label class="f grow">Autor <span class="m">opcional</span><input class="grow" name="author" maxlength="120" placeholder="ex.: Machado de Assis"></label>' +
-        '<label class="f grow">Tag' +
-        dependencies.tagInput("b-tag", "ex.: Fisiologia, Romance") +
-        "</label>" +
+        '<label class="f grow">Tag ' + dependencies.tagInput("b-tag", "ex.: Romance") + '</label>' +
         '<label class="f">Total de páginas<input id="b-total" type="number" name="total" min="1" max="5000" required></label>' +
-        '<label class="f">Já li até a página<input id="b-read" type="number" name="read" min="0" max="5000" step="1" value="0" required><span class="m">O progresso anterior não será contado como leitura de hoje.</span></label>' +
-        '<button class="btn pri" type="submit">Adicionar</button></form></div>' +
-        (state.books.length
-          ? '<div class="reading-shelf-tools"><label class="f">Estante<select id="reading-shelf-filter"><option value="all">Todos os livros</option>' +
-            Object.keys(statusLabels).map(function (value) {
-              return '<option value="' + value + '">' + statusLabels[value] + '</option>';
-            }).join("") +
-            '</select></label><span id="reading-shelf-count" class="m" aria-live="polite">' + state.books.length + (state.books.length === 1 ? ' livro na estante' : ' livros na estante') + '</span></div>'
-          : "") +
-        (cards || '<p class="empty">Nenhum livro cadastrado.</p>')
-      );
+        '<label class="f">Já li até a página<input id="b-read" type="number" name="read" min="0" max="5000" step="1" value="0" required><span class="m">O progresso anterior não conta como leitura de hoje.</span></label>' +
+        '<button class="btn pri" type="submit">Adicionar à estante</button></form></section>';
+      var shelfTools = state.books.length
+        ? '<div class="reading-shelf-tools"><label class="f">Filtrar por situação<select id="reading-shelf-filter"><option value="all">Todos os livros</option>' +
+          Object.keys(statusLabels).map(function (value) {
+            return '<option value="' + value + '">' + statusLabels[value] + '</option>';
+          }).join("") +
+          '</select></label><span id="reading-shelf-count" class="m" aria-live="polite">' + state.books.length + (state.books.length === 1 ? ' livro na estante' : ' livros na estante') + '</span></div>'
+        : "";
+      var shelfMarkup = '<div class="reading-section reading-section--shelf">' + newBookMarkup + shelfTools +
+        (cards ? '<div class="reading-book-grid">' + cards + '</div>' : '<div class="card reading-empty-shelf"><h2>Sua estante começa aqui</h2><p class="m">Adicione um livro para acompanhar páginas, sessões e avaliações.</p></div>') +
+        "</div>";
+
+      var sessionMarkup = '<div class="reading-section reading-section--session">' + readingTimerMarkup + readingProgressForm + '</div>';
+      var progressMarkup = '<div class="reading-section reading-section--progress"><div class="reading-section-heading"><p class="eyebrow">SEU CAMINHO</p><h2>Metas e evolução</h2><p class="m">Acompanhe sua consistência e ajuste as metas ao seu ritmo.</p></div>' + goalMarkup + progressTiles + progressChart + '</div>';
+      var currentBookMarkup = currentBook
+        ? '<div class="reading-current-book"><p class="eyebrow">' + (currentBook.status === "reading" ? "LEITURA EM ANDAMENTO" : currentBook.status === "paused" ? "LEITURA PAUSADA" : currentBook.status === "completed" ? "RELEITURA" : "PRÓXIMO LIVRO") + '</p><h2>' + dependencies.esc(currentBook.title) + '</h2>' + (currentBook.author ? '<p class="m">' + dependencies.esc(currentBook.author) + '</p>' : "") + '<div class="bar" role="progressbar" aria-label="Progresso de ' + dependencies.esc(currentBook.title) + '" aria-valuemin="0" aria-valuemax="' + dependencies.esc(currentBook.total) + '" aria-valuenow="' + dependencies.esc(currentBook.read) + '"><b style="width:' + Math.min(100, Math.round((currentBook.read / currentBook.total) * 100)) + '%"></b></div><p class="m">Página ' + dependencies.esc(currentBook.read) + ' de ' + dependencies.esc(currentBook.total) + '</p><button class="btn pri" type="button" data-a="reading-view" data-reading-view="session">' + (readingRun && readingRun.bookId === currentBook.id ? "Voltar à sessão" : currentBook.status === "paused" ? "Retomar leitura" : "Começar a ler") + '</button><button class="btn" type="button" data-a="reading-view" data-reading-view="shelf">Ver estante</button></div>'
+        : '<div class="reading-current-book reading-current-book--empty"><p class="eyebrow">SUA PRÓXIMA LEITURA</p><h2>Escolha um livro para começar</h2><p class="m">Adicione um livro à sua estante e acompanhe seu progresso por aqui.</p><button class="btn pri" type="button" data-a="reading-view" data-reading-view="shelf">Adicionar livro</button></div>';
+      var overviewSessionText = readingRun
+        ? (readingRun.status === "running" ? "Sessão em andamento" : "Sessão pausada")
+        : "Cronômetro pronto para sua próxima leitura";
+      var overviewMarkup = '<div class="reading-section reading-section--overview"><section class="card reading-today-card"><div><p class="eyebrow">HOJE</p><h2>' + pagesToday + ' de ' + dailyPageGoal + ' páginas</h2><div class="bar" role="progressbar" aria-label="Progresso da meta diária" aria-valuemin="0" aria-valuemax="' + dailyPageGoal + '" aria-valuenow="' + Math.min(pagesToday, dailyPageGoal) + '"><b style="width:' + dailyProgress + '%"></b></div><p class="m">' + dailyGoalHint + '</p></div><div class="reading-today-streak"><strong class="num">' + readingStreak + '</strong><span>' + (readingStreak === 1 ? "dia seguido" : "dias seguidos") + '</span></div></section><div class="reading-overview-grid"><section class="card reading-current-card">' + currentBookMarkup + '</section><section class="card reading-session-shortcut"><p class="eyebrow">SESSÃO DE LEITURA</p><h2>' + overviewSessionText + '</h2><p class="m">' + (readingRun ? 'Seu cronômetro e livro estão salvos. Você pode continuar de onde parou.' : 'Reserve alguns minutos para ler e registre o tempo automaticamente.') + '</p><button class="btn' + (readingRun ? ' pri' : '') + '" type="button" data-a="reading-view" data-reading-view="session">' + (readingRun ? "Abrir sessão" : "Abrir cronômetro") + '</button></section></div><div class="tiles reading-overview-stats"><div class="tile"><div class="l">Páginas esta semana</div><div class="v num">' + dependencies.pagesRange(ws, we) + '</div><div class="n">lidas</div></div><div class="tile"><div class="l">Livros em andamento</div><div class="v num">' + currentReadingBooks.length + '</div><div class="n">na estante</div></div><div class="tile"><div class="l">Concluídos em ' + dependencies.esc(currentYear) + '</div><div class="v num">' + finishedThisYear + '</div><div class="n">livros</div></div></div></div>';
+      var viewContent = {
+        overview: overviewMarkup,
+        session: sessionMarkup,
+        shelf: shelfMarkup,
+        progress: progressMarkup,
+      }[readingView];
+
+      return dependencies.head(
+        "Leitura",
+        "Sua estante, seu ritmo e seu espaço para aproveitar cada livro.",
+      ) + '<nav class="area-tabs reading-area-tabs" aria-label="Seções da Leitura">' + readingNavigation +
+        '</nav><div class="reading-view reading-view--' + readingView + '">' + viewContent + '</div>';
     }
 
     return Object.freeze({
@@ -681,6 +767,7 @@
   }
   window.DesvelarLearningViews = Object.freeze({ create: create });
 })();
+
 
 
 
