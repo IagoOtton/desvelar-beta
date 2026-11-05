@@ -696,6 +696,22 @@
     }
   }
 
+  function updateReadingTimerClock() {
+    var clock = document.getElementById("reading-timer-clock");
+    if (!clock) return;
+    var elapsedMs = Number(clock.dataset.elapsedMs);
+    if (!Number.isFinite(elapsedMs) || elapsedMs < 0) elapsedMs = 0;
+    if (clock.dataset.running === "true") {
+      var startedAt = Number(clock.dataset.startedAt);
+      if (Number.isFinite(startedAt) && startedAt > 0) elapsedMs += Math.max(0, Date.now() - startedAt);
+    }
+    var totalSeconds = Math.floor(elapsedMs / 1000);
+    var hours = Math.floor(totalSeconds / 3600);
+    var minutes = Math.floor((totalSeconds % 3600) / 60);
+    var seconds = totalSeconds % 60;
+    clock.textContent = hours ? pad(hours) + ":" + pad(minutes) + ":" + pad(seconds) : pad(minutes) + ":" + pad(seconds);
+  }
+
   function render(options) {
     buildTags();
     document.getElementById("sidenav").innerHTML =
@@ -786,6 +802,7 @@
             }
           }
           tick();
+          updateReadingTimerClock();
           view.setAttribute("aria-busy", "false");
           focusRenderedTarget(options);
         }
@@ -1184,6 +1201,7 @@
 
   PomodoroRuntime.startClock();
   window.setInterval(function () {
+    updateReadingTimerClock();
     if (tab === "atividade_fisica" && StrengthController) StrengthController.tick();
   }, 1000);
 
