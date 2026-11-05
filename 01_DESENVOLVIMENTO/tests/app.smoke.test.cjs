@@ -1477,6 +1477,7 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
     await page.locator('#view form[data-form="read"] input[name="to"]').fill("20");
     await page.locator('#view form[data-form="read"] button[type="submit"]').click();
     await page.locator('#view nav.reading-area-tabs [data-reading-view="shelf"]').click();
+    await book.locator(".book-history > summary").click();
     await book
       .locator(".hist")
       .filter({ hasText: "p.0 → p.20" })
