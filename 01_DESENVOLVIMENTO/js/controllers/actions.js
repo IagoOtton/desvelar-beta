@@ -141,6 +141,19 @@
         window.scrollTo(0, 0);
         return;
       }
+      if (action === "reading-view") {
+        var nextReadingView = button.dataset.readingView;
+        if (["overview", "session", "shelf", "progress"].indexOf(nextReadingView) === -1) return;
+        var readingAreaTabs = button.closest(".area-tabs");
+        var readingAreaScrollLeft = readingAreaTabs ? readingAreaTabs.scrollLeft : null;
+        dependencies.setUiState({ readingView: nextReadingView });
+        dependencies.render({
+          focusHeading: event.detail === 0,
+          areaScrollLeft: readingAreaScrollLeft,
+        });
+        window.scrollTo(0, 0);
+        return;
+      }
       if (action === "retry") {
         dependencies.render();
         return;

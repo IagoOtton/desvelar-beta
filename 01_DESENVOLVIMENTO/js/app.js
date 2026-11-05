@@ -115,6 +115,7 @@
   var S = null,
     tab = "inicio",
     activityView = "training",
+    readingView = "overview",
     editingStrengthRoutineId = "",
     selectedMeasurementMetric = "weightKg",
     selectedMeasurementRange = "all",
@@ -395,6 +396,9 @@
     getActiveTab: function () {
       return tab;
     },
+    getReadingView: function () {
+      return readingView;
+    },
     getActivityView: function () {
       return activityView;
     },
@@ -482,6 +486,7 @@
     getUiState: function () {
       return {
         tab: tab,
+        readingView: readingView,
         zen: zen,
         finM: finM,
         calM: calM,
@@ -500,6 +505,11 @@
         var previousTab = tab;
         tab = updates.tab;
         if (tab !== previousTab) UsageAnalytics.recordArea(tab);
+      }
+      if (Object.prototype.hasOwnProperty.call(updates, "readingView")) {
+        if (["overview", "session", "shelf", "progress"].indexOf(updates.readingView) !== -1) {
+          readingView = updates.readingView;
+        }
       }
       if (Object.prototype.hasOwnProperty.call(updates, "zen")) {
         zen = updates.zen;
@@ -1036,6 +1046,24 @@
     });
   });
   document.addEventListener("change", function (event) {
+    var readingProgressBook = event.target.closest("#reading-progress-book");
+    if (readingProgressBook) {
+      var selectedReadingOption = readingProgressBook.options[readingProgressBook.selectedIndex];
+      var readingProgressPage = document.getElementById("reading-progress-page");
+      var readingProgressPosition = document.getElementById("reading-progress-position");
+      var currentReadingPage = Number(selectedReadingOption && selectedReadingOption.dataset.current) || 0;
+      var totalReadingPages = Number(selectedReadingOption && selectedReadingOption.dataset.total) || 0;
+      if (readingProgressPage) {
+        readingProgressPage.min = String(currentReadingPage + 1);
+        readingProgressPage.max = String(totalReadingPages);
+        readingProgressPage.placeholder = String(currentReadingPage + 1);
+      }
+      if (readingProgressPosition) {
+        readingProgressPosition.textContent = "Você parou na página " + currentReadingPage + " de " + totalReadingPages + ".";
+      }
+      return;
+    }
+
     var readingShelfFilter = event.target.closest("#reading-shelf-filter");
     if (readingShelfFilter) {
       var visibleBooks = 0;
