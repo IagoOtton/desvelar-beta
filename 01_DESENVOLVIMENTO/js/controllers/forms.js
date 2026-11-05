@@ -272,6 +272,7 @@
         message = "Dados e avaliação privada foram salvos.";
       } else if (kind === "reading-goal") {
         var annualGoal = Number(values.annualGoal);
+        var dailyPageGoal = Number(values.dailyPageGoal);
         if (!Number.isInteger(annualGoal) || annualGoal < 1 || annualGoal > 365) {
           reportFieldError(
             form,
@@ -281,8 +282,22 @@
           );
           return;
         }
+        if (
+          !Number.isInteger(dailyPageGoal) ||
+          dailyPageGoal < 1 ||
+          dailyPageGoal > 500
+        ) {
+          reportFieldError(
+            form,
+            form.querySelector('input[name="dailyPageGoal"]'),
+            "Escolha uma meta diária entre 1 e 500 páginas.",
+            'input[name="dailyPageGoal"]',
+          );
+          return;
+        }
         state.readingSettings.annualGoal = annualGoal;
-        message = "Meta anual atualizada.";
+        state.readingSettings.dailyPageGoal = dailyPageGoal;
+        message = "Metas de leitura atualizadas.";
       } else if (kind === "event") {
         state.events.push({
           id: dependencies.uid(),
@@ -496,5 +511,6 @@
 
   window.DesvelarFormController = Object.freeze({ create: create });
 })();
+
 
 
