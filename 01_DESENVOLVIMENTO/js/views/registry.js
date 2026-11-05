@@ -44,7 +44,6 @@
     var charts = dependencies.charts;
     var head = dependencies.head;
     var studyTabIds = ["estudo", "foco", "temas", "erros", "desempenho"];
-    var strengthTabIds = ["atividade_fisica"];
 
     function studyHead(title, subtitle) {
       var activeTab = dependencies.getActiveTab();
@@ -85,10 +84,6 @@
     }
 
     function strengthHead(title, subtitle) {
-      var activeTab = dependencies.getActiveTab();
-      if (strengthTabIds.indexOf(activeTab) === -1) {
-        return head(title, subtitle);
-      }
       var activityView = dependencies.getActivityView();
       var navigation = [
         ["training", "Treinar"],
@@ -98,15 +93,15 @@
         ["measurements", "Medidas"],
       ];
       var pageHeader =
-        '<header class="study-heading study-heading--notebook"><div class="study-mobile-brand"><span class="study-mobile-brand-mark" aria-hidden="true">D</span><span>DESVELAR</span></div><p class="study-breadcrumb">Pessoal <span>/</span> Atividade física</p>' +
+        '<header class="study-heading study-heading--notebook study-heading--strength"><div class="study-mobile-brand"><span class="study-mobile-brand-mark" aria-hidden="true">D</span><span>DESVELAR</span></div><p class="study-breadcrumb">Pessoal <span>/</span> Atividade física</p>' +
         head(title, subtitle) +
         "</header>";
       if (activityView === "active") {
-        return '<header class="study-heading study-heading--notebook"><div class="study-mobile-brand"><span class="study-mobile-brand-mark" aria-hidden="true">D</span><span>DESVELAR</span></div><p class="study-breadcrumb">Pessoal <span>/</span> Atividade física <span>/</span> Treino</p></header>';
+        return '<header class="study-heading study-heading--notebook study-heading--strength"><div class="study-mobile-brand"><span class="study-mobile-brand-mark" aria-hidden="true">D</span><span>DESVELAR</span></div><p class="study-breadcrumb">Pessoal <span>/</span> Atividade física <span>/</span> Treino</p></header>';
       }
       return (
         pageHeader +
-        '<nav class="area-tabs strength-tabs" aria-label="Ferramentas de atividade física">' +
+        '<nav class="area-tabs strength-tabs strength-area-tabs" aria-label="Ferramentas de atividade física">' +
         navigation
           .map(function (item) {
             return (

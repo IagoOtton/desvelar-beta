@@ -333,34 +333,35 @@
 
       return (
         dependencies.head(
-          "Musculação",
-          "Monte seus treinos, registre cada série e acompanhe sua evolução.",
+          "Atividade física",
+          "Seu movimento, no seu ritmo.",
         ) +
-        '<section class="strength-overview-grid"><article class="card strength-start-card"><p class="eyebrow">SEU ESPAÇO DE TREINO</p><h2>' +
+        '<section class="strength-dashboard" aria-label="Visão geral da atividade física"><div class="strength-dashboard-main"><article class="strength-dashboard-hero"><div class="strength-dashboard-hero-copy"><p class="strength-dashboard-eyebrow">SEU ESPAÇO DE TREINO</p><h2>' +
         (active ? "Seu treino está salvo" : "Um treino de cada vez") +
-        '</h2><p class="m">' +
+        '</h2><p>' +
         (active
           ? "Você pode continuar do ponto em que parou. As séries registradas ficam salvas na sua conta."
           : "Registre seus exercícios ou marque presença se acompanha o treino em outro app.") +
-        '</p><div class="strength-start-actions">' +
+        '</p><div class="strength-dashboard-actions">' +
         (active
           ? '<button class="btn pri" type="button" data-strength-action="resume">Continuar treino</button>'
-          : '<button class="btn pri" type="button" data-strength-action="start-empty">Iniciar treino livre</button><button class="btn" type="button" data-strength-action="quick-check-in">Marcar presença</button>') +
-        '<button class="btn" type="button" data-strength-view="routines">' +
+          : '<button class="btn pri" type="button" data-strength-action="start-empty">Iniciar treino livre</button><button class="btn strength-dashboard-secondary" type="button" data-strength-action="quick-check-in">Marcar presença</button>') +
+        '<button class="btn strength-dashboard-routine-link" type="button" data-strength-view="' +
+        (routines.length ? "routines" : "routine-editor") + '">' +
         (routines.length ? "Ver rotinas" : "Criar rotina") +
-        '</button></div></article><div class="strength-week-card card"><div><span class="l">Treinos esta semana</span><strong class="v">' +
+        '</button></div></div><div class="strength-dashboard-art" aria-hidden="true"><span></span><span></span><span></span></div></article><div class="strength-dashboard-metrics"><article class="strength-dashboard-metric"><span>TREINOS ESTA SEMANA</span><strong>' +
         weekSessions.length +
-        '</strong></div><div><span class="l">Séries registradas</span><strong class="v">' +
+        '</strong><small>registrados</small><i aria-hidden="true"></i></article><article class="strength-dashboard-metric"><span>SÉRIES REGISTRADAS</span><strong>' +
         weekSets +
-        '</strong></div></div></section>' +
+        '</strong><small>nesta semana</small><i aria-hidden="true"></i></article></div></div>' +
         weeklyCalendar(state, weekSessions) +
-        '<section class="card strength-section-card"><div class="strength-section-heading"><div><p class="eyebrow">TREINOS SALVOS</p><h2>Suas rotinas</h2></div><button class="btn" type="button" data-strength-view="routine-editor">Criar rotina</button></div>' +
+        '<div class="strength-dashboard-bottom"><section class="card strength-section-card strength-dashboard-panel"><div class="strength-section-heading"><div><p class="eyebrow">TREINOS SALVOS</p><h2>Suas rotinas</h2></div><button class="btn" type="button" data-strength-view="routine-editor">Criar rotina</button></div>' +
         (routines.length
           ? '<div class="strength-routine-list">' +
             routines.slice(0, 3).map(function (routine) { return routineCard(routine, false); }).join("") +
             "</div>"
-          : '<p class="empty">Crie uma rotina com seus exercícios para começar mais rápido nas próximas sessões.</p>') +
-        '</section><section class="card strength-section-card"><div class="strength-section-heading"><div><p class="eyebrow">HISTÓRICO RECENTE</p><h2>Último treino</h2></div><button class="btn" type="button" data-strength-view="history">Ver histórico</button></div>' +
+          : '<div class="strength-dashboard-empty"><span aria-hidden="true">＋</span><div><strong>Você ainda não tem rotinas.</strong><p>Crie sua primeira rotina e organize seu treino.</p></div></div>') +
+        '</section><section class="card strength-section-card strength-dashboard-panel"><div class="strength-section-heading"><div><p class="eyebrow">HISTÓRICO RECENTE</p><h2>Último treino</h2></div><button class="btn" type="button" data-strength-view="history">Ver histórico</button></div>' +
         (latest
           ? '<div class="strength-latest-session"><div><strong>' +
             safe(latest.name) +
@@ -375,8 +376,8 @@
                   dependencies.sessionDurationSeconds(latest),
                 ))) +
             "</span></div>"
-          : '<p class="empty">Seus treinos concluídos aparecerão aqui.</p>') +
-        "</section>"
+          : '<div class="strength-dashboard-empty strength-dashboard-empty--history"><span aria-hidden="true">↗</span><div><strong>Nenhum treino registrado ainda.</strong><p>Finalize um treino para ver os detalhes aqui.</p></div></div>') +
+        "</section></div></section>"
       );
     }
 
