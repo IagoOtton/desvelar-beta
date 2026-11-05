@@ -1913,6 +1913,18 @@ svg.ch .chart-hit {
 .reading-goal-settings .btn {
   grid-column: 1 / -1;
 }
+.reading-timer-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 24px; align-items: center; }
+.reading-timer-card h2 { margin: 2px 0 6px; }
+.reading-timer-intro .eyebrow { margin: 0; color: var(--a1); font: 600 11px/1.4 var(--mono); letter-spacing: 0.08em; }
+.reading-timer-book-label { margin: 8px 0 0; font-size: 13px; }
+.reading-timer-book-label strong { color: var(--ink); }
+.reading-timer-controls { display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.reading-timer-controls .f { flex: 1 1 180px; min-width: 150px; max-width: 260px; }
+.reading-timer-controls select { width: 100%; }
+.reading-timer-clock { min-width: 100px; color: var(--ink); font-size: clamp(24px, 3vw, 34px); font-variant-numeric: tabular-nums; font-weight: 700; line-height: 1; text-align: center; }
+.reading-timer-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.reading-timer-empty { margin: 0; }
+
 .book-author {
   margin: -2px 0 7px;
   color: var(--muted);
@@ -1976,6 +1988,12 @@ svg.ch .chart-hit {
   overflow-wrap: anywhere;
 }
 @media (max-width: 900px) {
+  .reading-timer-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reading-timer-controls {
+    justify-content: flex-start;
+  }
   .reading-goal-card {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1987,6 +2005,12 @@ svg.ch .chart-hit {
   }
 }
 @media (max-width: 600px) {
+  .reading-timer-card { grid-template-columns: minmax(0, 1fr); }
+  .reading-timer-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; justify-content: stretch; }
+  .reading-timer-controls .f { grid-column: 1 / -1; width: 100%; max-width: none; }
+  .reading-timer-controls select { width: 100%; }
+  .reading-timer-actions { grid-column: 1 / -1; width: 100%; }
+  .reading-timer-actions .btn { flex: 1 1 auto; }
   .reading-goal-card {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
