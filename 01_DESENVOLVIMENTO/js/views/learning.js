@@ -512,6 +512,31 @@
                 60),
           )
         : 0;
+      var readingTimerBooks = state.books.filter(function (book) { return book.status !== "abandoned"; });
+      var readingRun = state.readingRun || null;
+      var readingTimerBook = readingRun ? readingTimerBooks.find(function (book) { return book.id === readingRun.bookId; }) : null;
+      var selectedTimerBookId = readingRun ? readingRun.bookId : (readingTimerBooks[0] ? readingTimerBooks[0].id : "");
+      var readingTimerElapsedMs = readingRun ? Math.max(0, Number(readingRun.elapsedMs) || 0) : 0;
+      if (readingRun && readingRun.status === "running") readingTimerElapsedMs += Math.max(0, Date.now() - Number(readingRun.startedAt || 0));
+      var readingTimerSeconds = Math.floor(readingTimerElapsedMs / 1000);
+      var readingTimerHours = Math.floor(readingTimerSeconds / 3600);
+      var readingTimerMinutes = Math.floor((readingTimerSeconds % 3600) / 60);
+      var readingTimerRemainder = readingTimerSeconds % 60;
+      function timerPad(value) { return String(value).padStart(2, "0"); }
+      var readingTimerClock = readingTimerHours ? timerPad(readingTimerHours) + ":" + timerPad(readingTimerMinutes) + ":" + timerPad(readingTimerRemainder) : timerPad(readingTimerMinutes) + ":" + timerPad(readingTimerRemainder);
+      var readingTimerButtons = !readingRun
+        ? '<button class="btn pri" type="button" data-a="reading-start">Iniciar sessão</button>'
+        : (readingRun.status === "running" ? '<button class="btn" type="button" data-a="reading-pause">Pausar</button>' : '<button class="btn" type="button" data-a="reading-resume">Retomar</button>') +
+            '<button class="btn pri" type="button" data-a="reading-finish">Encerrar e salvar</button>' +
+            '<button class="btn sm" type="button" data-a="reading-cancel">Descartar sessão</button>';
+      var readingTimerMarkup = '<section class="card reading-timer-card"><div class="reading-timer-intro"><p class="eyebrow">SESSÃO DE LEITURA</p><h2>Leia no seu ritmo</h2><p class="m">O tempo é registrado no histórico do livro; a página atual só muda quando você registrar o progresso.</p>' +
+        (readingTimerBook ? '<p class="reading-timer-book-label">Livro atual: <strong>' + dependencies.esc(readingTimerBook.title) + '</strong></p>' : '') +
+        '</div>' +
+        (readingTimerBooks.length
+          ? '<div class="reading-timer-controls"><label class="f">Livro<select id="reading-timer-book"' + (readingRun ? ' disabled' : '') + '>' + readingTimerBooks.map(function (book) { return '<option value="' + dependencies.esc(book.id) + '"' + (book.id === selectedTimerBookId ? ' selected' : '') + '>' + dependencies.esc(book.title) + '</option>'; }).join('') + '</select></label><output id="reading-timer-clock" class="reading-timer-clock" data-reading-clock data-running="' + (readingRun && readingRun.status === "running" ? 'true' : 'false') + '" data-started-at="' + (readingRun && readingRun.status === "running" ? Number(readingRun.startedAt) : 0) + '" data-elapsed-ms="' + readingTimerElapsedMs + '" aria-label="Tempo da sessão">' + readingTimerClock + '</output><div class="reading-timer-actions">' + readingTimerButtons + '</div></div>'
+          : '<p class="empty reading-timer-empty">Adicione um livro ou atualize a estante para iniciar uma sessão.</p>') +
+        '</section>';
+
       var statusOrder = { reading: 0, planned: 1, paused: 2, completed: 3, abandoned: 4 };
       var cards = state.books
         .slice()
@@ -550,22 +575,20 @@
               return (
                 '<li><span class="m num">' +
                 dependencies.fmtD(r.date) +
-                '</span><span class="t">p.' +
-                dependencies.esc(r.from) +
-                " → p." +
-                dependencies.esc(r.to) +
-                ' <span class="m">· +' +
-                dependencies.esc(r.pages) +
-                " págs" +
-                (r.min ? " · " + dependencies.esc(r.min) + " min" : "") +
-                "</span></span>" +
+                '</span><span class="t">' +
+                (r.timed === true
+                  ? '<span class="m">Sessão cronometrada · ' + dependencies.esc(r.min) + ' min</span>'
+                  : 'p.' + dependencies.esc(r.from) + " → p." + dependencies.esc(r.to) +
+                    ' <span class="m">· +' + dependencies.esc(r.pages) + " págs" +
+                    (r.min ? " · " + dependencies.esc(r.min) + " min" : "") + "</span>") +
+                "</span>" +
                 (r.note
                   ? '<span class="reading-log-note">' + dependencies.esc(r.note) + "</span>"
                   : "") +
                 (last && r.id === last.id
                   ? '<button class="ico" data-a="del-read" data-id="' +
                     dependencies.esc(r.id) +
-                    '" aria-label="Desfazer esta leitura">×</button>'
+                    '" aria-label="Desfazer registro">×</button>'
                   : "") +
                 "</li>"
               );
@@ -657,6 +680,7 @@
         '</p><div class="bar" role="progressbar" aria-label="Progresso da meta anual" aria-valuemin="0" aria-valuemax="' + annualGoal + '" aria-valuenow="' + Math.min(finishedThisYear, annualGoal) + '"><b style="width:' + annualProgress + '%"></b></div><span class="m">A meta considera livros concluídos com a data registrada.</span></div>' +
         '<div class="reading-daily-goal"><div class="reading-daily-copy"><p class="eyebrow">META DIÁRIA</p><h3>' + pagesToday + ' de ' + dailyPageGoal + ' páginas hoje</h3><div class="bar" role="progressbar" aria-label="Progresso da meta diária de leitura" aria-valuemin="0" aria-valuemax="' + dailyPageGoal + '" aria-valuenow="' + Math.min(pagesToday, dailyPageGoal) + '"><b style="width:' + dailyProgress + '%"></b></div><p class="m">' + dailyGoalHint + '</p></div><div class="reading-streak"><strong class="num">' + readingStreak + '</strong><span>' + (readingStreak === 1 ? 'dia seguido' : 'dias seguidos') + '</span></div><p class="m reading-streak-hint">' + streakHint + '</p></div></div>' +
         '<form class="row reading-goal-settings" data-form="reading-goal"><label class="f">Livros no ano<input name="annualGoal" type="number" min="1" max="365" value="' + annualGoal + '" required></label><label class="f">Páginas por dia<input name="dailyPageGoal" type="number" min="1" max="500" value="' + dailyPageGoal + '" required></label><button class="btn sm" type="submit">Salvar metas</button></form></section>' +
+        readingTimerMarkup +
         '<div class="tiles"><div class="tile"><div class="l">Hoje</div><div class="v num">' +
         dependencies.pagesRange(t, t) +
         '</div><div class="n">páginas</div></div>' +
