@@ -35,6 +35,7 @@
       var message = "";
       var undoRestore = null;
       var undoMessage = "Registro removido.";
+      var recordFirstStudyRecord = false;
 
       if (action === "undo-delete") {
         var undo = pendingUndo;
@@ -144,9 +145,11 @@
       } else if (action === "pomo-pause") {
         if (!state.pomoRun) return;
         dependencies.pomoPause(state);
+        recordFirstStudyRecord = Boolean(state.pomoRun && state.pomoRun.overtimeSince);
       } else if (action === "pomo-start-break") {
         var waitingFocus = state.pomoRun;
         if (!waitingFocus || waitingFocus.phase !== "focus" || !waitingFocus.overtimeSince || !dependencies.pomoComplete(Date.now(), state)) return;
+        recordFirstStudyRecord = true;
         message = "Pausa iniciada. O tempo extra foi incluído no bloco.";
       } else if (action === "pomo-next-focus") {
         var endedBreak = state.pomoRun;
@@ -155,6 +158,7 @@
         message = "Próximo bloco de foco iniciado.";
       } else if (action === "pomo-finish-study") {
         if (!dependencies.pomoFinishStudy(state, Date.now())) return;
+        recordFirstStudyRecord = true;
         message = "Estudo finalizado. Seu progresso foi salvo.";
       } else if (action === "pomo-plus") {
         if (!state.pomoRun || state.pomoRun.phase !== "focus") return;
@@ -184,6 +188,7 @@
           if (stoppedRun.topic) session.topic = stoppedRun.topic;
           if (stoppedRun.studyType) session.studyType = stoppedRun.studyType;
           state.sessions.push(session);
+          recordFirstStudyRecord = true;
           message = "Bloco incompleto salvo: " + minutes + " min.";
         } else {
           message = "Menos de 1 min: nenhum bloco foi salvo.";
@@ -247,6 +252,13 @@
       }
 
       var saved = dependencies.stateStore.saveDraft(state);
+      if (
+        saved &&
+        recordFirstStudyRecord &&
+        typeof dependencies.recordFirstStudyRecord === "function"
+      ) {
+        dependencies.recordFirstStudyRecord();
+      }
       if (undoRestore) {
         dependencies.commit("", saved);
         if (!saved) return;

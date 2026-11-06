@@ -146,6 +146,13 @@
         }
 
         var saved = dependencies.stateStore.saveDraft(state);
+        if (
+          saved &&
+          kind === "session" &&
+          typeof dependencies.recordFirstStudyRecord === "function"
+        ) {
+          dependencies.recordFirstStudyRecord();
+        }
         dependencies.commit(message, saved);
       } finally {
         if (form.isConnected) {

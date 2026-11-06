@@ -23,6 +23,7 @@
       "topicField",
       "studyTypeField",
       "studyTypeLabel",
+      "getStudyGuideState",
       "isReviewDue",
       "head",
       "sum",
@@ -259,11 +260,21 @@
           return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
         })
         .slice(0, 25);
+      var guideState = dependencies.getStudyGuideState();
+      var guideHtml = "";
+      if (guideState.open) {
+        guideHtml =
+          '<section class="card study-first-session" aria-labelledby="study-first-session-title"><div class="study-first-session-copy"><h2 id="study-first-session-title">Seu próximo bloco começa por aqui.</h2><p>Inicie um Pomodoro ou registre o que você já estudou. Seu progresso fica associado à sua conta e sincroniza quando há conexão. Seus registros de Estudos são privados.</p></div><div class="study-first-session-actions"><button class="btn pri" type="button" data-a="tab" data-tab="foco">Iniciar Pomodoro</button><button class="btn" type="button" data-a="study-guide-session">Registrar sessão</button><button class="btn sm" type="button" data-a="study-guide-dismiss">Dispensar orientação</button></div></section>';
+      } else if (guideState.hydrated) {
+        guideHtml =
+          '<div class="study-guide-reopen"><button class="btn sm" type="button" data-a="study-guide-open">Como começar</button></div>';
+      }
       return (
         dependencies.head(
           "Estudos",
           "Todo bloco conta. Continue de onde parou.",
         ) +
+        guideHtml +
         '<div class="study-overview"><div class="study-overview-primary">' +
         '<section class="card study-session-form-card"><p class="study-eyebrow">Nova sessão</p><h2>O que você vai estudar?</h2><p class="study-card-description">Guarde matéria, assunto e tempo em um só lugar.</p><form class="row study-session-form" data-form="session">' +
         '<label class="f grow">Matéria' +

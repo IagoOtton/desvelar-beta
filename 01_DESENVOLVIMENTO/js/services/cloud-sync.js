@@ -30,6 +30,7 @@
     var localData = options.localData;
     var repository = options.repository || null;
     var bootstrap = options.initialSnapshot || {};
+    var accountDataHydrated = false;
     var syncState = bootstrap.error ? "error" : "syncing";
     var saveRequest = 0;
     var savePromise = Promise.resolve(false);
@@ -144,6 +145,8 @@
 
       if (bootstrap.error) return localState;
 
+      accountDataHydrated = true;
+
       if (bootstrap.data) {
         var remoteState = options.normalize(JSON.parse(JSON.stringify(bootstrap.data)));
         if (hasLocalData && localData.hasPendingCloudSync()) {
@@ -199,6 +202,7 @@
           }
 
           bootstrap = snapshot;
+          accountDataHydrated = true;
           var currentState = options.getState();
           var nextState = currentState;
 
@@ -280,6 +284,9 @@
       flush: flush,
       getStatus: function () {
         return syncState;
+      },
+      isAccountDataHydrated: function () {
+        return accountDataHydrated;
       },
       getStatusLabel: statusLabel,
       handleOnline: handleOnline,

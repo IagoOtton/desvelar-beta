@@ -12,6 +12,7 @@
       "charts",
       "head",
       "getActiveTab",
+      "getStudyGuideState",
       "getCloudSyncStatus",
       "usageAnalytics",
     ];
@@ -93,6 +94,7 @@
       studyTypeField: studyFields.typeField,
       studyTypeLabel: studyFields.typeLabel,
       head: studyHead,
+      getStudyGuideState: dependencies.getStudyGuideState,
       sum: formatting.sum,
       tkey: tags.key,
       groupMin: analytics.groupMin,

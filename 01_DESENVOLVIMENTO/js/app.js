@@ -122,6 +122,39 @@
     },
   });
 
+  var studyGuidePreferenceKey =
+    "desvelar-study-guide-dismissed:" + encodeURIComponent(window.desvelarUser.id);
+  var studyGuideDismissed = false;
+  var studyGuideManuallyOpened = false;
+  try {
+    studyGuideDismissed =
+      window.localStorage.getItem(studyGuidePreferenceKey) === "true";
+  } catch (error) {}
+
+  function studyGuideState() {
+    var state = stateStore.getState();
+    var collections = ["sessions", "themes", "questions", "mistakes"];
+    var isEmpty =
+      !!state &&
+      collections.every(function (key) {
+        return Array.isArray(state[key]) && state[key].length === 0;
+      });
+    var hydrated = cloudSync.isAccountDataHydrated();
+    var autoOpen = hydrated && isEmpty && !studyGuideDismissed;
+    return {
+      hydrated: hydrated,
+      open: hydrated && (autoOpen || studyGuideManuallyOpened),
+    };
+  }
+
+  function setStudyGuideDismissed() {
+    studyGuideDismissed = true;
+    studyGuideManuallyOpened = false;
+    try {
+      window.localStorage.setItem(studyGuidePreferenceKey, "true");
+    } catch (error) {}
+  }
+
   function persist() {
     return stateStore.persist();
   }
@@ -131,6 +164,7 @@
     getState: stateStore.getState,
     getTab: function () { return tab; },
     persist: persist,
+    recordFirstStudyRecord: UsageAnalytics.recordFirstStudyRecord,
     showPomodoroDecision: showPomodoroDecision,
     toast: toast,
     pad: pad,
@@ -281,6 +315,7 @@
     },
     head: head,
     getActiveTab: function () { return tab; },
+    getStudyGuideState: studyGuideState,
     getCloudSyncStatus: cloudSync.getStatusLabel,
     usageAnalytics: UsageAnalytics,
     getZen: function () { return zen; },
@@ -306,6 +341,7 @@
     today: today,
     commit: commit,
     toast: toast,
+    recordFirstStudyRecord: UsageAnalytics.recordFirstStudyRecord,
   });
   var studyRouteIds = ["estudo", "foco", "temas", "erros", "desempenho"];
   var routeIds = studyRouteIds.concat(["sistema", "painel_controle"]);
@@ -338,6 +374,7 @@
     pomoPause: pomoPause,
     pomoComplete: pomoComplete,
     pomoFinishStudy: PomodoroDomain.finishStudy,
+    recordFirstStudyRecord: UsageAnalytics.recordFirstStudyRecord,
     pomoEndBreak: PomodoroDomain.markBreakComplete,
     refreshPomodoro: showPomodoroDecision,
     render: render,
@@ -555,11 +592,11 @@
       dialog.setAttribute("aria-describedby", "usage-consent-prompt-copy");
       dialog.innerHTML =
         '<p class="usage-consent-prompt__eyebrow">SUA ESCOLHA</p>' +
-        '<h2 id="usage-consent-prompt-title">Ajude a melhorar o DESVELAR</h2>' +
-        '<p id="usage-consent-prompt-copy">Você pode autorizar o registro de métricas básicas, como as áreas abertas e a atividade aproximada. Elas não incluem anotações nem o conteúdo do seu progresso; aparecem para a equipe em indicadores agregados e são removidas após 90 dias. <a href="./privacidade.html#metricas-de-uso" target="_blank" rel="noopener noreferrer">Saiba mais no Aviso de Privacidade</a>. Você pode mudar sua escolha a qualquer momento em Perfil.</p>' +
+        '<h2 id="usage-consent-prompt-title">Atualizamos as métricas opcionais</h2>' +
+        '<p id="usage-consent-prompt-copy">Além das ferramentas abertas e da atividade aproximada, a nova opção registra a data do primeiro registro de sessão de Estudos feito depois da autorização e se você voltou a Estudos em outro dia nos 7 dias seguintes. Não coleta matéria, assunto, anotações ou conteúdo do progresso; a equipe vê apenas totais agregados e os registros são removidos após 90 dias. Se recusar, as métricas serão desativadas e os dados associados à sua conta serão apagados. <a href="./privacidade.html#metricas-de-uso" target="_blank" rel="noopener noreferrer">Saiba mais no Aviso de Privacidade</a>. Você pode mudar sua escolha a qualquer momento em Perfil.</p>' +
         '<p class="usage-consent-prompt__status" role="status" aria-live="polite"></p>' +
         '<div class="usage-consent-prompt__actions">' +
-        '<button class="btn" type="button" data-usage-consent-choice="false">Agora não</button>' +
+        '<button class="btn" type="button" data-usage-consent-choice="false">Recusar e apagar métricas</button>' +
         '<button class="btn pri" type="button" data-usage-consent-choice="true">Autorizar métricas</button>' +
         "</div>";
 
@@ -586,6 +623,7 @@
             if (enabled) UsageAnalytics.recordArea(tab, true);
             dialog.close();
             dialog.remove();
+            render();
           });
         });
       });
@@ -636,6 +674,22 @@
 
   /* ---------- ações ---------- */
   document.addEventListener("click", function (event) {
+    var studyGuideButton = event.target.closest(
+      '[data-a="study-guide-dismiss"], [data-a="study-guide-open"], [data-a="study-guide-session"]',
+    );
+    if (studyGuideButton) {
+      if (studyGuideButton.dataset.a === "study-guide-dismiss") {
+        setStudyGuideDismissed();
+        render();
+      } else if (studyGuideButton.dataset.a === "study-guide-open") {
+        studyGuideManuallyOpened = true;
+        render();
+      } else {
+        render({ focusId: "s-tag" });
+      }
+      return;
+    }
+
     if (event.target.closest('[data-a="site-analytics-refresh"]')) {
       render();
       return;
@@ -770,13 +824,14 @@
   }
 
   var caughtBreak = false;
+  var caughtFocus = false;
   if (
     S.pomoRun &&
     S.pomoRun.phase === "focus" &&
     S.pomoRun.end &&
     S.pomoRun.end <= Date.now()
   ) {
-    PomodoroDomain.markFocusComplete(S, S.pomoRun.end);
+    caughtFocus = PomodoroDomain.markFocusComplete(S, S.pomoRun.end);
   } else if (
     S.pomoRun &&
     S.pomoRun.phase !== "focus" &&
@@ -789,6 +844,7 @@
   PomodoroRuntime.startClock();
 
   var initSaved = persist();
+  if (caughtFocus && initSaved) UsageAnalytics.recordFirstStudyRecord();
   var legacyMigration = localData.hasLegacyMigration();
   var migrationFinalized = localData.finalizeLegacyMigration(initSaved);
   render();
