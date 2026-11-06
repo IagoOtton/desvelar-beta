@@ -521,7 +521,11 @@
         view.setAttribute("aria-busy", "false");
         focusRenderedTarget(options);
       });
-  }  function toast(msg, action) {
+  }
+
+  var activeUndoToast = null;
+
+  function toast(msg, action) {
     var el = document.createElement("div");
     el.className = "toast";
     var text = document.createElement("span");
@@ -532,11 +536,26 @@
     var remaining = duration;
     var removeTimer = null;
     var scheduledAt = 0;
+    var removed = false;
+    var isHovered = false;
+    var hasFocus = false;
 
     function removeToast() {
+      if (removed) return;
+      removed = true;
       if (removeTimer !== null) window.clearTimeout(removeTimer);
       removeTimer = null;
       el.remove();
+      if (activeUndoToast && activeUndoToast.element === el) {
+        activeUndoToast = null;
+      }
+      if (
+        action &&
+        action.type === "undo-delete" &&
+        typeof action.onExpire === "function"
+      ) {
+        action.onExpire();
+      }
     }
 
     function pauseAutoDismiss() {
@@ -557,6 +576,7 @@
     }
 
     if (action && action.type === "undo-delete") {
+      if (activeUndoToast) activeUndoToast.dismiss();
       el.classList.add("toast-actionable");
       var button = document.createElement("button");
       button.type = "button";
@@ -570,12 +590,25 @@
       el.appendChild(button);
       duration = Math.min(9000, Math.max(duration, 6500));
       remaining = duration;
-      el.addEventListener("mouseenter", pauseAutoDismiss);
-      el.addEventListener("mouseleave", resumeAutoDismiss);
-      el.addEventListener("focusin", pauseAutoDismiss);
-      el.addEventListener("focusout", function (event) {
-        if (!el.contains(event.relatedTarget)) resumeAutoDismiss();
+      el.addEventListener("mouseenter", function () {
+        isHovered = true;
+        pauseAutoDismiss();
       });
+      el.addEventListener("mouseleave", function () {
+        isHovered = false;
+        if (!hasFocus) resumeAutoDismiss();
+      });
+      el.addEventListener("focusin", function () {
+        hasFocus = true;
+        pauseAutoDismiss();
+      });
+      el.addEventListener("focusout", function (event) {
+        if (!el.contains(event.relatedTarget)) {
+          hasFocus = false;
+          if (!isHovered) resumeAutoDismiss();
+        }
+      });
+      activeUndoToast = { element: el, dismiss: removeToast };
     }
 
     document.getElementById("toasts").appendChild(el);
