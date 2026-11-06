@@ -3,99 +3,52 @@
 
   function create(dependencies) {
     var required = [
-      "getUiState",
-      "setUiState",
-      "setTheme",
-      "verifyPassword",
-      "signOut",
-      "confirm",
-      "toast",
-      "uid",
-      "today",
-      "dateKey",
-      "parseDate",
-      "isStudyReviewDue",
-      "scheduleStudyReview",
-      "pomoRem",
-      "pomoStart",
-      "pomoPause",
-      "pomoComplete",
-      "pomoFinishStudy",
-      "pomoEndBreak",
-      "refreshPomodoro",
-      "render",
-      "commit",
-      "isTabEnabled",
+      "getUiState", "setUiState", "setTheme", "signOut", "confirm", "toast",
+      "uid", "today", "dateKey", "isStudyReviewDue", "scheduleStudyReview",
+      "pomoRem", "pomoStart", "pomoPause", "pomoComplete", "pomoFinishStudy",
+      "pomoEndBreak", "refreshPomodoro", "render", "commit", "isTabEnabled",
     ];
-
     if (
       !dependencies ||
       !dependencies.stateStore ||
       typeof dependencies.stateStore.createDraft !== "function" ||
       typeof dependencies.stateStore.saveDraft !== "function" ||
-      required.some(function (key) {
-        return typeof dependencies[key] !== "function";
-      }) ||
-      !Array.isArray(dependencies.moduleIds)
+      required.some(function (key) { return typeof dependencies[key] !== "function"; })
     ) {
       throw new Error("As dependências das ações não foram informadas.");
     }
 
     var pendingUndo = null;
     var undoSequence = 0;
+    var deletableCollections = ["sessions", "questions", "mistakes", "themes"];
 
     function restoreAt(list, item, index) {
-      if (
-        !Array.isArray(list) ||
-        list.some(function (current) {
-          return current.id === item.id;
-        })
-      ) {
-        return;
-      }
-
+      if (!Array.isArray(list) || list.some(function (current) { return current.id === item.id; })) return;
       list.splice(Math.min(index, list.length), 0, item);
     }
 
     async function handleClick(event) {
       var button = event.target.closest("[data-a]");
       if (!button) return;
-
       var action = button.dataset.a;
       var ui = dependencies.getUiState();
       var message = "";
       var undoRestore = null;
-      var undoMessage = "";
-
-      if (
-        action !== "wipe" &&
-        action !== "wipe-confirm" &&
-        action !== "wipe-cancel"
-      ) {
-        dependencies.setUiState({ wipeArm: 0 });
-      }
+      var undoMessage = "Registro removido.";
 
       if (action === "undo-delete") {
         var undo = pendingUndo;
         if (!undo || button.dataset.undoToken !== undo.token) return;
-
-        var restoredState = dependencies.stateStore.createDraft();
-        undo.restore(restoredState);
-        var undoSaved = dependencies.stateStore.saveDraft(restoredState);
-        if (!undoSaved) {
+        var restoreState = dependencies.stateStore.createDraft();
+        undo.restore(restoreState);
+        var restored = dependencies.stateStore.saveDraft(restoreState);
+        if (!restored) {
           dependencies.commit("", false);
           return;
         }
-
         pendingUndo = null;
         window.clearTimeout(undo.timer);
         dependencies.commit("Exclusão desfeita", true, { focusHeading: true });
-        return;
-      }
-
-      if (action === "wipe-cancel") {
-        dependencies.setUiState({ wipeArm: 0 });
-        dependencies.render();
         return;
       }
 
@@ -120,98 +73,54 @@
 
       if (action === "tab") {
         if (!dependencies.isTabEnabled(button.dataset.tab)) {
-          dependencies.toast(
-            "Essa área está desativada. Você pode reativá-la em Configurações.",
-          );
+          dependencies.toast("Esta tela não está disponível.");
           return;
         }
-        var currentAreaTabs =
-          button.closest(".area-tabs") ||
-          document.querySelector("#view .area-tabs");
-        var areaScrollLeft = currentAreaTabs
-          ? currentAreaTabs.scrollLeft
-          : null;
+        var tabs = button.closest(".area-tabs") || document.querySelector("#view .area-tabs");
         dependencies.setUiState({ tab: button.dataset.tab, zen: false });
-        var focusId = button.dataset.focus || "";
         dependencies.render({
           focusHeading: event.detail === 0,
-          focusId: focusId,
-          areaScrollLeft: areaScrollLeft,
+          focusId: button.dataset.focus || "",
+          areaScrollLeft: tabs ? tabs.scrollLeft : null,
         });
         window.scrollTo(0, 0);
         return;
       }
-      if (action === "reading-view") {
-        var nextReadingView = button.dataset.readingView;
-        if (["overview", "session", "shelf", "progress"].indexOf(nextReadingView) === -1) return;
-        var readingAreaTabs = button.closest(".area-tabs");
-        var readingAreaScrollLeft = readingAreaTabs ? readingAreaTabs.scrollLeft : null;
-        dependencies.setUiState({ readingView: nextReadingView });
-        dependencies.render({
-          focusHeading: event.detail === 0,
-          areaScrollLeft: readingAreaScrollLeft,
-        });
-        window.scrollTo(0, 0);
-        return;
-      }
+
       if (action === "retry") {
         dependencies.render();
         return;
       }
+
       if (action === "theme") {
-        var state = dependencies.stateStore.createDraft();
-        var currentTheme = state.theme;
+        var themeState = dependencies.stateStore.createDraft();
+        var currentTheme = themeState.theme;
         if (currentTheme !== "light" && currentTheme !== "dark") {
           currentTheme = document.documentElement.getAttribute("data-theme");
         }
         if (currentTheme !== "light" && currentTheme !== "dark") {
-          currentTheme =
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: light)").matches
-              ? "light"
-              : "dark";
+          currentTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
         }
-        var nextTheme = currentTheme === "light" ? "dark" : "light";
-        state.theme = nextTheme;
-        var saved = dependencies.stateStore.saveDraft(state);
-        if (!saved) {
+        themeState.theme = currentTheme === "light" ? "dark" : "light";
+        var themeSaved = dependencies.stateStore.saveDraft(themeState);
+        if (!themeSaved) {
           dependencies.commit("", false);
           return;
         }
-
-        dependencies.setTheme(nextTheme);
+        dependencies.setTheme(themeState.theme);
         dependencies.commit("", true);
         return;
       }
 
-      if (action === "module-toggle") {
-        var moduleId = button.dataset.module;
-        if (dependencies.moduleIds.indexOf(moduleId) === -1) return;
-
-        var moduleState = dependencies.stateStore.createDraft();
-        moduleState.enabledTabs = moduleState.enabledTabs || {};
-        moduleState.enabledTabs[moduleId] = button.checked === true;
-        var moduleSaved = dependencies.stateStore.saveDraft(moduleState);
-        if (!moduleSaved) {
-          dependencies.commit("", false);
-          return;
-        }
-
-        dependencies.commit(
-          button.checked ? "Aba ativada" : "Aba desativada",
-          true,
-        );
-        return;
-      }
-
       if (action === "pick-tag") {
-        var selectedTagInput = document.getElementById("pomo-tag");
-        if (selectedTagInput) {
-          selectedTagInput.value = button.dataset.t;
-          selectedTagInput.focus();
+        var tagInput = document.getElementById("pomo-tag");
+        if (tagInput) {
+          tagInput.value = button.dataset.t || "";
+          tagInput.focus();
         }
         return;
       }
+
       if (action === "zen") {
         dependencies.setUiState({ zen: !ui.zen });
         dependencies.render();
@@ -219,284 +128,112 @@
       }
 
       var state = dependencies.stateStore.createDraft();
-
-      if (action === "reading-start") {
-        if (state.readingRun) { dependencies.toast("Já existe uma sessão de leitura ativa."); return; }
-        var timerSelect = document.getElementById("reading-timer-book");
-        var selectedReadingBook = state.books.find(function (book) { return book.id === (timerSelect && timerSelect.value); });
-        if (!selectedReadingBook) { dependencies.toast("Escolha um livro da estante para iniciar."); return; }
-        state.readingRun = { id: dependencies.uid(), bookId: selectedReadingBook.id, status: "running", startedAt: Date.now(), elapsedMs: 0 };
-        message = "Sessão de leitura iniciada.";
-      } else if (action === "reading-pause") {
-        var timerToPause = state.readingRun;
-        if (!timerToPause || timerToPause.status !== "running") return;
-        timerToPause.elapsedMs = Math.max(0, Number(timerToPause.elapsedMs) || 0) + Math.max(0, Date.now() - Number(timerToPause.startedAt || 0));
-        timerToPause.startedAt = 0;
-        timerToPause.status = "paused";
-        message = "Sessão de leitura pausada.";
-      } else if (action === "reading-resume") {
-        var timerToResume = state.readingRun;
-        if (!timerToResume || timerToResume.status !== "paused") return;
-        timerToResume.startedAt = Date.now();
-        timerToResume.status = "running";
-        message = "Sessão de leitura retomada.";
-      } else if (action === "reading-finish") {
-        var timerToFinish = state.readingRun;
-        if (!timerToFinish) return;
-        var timerBook = state.books.find(function (book) { return book.id === timerToFinish.bookId; });
-        var timerElapsedMs = Math.max(0, Number(timerToFinish.elapsedMs) || 0);
-        if (timerToFinish.status === "running") timerElapsedMs += Math.max(0, Date.now() - Number(timerToFinish.startedAt || 0));
-        var timerMinutes = Math.round(timerElapsedMs / 60000);
-        if (timerBook && timerMinutes >= 1) {
-          state.readlog.push({ id: dependencies.uid(), bookId: timerBook.id, date: dependencies.today(), from: timerBook.read, to: timerBook.read, pages: 0, min: timerMinutes, timed: true });
-          message = "Sessão registrada: " + timerMinutes + " min. A página atual não foi alterada.";
-        } else if (timerBook) {
-          message = "Sessão menor que 30 segundos encerrada sem registro.";
-        } else {
-          message = "O livro desta sessão não está mais na estante.";
-        }
-        state.readingRun = null;
-      } else if (action === "reading-cancel") {
-        if (!state.readingRun) return;
-        if (!dependencies.confirm("Descartar esta sessão de leitura sem registrar o tempo?")) return;
-        state.readingRun = null;
-        message = "Sessão de leitura descartada.";
-      } else if (action === "pomo-start") {
+      if (action === "pomo-start") {
+        if (state.pomoRun) return;
+        var tag = document.getElementById("pomo-tag");
+        var intent = document.getElementById("pomo-intent");
+        var topic = document.getElementById("pomo-topic");
+        var type = document.getElementById("pomo-type");
         dependencies.pomoStart(
-          (document.getElementById("pomo-tag").value || "").trim(),
-          ((document.getElementById("pomo-intent") || {}).value || "").trim(),
+          tag ? tag.value.trim() : state.pomo.lastTag,
+          intent ? intent.value.trim() : "",
           state,
-          ((document.getElementById("pomo-topic") || {}).value || "").trim(),
-          ((document.getElementById("pomo-type") || {}).value || ""),
+          topic ? topic.value.trim() : "",
+          type ? type.value : "",
         );
       } else if (action === "pomo-pause") {
+        if (!state.pomoRun) return;
         dependencies.pomoPause(state);
       } else if (action === "pomo-start-break") {
         var waitingFocus = state.pomoRun;
-        if (
-          waitingFocus &&
-          waitingFocus.phase === "focus" &&
-          waitingFocus.overtimeSince &&
-          dependencies.pomoComplete(Date.now(), state)
-        ) {
-          message = "Pausa iniciada. O tempo extra foi incluído no bloco.";
-        } else {
-          return;
-        }
+        if (!waitingFocus || waitingFocus.phase !== "focus" || !waitingFocus.overtimeSince || !dependencies.pomoComplete(Date.now(), state)) return;
+        message = "Pausa iniciada. O tempo extra foi incluído no bloco.";
       } else if (action === "pomo-next-focus") {
         var endedBreak = state.pomoRun;
-        if (
-          !endedBreak ||
-          !endedBreak.breakEndedAt ||
-          (endedBreak.phase !== "short" && endedBreak.phase !== "long")
-        ) {
-          return;
-        }
-        dependencies.pomoStart(
-          endedBreak.tag || "",
-          endedBreak.intent || "",
-          state,
-          endedBreak.topic || "",
-          endedBreak.studyType || "",
-        );
+        if (!endedBreak || !endedBreak.breakEndedAt || (endedBreak.phase !== "short" && endedBreak.phase !== "long")) return;
+        dependencies.pomoStart(endedBreak.tag || "", endedBreak.intent || "", state, endedBreak.topic || "", endedBreak.studyType || "");
         message = "Próximo bloco de foco iniciado.";
       } else if (action === "pomo-finish-study") {
         if (!dependencies.pomoFinishStudy(state, Date.now())) return;
         message = "Estudo finalizado. Seu progresso foi salvo.";
       } else if (action === "pomo-plus") {
-        var activeRun = state.pomoRun;
-        activeRun.dur += 300;
-        if (activeRun.end) activeRun.end += 300000;
-        else activeRun.left += 300;
+        if (!state.pomoRun || state.pomoRun.phase !== "focus") return;
+        state.pomoRun.dur += 300;
+        if (state.pomoRun.end) state.pomoRun.end += 300000;
+        else state.pomoRun.left += 300;
         message = "+5 minutos";
       } else if (action === "pomo-skip") {
+        if (!state.pomoRun || (state.pomoRun.phase !== "short" && state.pomoRun.phase !== "long")) return;
         dependencies.pomoEndBreak(state, Date.now(), true);
         message = "Pausa encerrada. Comece outro bloco ou finalize o estudo.";
       } else if (action === "pomo-stop") {
         var stoppedRun = state.pomoRun;
-        var minutes = Math.round(
-          (stoppedRun.dur - dependencies.pomoRem(stoppedRun)) / 60,
-        );
+        if (!stoppedRun || stoppedRun.phase !== "focus") return;
+        var seconds = Math.max(0, Number(stoppedRun.dur) - dependencies.pomoRem(stoppedRun));
+        var minutes = Math.round(seconds / 60);
         if (minutes >= 1) {
-          state.sessions.push({
+          var session = {
             id: dependencies.uid(),
             date: dependencies.dateKey(new Date(stoppedRun.startedAt)),
             min: minutes,
-            tag: stoppedRun.tag,
+            tag: stoppedRun.tag || "",
             note: stoppedRun.intent || "Pomodoro interrompido",
             pomo: 1,
             incomplete: true,
-          });
-          var stoppedSession = state.sessions[state.sessions.length - 1];
-          if (stoppedRun.topic) stoppedSession.topic = stoppedRun.topic;
-          if (stoppedRun.studyType) stoppedSession.studyType = stoppedRun.studyType;
-          message = "Bloco incompleto salvo: " + minutes + " min";
+          };
+          if (stoppedRun.topic) session.topic = stoppedRun.topic;
+          if (stoppedRun.studyType) session.studyType = stoppedRun.studyType;
+          state.sessions.push(session);
+          message = "Bloco incompleto salvo: " + minutes + " min.";
         } else {
-          message = "menos de 1 min, nada salvo";
+          message = "Menos de 1 min: nenhum bloco foi salvo.";
         }
         state.pomoRun = null;
       } else if (action === "pomo-cancel") {
+        if (!state.pomoRun || !dependencies.confirm("Descartar a sessão de foco sem salvar o tempo?")) return;
         state.pomoRun = null;
         message = "Sessão de foco descartada sem registro.";
       } else if (action === "preset") {
-        var settings = state.pomo;
-        settings.focus = Number(button.dataset.f);
-        settings.short = Number(button.dataset.s);
-        settings.long = Number(button.dataset.l);
-        var tagInput = document.getElementById("pomo-tag");
-        if (tagInput) settings.lastTag = tagInput.value.trim();
+        state.pomo.focus = Number(button.dataset.f);
+        state.pomo.short = Number(button.dataset.s);
+        state.pomo.long = Number(button.dataset.l);
+        var lastTag = document.getElementById("pomo-tag");
+        if (lastTag) state.pomo.lastTag = lastTag.value.trim();
       } else if (action === "rate") {
         var rating = Number(button.dataset.n);
-        state.sessions.forEach(function (session) {
-          if (session.id === state.pomo.rateId && rating > 0) {
-            session.rate = rating;
-          }
+        if (!Number.isInteger(rating) || rating < 0 || rating > 5) return;
+        state.sessions.forEach(function (item) {
+          if (item.id === state.pomo.rateId && rating > 0) item.rate = rating;
         });
         state.pomo.rateId = "";
-        if (rating > 0) message = "foco " + rating + "/5 anotado";
+        if (rating > 0) message = "Foco " + rating + "/5 anotado.";
       } else if (action === "del") {
         var collection = button.dataset.k;
-        var collectionItems = state[collection];
-        if (!Array.isArray(collectionItems)) return;
-        var itemIndex = collectionItems.findIndex(function (item) {
-          return item.id === button.dataset.id;
-        });
-        if (itemIndex === -1) return;
-        if (button.dataset.confirm && !dependencies.confirm(button.dataset.confirm)) {
-          return;
-        }
-
-        var deletedItem = collectionItems[itemIndex];
-        var deletedReadlog = [];
-        if (collection === "books") {
-          state.readlog.forEach(function (record, index) {
-            if (record.bookId === deletedItem.id) {
-              deletedReadlog.push({ record: record, index: index });
-            }
-          });
-        }
-        collectionItems.splice(itemIndex, 1);
-        if (collection === "books") {
-          state.readlog = state.readlog.filter(function (record) {
-            return record.bookId !== deletedItem.id;
-          });
-        }
-
-        undoRestore = function (draft) {
-          restoreAt(draft[collection], deletedItem, itemIndex);
-          deletedReadlog.forEach(function (item) {
-            restoreAt(draft.readlog, item.record, item.index);
-          });
-        };
+        if (deletableCollections.indexOf(collection) === -1) return;
+        var items = state[collection];
+        if (!Array.isArray(items)) return;
+        var index = items.findIndex(function (item) { return item.id === button.dataset.id; });
+        if (index === -1 || (button.dataset.confirm && !dependencies.confirm(button.dataset.confirm))) return;
+        var deletedItem = items[index];
+        items.splice(index, 1);
+        undoRestore = function (draft) { restoreAt(draft[collection], deletedItem, index); };
         var deleteMessages = {
-          books: "Livro removido.",
-          events: "Compromisso removido.",
-          habits: "Hábito removido.",
-          goals: "Meta removida.",
-          mistakes: "Erro removido do caderno.",
-          questions: "Registro de questões removido.",
-          readlog: "Registro de leitura removido.",
-          routine: "Item da rotina removido.",
           sessions: "Sessão removida.",
-          strengthSessions: "Treino removido.",
-          tasks: "Atividade removida.",
+          questions: "Registro de questões removido.",
+          mistakes: "Erro removido do caderno.",
           themes: "Tema removido.",
-          txs: "Lançamento removido.",
         };
-        undoMessage = deleteMessages[collection] || "Registro removido.";
-      } else if (action === "del-read") {
-        var entryIndex = state.readlog.findIndex(function (record) {
-          return record.id === button.dataset.id;
-        });
-        if (entryIndex === -1) return;
-
-        var entry = state.readlog[entryIndex];
-        var changedBooks = [];
-        if (entry.timed !== true) {
-          state.books.forEach(function (book) {
-            if (book.id === entry.bookId && book.read === entry.to) {
-              changedBooks.push({
-                id: book.id,
-                previousRead: book.read,
-                previousStatus: book.status,
-                previousFinishedAt: book.finishedAt || "",
-              });
-              book.read = entry.from;
-              if (entry.to >= book.total && book.status === "completed") {
-                book.status = entry.from > 0 ? "reading" : "planned";
-                book.finishedAt = "";
-              }
-            }
-          });
-        }
-        state.readlog.splice(entryIndex, 1);
-
-        undoRestore = function (draft) {
-          restoreAt(draft.readlog, entry, entryIndex);
-          changedBooks.forEach(function (change) {
-            var book = draft.books.find(function (item) {
-              return item.id === change.id;
-            });
-            if (book && book.read === entry.from) {
-              book.read = change.previousRead;
-              book.status = change.previousStatus;
-              book.finishedAt = change.previousFinishedAt;
-            }
-          });
-        };
-        undoMessage = "Registro de leitura removido.";
-      } else if (action === "toggle") {
-        state.tasks.forEach(function (task) {
-          if (task.id === button.dataset.id) {
-            task.done = !task.done;
-            task.doneOn = task.done ? dependencies.today() : "";
-          }
-        });
-      } else if (action === "hab-toggle") {
-        state.habits.forEach(function (habit) {
-          if (habit.id === button.dataset.id) {
-            if (habit.days[button.dataset.d]) {
-              delete habit.days[button.dataset.d];
-            } else {
-              habit.days[button.dataset.d] = 1;
-            }
-          }
-
-        });
+        undoMessage = deleteMessages[collection];
       } else if (action === "th-review") {
-        var reviewTheme = state.themes.find(function (theme) {
-          return theme.id === button.dataset.id;
-        });
-        if (
-          reviewTheme &&
-          dependencies.isStudyReviewDue(reviewTheme, dependencies.today())
-        ) {
-          var reviewSchedule = dependencies.scheduleStudyReview(
-            reviewTheme,
-            button.dataset.result,
-            dependencies.today(),
-          );
-          var reviewResultLabels = {
-            again: "não lembrei",
-            effort: "com esforço",
-            easy: "fácil",
-          };
-          message =
-            "Revisão registrada: " +
-            reviewResultLabels[button.dataset.result] +
-            ". Próxima revisão " +
-            (reviewSchedule.intervalDays === 1
-              ? "amanhã"
-              : "em " + reviewSchedule.intervalDays + " dias");
-        } else {
-          message = "Essa revisão já não está pendente.";
-        }
+        var review = state.themes.find(function (item) { return item.id === button.dataset.id; });
+        var result = button.dataset.result;
+        if (!review || ["again", "effort", "easy"].indexOf(result) === -1 || !dependencies.isStudyReviewDue(review, dependencies.today())) return;
+        var schedule = dependencies.scheduleStudyReview(review, result, dependencies.today());
+        var labels = { again: "não lembrei", effort: "com esforço", easy: "fácil" };
+        message = "Revisão registrada: " + labels[result] + ". Próxima revisão " + (schedule.intervalDays === 1 ? "amanhã" : "em " + schedule.intervalDays + " dias.");
       } else if (action === "mistake-resolve" || action === "mistake-reopen") {
-        var mistake = state.mistakes.find(function (item) {
-          return item.id === button.dataset.id;
-        });
+        var mistake = state.mistakes.find(function (item) { return item.id === button.dataset.id; });
         if (!mistake) return;
-
         mistake.resolved = action === "mistake-resolve";
         if (mistake.resolved) {
           mistake.resolvedAt = dependencies.today();
@@ -505,119 +242,6 @@
           delete mistake.resolvedAt;
           message = "Erro voltou para a fila de revisão.";
         }
-      } else if (action === "ms-toggle") {
-        state.goals.forEach(function (goal) {
-          if (goal.id === button.dataset.g) {
-            goal.ms.forEach(function (milestone) {
-              if (milestone.id === button.dataset.id) {
-                milestone.done = !milestone.done;
-              }
-            });
-          }
-        });
-      } else if (action === "ms-del") {
-        var milestoneGoal = state.goals.find(function (goal) {
-          return goal.id === button.dataset.g;
-        });
-        if (!milestoneGoal) return;
-        var milestoneIndex = milestoneGoal.ms.findIndex(function (milestone) {
-          return milestone.id === button.dataset.id;
-        });
-        if (milestoneIndex === -1) return;
-
-        var deletedMilestone = milestoneGoal.ms[milestoneIndex];
-        var milestoneGoalId = milestoneGoal.id;
-        milestoneGoal.ms.splice(milestoneIndex, 1);
-        undoRestore = function (draft) {
-          var goal = draft.goals.find(function (item) {
-            return item.id === milestoneGoalId;
-          });
-          if (goal) restoreAt(goal.ms, deletedMilestone, milestoneIndex);
-        };
-        undoMessage = "Etapa da meta removida.";
-      } else if (action === "fin-prev" || action === "fin-next") {
-        var monthOffset = action === "fin-prev" ? -1 : 1;
-        dependencies.setUiState({
-          finM: new Date(
-            ui.finM.getFullYear(),
-            ui.finM.getMonth() + monthOffset,
-            1,
-          ),
-        });
-      } else if (action === "sel") {
-        var selectedDay = button.dataset.d;
-        var selectedDate = dependencies.parseDate(selectedDay);
-        var updates = { selDay: selectedDay };
-        if (selectedDate.getMonth() !== ui.calM.getMonth()) {
-          updates.calM = new Date(
-            selectedDate.getFullYear(),
-            selectedDate.getMonth(),
-            1,
-          );
-        }
-        dependencies.setUiState(updates);
-      } else if (action === "cal-today") {
-        var agendaTodayKey = dependencies.today();
-        var agendaTodayDate = dependencies.parseDate(agendaTodayKey);
-        dependencies.setUiState({
-          selDay: agendaTodayKey,
-          calM: new Date(
-            agendaTodayDate.getFullYear(),
-            agendaTodayDate.getMonth(),
-            1,
-          ),
-        });
-      } else if (action === "cal-prev" || action === "cal-next") {
-        var calendarOffset = action === "cal-prev" ? -1 : 1;
-        dependencies.setUiState({
-          calM: new Date(
-            ui.calM.getFullYear(),
-            ui.calM.getMonth() + calendarOffset,
-            1,
-          ),
-        });
-      } else if (action === "wipe") {
-        if (!ui.wipeArm) {
-          dependencies.setUiState({ wipeArm: 1 });
-          dependencies.render();
-          return;
-        }
-        return;
-      } else if (action === "wipe-confirm") {
-        var passwordInput = document.getElementById("wipe-password");
-        var password = passwordInput ? passwordInput.value : "";
-        if (!password) {
-          dependencies.toast("Digite sua senha para confirmar.");
-          return;
-        }
-
-        var verified;
-        try {
-          verified = await dependencies.verifyPassword(password);
-        } catch (error) {
-          console.error("Erro ao confirmar senha para apagar os dados:", error);
-          dependencies.toast("Não foi possível confirmar a senha. Tente novamente.");
-          return;
-        }
-
-        if (!verified) {
-          if (passwordInput) passwordInput.value = "";
-          dependencies.toast("Senha incorreta. Seus dados continuam salvos.");
-          return;
-        }
-
-        dependencies.setUiState({ wipeArm: 0 });
-        var name = state.name;
-        var weeklyGoal = state.goalH;
-        var theme = state.theme;
-        var enabledTabs = state.enabledTabs;
-        state = {
-          name: name,
-          goalH: weeklyGoal,
-          theme: theme,
-          enabledTabs: enabledTabs,
-        };
-        message = "tudo apagado";
       } else {
         return;
       }
@@ -625,35 +249,19 @@
       var saved = dependencies.stateStore.saveDraft(state);
       if (undoRestore) {
         dependencies.commit("", saved);
-        if (saved) {
-          if (pendingUndo) window.clearTimeout(pendingUndo.timer);
-          var undoRecord = {
-            token: String(++undoSequence),
-            restore: undoRestore,
-            timer: 0,
-          };
-          pendingUndo = undoRecord;
-          undoRecord.timer = window.setTimeout(function () {
-            if (pendingUndo === undoRecord) pendingUndo = null;
-          }, 5000);
-          dependencies.toast(undoMessage, {
-            type: "undo-delete",
-            token: undoRecord.token,
-            label: "Desfazer",
-          });
-        }
+        if (!saved) return;
+        if (pendingUndo) window.clearTimeout(pendingUndo.timer);
+        var undoRecord = { token: String(++undoSequence), restore: undoRestore, timer: 0 };
+        pendingUndo = undoRecord;
+        undoRecord.timer = window.setTimeout(function () {
+          if (pendingUndo === undoRecord) pendingUndo = null;
+        }, 5000);
+        dependencies.toast(undoMessage, { type: "undo-delete", token: undoRecord.token, label: "Desfazer" });
         return;
       }
-      var keepCurrentPage =
-        ui.tab !== "foco" &&
-        (action === "pomo-start-break" ||
-          action === "pomo-next-focus" ||
-          action === "pomo-finish-study");
-      dependencies.commit(
-        message,
-        saved,
-        keepCurrentPage ? { skipRender: true } : undefined,
-      );
+
+      var keepCurrentPage = ui.tab !== "foco" && ["pomo-start-break", "pomo-next-focus", "pomo-finish-study"].indexOf(action) !== -1;
+      dependencies.commit(message, saved, keepCurrentPage ? { skipRender: true } : undefined);
       if (keepCurrentPage) dependencies.refreshPomodoro();
     }
 
@@ -662,6 +270,3 @@
 
   window.DesvelarActionController = Object.freeze({ create: create });
 })();
-
-
-

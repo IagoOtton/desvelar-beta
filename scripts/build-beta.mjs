@@ -26,8 +26,6 @@ mkdirSync(outputRoot, { recursive: true });
 const entries = {
   auth: join(appRoot, "js", "entries", "auth.js"),
   app: join(appRoot, "js", "entries", "app.js"),
-  fitness: join(appRoot, "js", "entries", "fitness.js"),
-  community: join(appRoot, "js", "entries", "community.js"),
   style: join(appRoot, "css", "style.css"),
 };
 
@@ -75,8 +73,6 @@ const cacheVersion = createHash("sha256")
     [
       authUrl,
       appUrl,
-      outputUrl(entries.fitness),
-      outputUrl(entries.community),
       styleUrl,
     ].join("\n"),
   )
@@ -122,7 +118,7 @@ if (/<script src="\.\/js\//.test(html)) {
 
 const deferredScripts = [
   '    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>',
-  `    <script src="${authUrl}" data-app-src="${appUrl}" data-fitness-src="${outputUrl(entries.fitness)}" data-community-src="${outputUrl(entries.community)}" defer></script>`,
+  `    <script src="${authUrl}" data-app-src="${appUrl}" defer></script>`,
 ].join("\n");
 
 if (!html.includes("</body>")) {
@@ -171,8 +167,6 @@ for (const publicFile of ["robots.txt", "sitemap.xml"]) {
 const bundleSizes = Object.entries({
   auth: authUrl,
   app: appUrl,
-  fitness: outputUrl(entries.fitness),
-  community: outputUrl(entries.community),
   style: styleUrl,
 })
   .map(([name, url]) => {

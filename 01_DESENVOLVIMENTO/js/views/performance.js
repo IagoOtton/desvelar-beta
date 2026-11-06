@@ -65,14 +65,14 @@
         })
         .slice(0, 8);
       var questionForm =
-        '<div class="card"><h2>Registrar questões</h2><form class="row" data-form="question"><label class="f grow">Matéria' +
+        '<section class="card performance-question-card" aria-labelledby="performance-question-title"><p class="eyebrow">ACOMPANHE SEUS ACERTOS</p><h2 id="performance-question-title">Registrar questões</h2><form class="row performance-question-form" data-form="question" aria-label="Registrar questões feitas e corretas"><label class="f grow">Matéria' +
         dependencies.tagInput("q-tag", "ex.: Fisiologia") +
         "</label>" +
         dependencies.topicField("q-topic", "ex.: Ciclo cardíaco") +
         '<label class="f">Feitas<input id="q-total" type="number" name="total" min="1" max="500" required></label><label class="f">Acertos<input id="q-correct" type="number" name="correct" min="0" max="500" required></label>' +
         '<label class="f">Data<input id="q-date" type="date" name="date" value="' +
         t +
-        '" required></label><button class="btn pri" type="submit">Registrar</button></form></div>';
+        '" required></label><button class="btn pri" type="submit">Salvar registro</button></form></section>';
       var recentQuestions = rq.length
         ? '<div class="card"><h2>Questões recentes</h2><ul class="list">' +
             rq

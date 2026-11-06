@@ -2,28 +2,13 @@
   "use strict";
 
   function create(dependencies) {
-    var required = [
-      "getSelectedDay",
-      "getUserId",
-      "uid",
-      "commit",
-      "toast",
-    ];
-
+    var required = ["uid", "today", "commit", "toast"];
     if (
       !dependencies ||
-      required.some(function (key) {
-        return typeof dependencies[key] !== "function";
-      }) ||
+      required.some(function (key) { return typeof dependencies[key] !== "function"; }) ||
       !dependencies.stateStore ||
       typeof dependencies.stateStore.createDraft !== "function" ||
-      typeof dependencies.stateStore.saveDraft !== "function" ||
-      !dependencies.groupRepository ||
-      typeof dependencies.groupRepository.createGroup !== "function" ||
-      typeof dependencies.groupRepository.joinGroup !== "function" ||
-      typeof dependencies.groupRepository.createSharedGoal !== "function" ||
-      !dependencies.feedbackRepository ||
-      typeof dependencies.feedbackRepository.submit !== "function"
+      typeof dependencies.stateStore.saveDraft !== "function"
     ) {
       throw new Error("As dependências dos formulários não foram informadas.");
     }
@@ -31,479 +16,148 @@
     async function submit(event) {
       var form = event.target.closest("form[data-form]");
       if (!form) return;
-
       event.preventDefault();
       if (form.dataset.submitting === "true") return;
 
       var kind = form.dataset.form;
-      var submitButtons = [].slice.call(
+      if (["session", "question", "mistake", "theme", "pomo", "profile"].indexOf(kind) === -1) {
+        dependencies.toast("Este formulário não está disponível.");
+        return;
+      }
+
+      var buttons = Array.prototype.slice.call(
         form.querySelectorAll('button[type="submit"], input[type="submit"]'),
       );
-      var originalButtons = submitButtons.map(function (button) {
+      var originals = buttons.map(function (button) {
         return {
           button: button,
           label: button.tagName === "INPUT" ? button.value : button.textContent,
           disabled: button.disabled,
         };
       });
-      var pendingLabels = {
-        feedback: "Enviando…",
-        group: "Criando…",
-        "join-group": "Entrando…",
-      };
-
       form.dataset.submitting = "true";
       form.setAttribute("aria-busy", "true");
-      originalButtons.forEach(function (item) {
+      originals.forEach(function (item) {
         item.button.disabled = true;
-        if (item.button.tagName === "INPUT") {
-          item.button.value = pendingLabels[kind] || "Salvando…";
-        } else {
-          item.button.textContent = pendingLabels[kind] || "Salvando…";
-        }
+        if (item.button.tagName === "INPUT") item.button.value = "Salvando…";
+        else item.button.textContent = "Salvando…";
       });
 
       try {
-        await submitForm(form, kind);
+        var values = Object.fromEntries(new FormData(form).entries());
+        var state = dependencies.stateStore.createDraft();
+        var message = "Registro salvo.";
+        var tag = String(values.tag || "").trim();
+        var topic = String(values.topic || "").trim();
+
+        if (kind === "session") {
+          var minutes = Number(values.min);
+          if (!Number.isInteger(minutes) || minutes < 1 || minutes > 720) {
+            dependencies.toast("Informe um tempo entre 1 e 720 minutos.");
+            return;
+          }
+          var session = {
+            id: dependencies.uid(),
+            date: values.date || dependencies.today(),
+            min: minutes,
+            tag: tag,
+            note: String(values.note || "").trim(),
+          };
+          if (topic) session.topic = topic;
+          if (values.studyType) session.studyType = values.studyType;
+          state.sessions.push(session);
+          message = "Sessão registrada.";
+        } else if (kind === "question") {
+          var total = Number(values.total);
+          var correct = Number(values.correct);
+          if (!Number.isInteger(total) || total < 1 || total > 500 || !Number.isInteger(correct) || correct < 0 || correct > total) {
+            dependencies.toast("Confira o total de questões e os acertos.");
+            return;
+          }
+          var record = {
+            id: dependencies.uid(),
+            date: values.date || dependencies.today(),
+            tag: tag,
+            studyType: "questions",
+            total: total,
+            correct: correct,
+          };
+          if (topic) record.topic = topic;
+          state.questions.push(record);
+          message = "Questões registradas.";
+        } else if (kind === "mistake") {
+          var mistake = {
+            id: dependencies.uid(),
+            date: values.date || dependencies.today(),
+            question: String(values.question || "").trim(),
+            reason: String(values.reason || "").trim(),
+            answer: String(values.answer || "").trim(),
+            tag: tag,
+            resolved: false,
+          };
+          if (topic) mistake.topic = topic;
+          state.mistakes.push(mistake);
+          message = "Erro adicionado ao caderno.";
+        } else if (kind === "theme") {
+          var difficulty = Number(values.diff);
+          if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
+            dependencies.toast("Escolha uma dificuldade de 1 a 5.");
+            return;
+          }
+          state.themes.push({
+            id: dependencies.uid(),
+            date: values.date || dependencies.today(),
+            title: String(values.title || "").trim(),
+            tag: tag,
+            diff: difficulty,
+            note: String(values.note || "").trim(),
+            reviewed: false,
+            nextReview: difficulty >= 4 ? (values.date || dependencies.today()) : "",
+            reviewCount: 0,
+            reviewIntervalDays: 0,
+          });
+          message = "Tema registrado.";
+        } else if (kind === "pomo") {
+          var settings = {
+            focus: [Number(values.focus), 1, 180],
+            short: [Number(values.short), 1, 60],
+            long: [Number(values.long), 1, 90],
+            every: [Number(values.every), 2, 10],
+            daily: [Number(values.daily), 1, 30],
+          };
+          var invalidSettings = Object.keys(settings).some(function (key) {
+            return !Number.isInteger(settings[key][0]) || settings[key][0] < settings[key][1] || settings[key][0] > settings[key][2];
+          });
+          if (invalidSettings) {
+            dependencies.toast("Confira os limites dos ajustes do ciclo.");
+            return;
+          }
+          Object.keys(settings).forEach(function (key) { state.pomo[key] = settings[key][0]; });
+          if (state.pomo.cycle > state.pomo.every) state.pomo.cycle = 1;
+          message = "Ajustes do ciclo salvos.";
+        } else if (kind === "profile") {
+          var name = String(values.name || "").trim();
+          if (!name) {
+            dependencies.toast("Informe seu nome completo.");
+            return;
+          }
+          state.name = name.slice(0, 80);
+          message = "Perfil salvo.";
+        }
+
+        var saved = dependencies.stateStore.saveDraft(state);
+        dependencies.commit(message, saved);
       } finally {
         if (form.isConnected) {
           delete form.dataset.submitting;
           form.removeAttribute("aria-busy");
-          originalButtons.forEach(function (item) {
+          originals.forEach(function (item) {
             item.button.disabled = item.disabled;
-            if (item.button.tagName === "INPUT") {
-              item.button.value = item.label;
-            } else {
-              item.button.textContent = item.label;
-            }
+            if (item.button.tagName === "INPUT") item.button.value = item.label;
+            else item.button.textContent = item.label;
           });
         }
       }
-    }
-
-    function reportFieldError(form, field, message, clearOnSelector) {
-      if (!field) {
-        dependencies.toast(message);
-        return;
-      }
-
-      field.setCustomValidity(message);
-      field.setAttribute("aria-invalid", "true");
-      field.reportValidity();
-
-      var clearError = function (changeEvent) {
-        var target = changeEvent.target;
-        if (!target.matches || !target.matches(clearOnSelector)) return;
-
-        field.setCustomValidity("");
-        field.removeAttribute("aria-invalid");
-        form.removeEventListener("input", clearError);
-        form.removeEventListener("change", clearError);
-      };
-
-      form.addEventListener("input", clearError);
-      form.addEventListener("change", clearError);
-    }
-
-    async function submitForm(form, kind) {
-      var values = Object.fromEntries(new FormData(form).entries());
-
-      if (kind === "feedback") {
-        var feedbackResult = await dependencies.feedbackRepository.submit({
-          category: values.category,
-          message: values.message,
-        });
-        if (feedbackResult.error) {
-          console.error("Erro ao enviar feedback:", feedbackResult.error);
-          dependencies.toast("Não foi possível enviar o feedback. Tente novamente.");
-          return;
-        }
-
-        form.reset();
-        dependencies.toast("Feedback enviado. Obrigado por ajudar no beta!");
-        return;
-      }
-
-      var state = dependencies.stateStore.createDraft();
-      var message = "registrado";
-      var tag = (values.tag || "").trim();
-
-      if (kind === "session") {
-        var session = {
-          id: dependencies.uid(),
-          date: values.date,
-          min: Number(values.min),
-          tag: tag,
-          note: (values.note || "").trim(),
-        };
-        var sessionTopic = (values.topic || "").trim();
-        if (sessionTopic) session.topic = sessionTopic;
-        if (values.studyType) session.studyType = values.studyType;
-        state.sessions.push(session);
-        message = "sessão registrada";
-      } else if (kind === "book") {
-        var bookTotal = Number(values.total);
-        var initialPage = values.read === "" ? 0 : Number(values.read);
-        if (!Number.isInteger(bookTotal) || bookTotal < 1 || bookTotal > 5000) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="total"]'),
-            "Informe um total de páginas entre 1 e 5000.",
-            'input[name="total"]',
-          );
-          return;
-        }
-        if (
-          !Number.isInteger(initialPage) ||
-          initialPage < 0 ||
-          initialPage > bookTotal
-        ) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="read"]'),
-            "A página atual precisa ficar entre 0 e o total de páginas do livro.",
-            'input[name="read"]',
-          );
-          return;
-        }
-        state.books.push({
-          id: dependencies.uid(),
-          title: values.title.trim(),
-          author: (values.author || "").trim(),
-          tag: tag,
-          total: bookTotal,
-          read: initialPage,
-          status:
-            initialPage >= bookTotal
-              ? "completed"
-              : initialPage > 0
-                ? "reading"
-                : "planned",
-          finishedAt: "",
-          rating: 0,
-          review: "",
-        });
-        message = initialPage
-          ? "Livro adicionado na página " + initialPage + ". O progresso anterior não entrou nas leituras de hoje."
-          : "Livro adicionado.";
-      } else if (kind === "read") {
-        var book = state.books.find(function (item) {
-          return item.id === values.id;
-        });
-        if (!book) return;
-
-        var page = Math.min(book.total, Math.round(Number(values.to)));
-        if (!(page > book.read)) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="to"]'),
-            "Informe uma página maior que " + book.read + ".",
-            'input[name="to"]',
-          );
-          return;
-        }
-
-        state.readlog.push({
-          id: dependencies.uid(),
-          bookId: book.id,
-          date: values.date,
-          from: book.read,
-          to: page,
-          pages: page - book.read,
-          min: values.min ? Number(values.min) : 0,
-          note: (values.note || "").trim().slice(0, 600),
-        });
-        message = "+" + (page - book.read) + " páginas lidas";
-        book.read = page;
-        if (page >= book.total) {
-          book.status = "completed";
-          book.finishedAt = values.date;
-          message = "Livro concluído! " + message;
-        } else if (book.status === "planned" || book.status === "paused") {
-          book.status = "reading";
-        }
-      } else if (kind === "book-status") {
-        var statusBook = state.books.find(function (item) {
-          return item.id === values.id;
-        });
-        var allowedBookStatuses = [
-          "planned",
-          "reading",
-          "paused",
-          "completed",
-          "abandoned",
-        ];
-        if (!statusBook || allowedBookStatuses.indexOf(values.status) === -1) return;
-
-        var finishDate = (values.finishedAt || "").trim();
-        var finishTimestamp = /^\d{4}-\d{2}-\d{2}$/.test(finishDate)
-          ? Date.parse(finishDate + "T00:00:00Z")
-          : NaN;
-        if (
-          finishDate &&
-          (!Number.isFinite(finishTimestamp) ||
-            new Date(finishTimestamp).toISOString().slice(0, 10) !== finishDate ||
-            finishDate > dependencies.today())
-        ) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="finishedAt"]'),
-            "Informe uma data válida, que não esteja no futuro.",
-            'input[name="finishedAt"]',
-          );
-          return;
-        }
-
-        var wasCompleted = statusBook.status === "completed";
-        statusBook.status = values.status;
-        statusBook.finishedAt = values.status === "completed"
-          ? finishDate || (wasCompleted ? statusBook.finishedAt : dependencies.today())
-          : "";
-        message = "Estante do livro atualizada.";
-      } else if (kind === "book-review") {
-        var reviewBook = state.books.find(function (item) {
-          return item.id === values.id;
-        });
-        var rating = Number(values.rating || 0);
-        if (!reviewBook || !Number.isInteger(rating) || rating < 0 || rating > 5) return;
-        reviewBook.author = (values.author || "").trim().slice(0, 120);
-        reviewBook.rating = rating;
-        reviewBook.review = (values.review || "").trim().slice(0, 1200);
-        message = "Dados e avaliação privada foram salvos.";
-      } else if (kind === "reading-goal") {
-        var annualGoal = Number(values.annualGoal);
-        var dailyPageGoal = Number(values.dailyPageGoal);
-        if (!Number.isInteger(annualGoal) || annualGoal < 1 || annualGoal > 365) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="annualGoal"]'),
-            "Escolha uma meta entre 1 e 365 livros.",
-            'input[name="annualGoal"]',
-          );
-          return;
-        }
-        if (
-          !Number.isInteger(dailyPageGoal) ||
-          dailyPageGoal < 1 ||
-          dailyPageGoal > 500
-        ) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="dailyPageGoal"]'),
-            "Escolha uma meta diária entre 1 e 500 páginas.",
-            'input[name="dailyPageGoal"]',
-          );
-          return;
-        }
-        state.readingSettings.annualGoal = annualGoal;
-        state.readingSettings.dailyPageGoal = dailyPageGoal;
-        message = "Metas de leitura atualizadas.";
-      } else if (kind === "event") {
-        state.events.push({
-          id: dependencies.uid(),
-          date: dependencies.getSelectedDay(),
-          time: values.time || "",
-          title: values.title.trim(),
-          kind: (values.kind || "").trim(),
-        });
-      } else if (kind === "task") {
-        state.tasks.push({
-          id: dependencies.uid(),
-          title: values.title.trim(),
-          due: values.due || "",
-          tag: tag,
-          done: false,
-          doneOn: "",
-        });
-      } else if (kind === "question") {
-        var total = Number(values.total);
-        var correct = Math.min(total, Number(values.correct));
-        var questionRecord = {
-          id: dependencies.uid(),
-          date: values.date,
-          tag: tag,
-          studyType: "questions",
-          total: total,
-          correct: correct,
-        };
-        var questionTopic = (values.topic || "").trim();
-        if (questionTopic) questionRecord.topic = questionTopic;
-        state.questions.push(questionRecord);
-      } else if (kind === "mistake") {
-        var mistakeTopic = (values.topic || "").trim();
-        var mistakeRecord = {
-          id: dependencies.uid(),
-          date: values.date,
-          question: (values.question || "").trim(),
-          reason: (values.reason || "").trim(),
-          answer: (values.answer || "").trim(),
-          tag: tag,
-          resolved: false,
-        };
-        if (mistakeTopic) mistakeRecord.topic = mistakeTopic;
-        state.mistakes.push(mistakeRecord);
-        message = "erro adicionado ao caderno";
-      } else if (kind === "theme") {
-        state.themes.push({
-          id: dependencies.uid(),
-          date: values.date,
-          title: values.title.trim(),
-          tag: tag,
-          diff: Number(values.diff),
-          note: (values.note || "").trim(),
-          reviewed: false,
-          nextReview: Number(values.diff) >= 4 ? values.date : "",
-          reviewCount: 0,
-          reviewIntervalDays: 0,
-        });
-        message = "tema registrado";
-      } else if (kind === "habit") {
-        state.habits.push({
-          id: dependencies.uid(),
-          name: values.name.trim(),
-          days: {},
-        });
-        message = "hábito criado";
-      } else if (kind === "tx") {
-        state.txs.push({
-          id: dependencies.uid(),
-          date: values.date,
-          type: values.type === "in" ? "in" : "out",
-          amount: Math.round(Number(values.amount) * 100) / 100,
-          title: values.title.trim(),
-          tag: tag,
-        });
-        message = "lançamento salvo";
-      } else if (kind === "goal") {
-        state.goals.push({
-          id: dependencies.uid(),
-          title: values.title.trim(),
-          tag: tag,
-          due: values.due || "",
-          manual: 0,
-          ms: [],
-        });
-        message = "meta criada";
-      } else if (kind === "ms") {
-        state.goals.forEach(function (goal) {
-          if (goal.id === values.g) {
-            goal.ms.push({
-              id: dependencies.uid(),
-              text: values.text.trim(),
-              done: false,
-            });
-          }
-        });
-        message = "marco adicionado";
-      } else if (kind === "gman") {
-        state.goals.forEach(function (goal) {
-          if (goal.id === values.g) {
-            goal.manual = Math.max(0, Math.min(100, Number(values.pct)));
-          }
-        });
-        message = "progresso atualizado";
-      } else if (kind === "routine") {
-        var selectedDays = [].slice
-          .call(form.querySelectorAll("input[name=d]:checked"))
-          .map(function (input) {
-            return Number(input.value);
-          });
-        if (!selectedDays.length) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="d"]'),
-            "Escolha ao menos um dia.",
-            'input[name="d"]',
-          );
-          return;
-        }
-        if (values.end <= values.start) {
-          reportFieldError(
-            form,
-            form.querySelector('input[name="end"]'),
-            "O fim precisa ser depois do início.",
-            'input[name="start"], input[name="end"]',
-          );
-          return;
-        }
-
-        selectedDays.forEach(function (day) {
-          state.routine.push({
-            id: dependencies.uid(),
-            day: day,
-            start: values.start,
-            end: values.end,
-            title: values.title.trim(),
-            tag: tag,
-          });
-        });
-        message = "bloco adicionado";
-      } else if (kind === "pomo") {
-        var pomodoro = state.pomo;
-        pomodoro.focus = Number(values.focus);
-        pomodoro.short = Number(values.short);
-        pomodoro.long = Number(values.long);
-        pomodoro.every = Number(values.every);
-        pomodoro.daily = Number(values.daily) || 6;
-        if (pomodoro.cycle > pomodoro.every) pomodoro.cycle = 1;
-        message = "ajustes salvos";
-      } else if (kind === "group") {
-        var groupResult = await dependencies.groupRepository.createGroup(
-          values.name,
-        );
-        if (groupResult.error) {
-          console.error("Erro ao criar grupo:", groupResult.error);
-          dependencies.toast("Erro ao criar grupo: " + groupResult.error.message);
-          return;
-        }
-        state = dependencies.stateStore.createDraft();
-        message = "grupo criado";
-      } else if (kind === "join-group") {
-        var joinResult = await dependencies.groupRepository.joinGroup(
-          values.invite_code,
-        );
-        if (joinResult.error) {
-          console.error("Erro ao entrar no grupo:", joinResult.error);
-          dependencies.toast("Não foi possível entrar: " + joinResult.error.message);
-          return;
-        }
-        if (!joinResult.data) {
-          dependencies.toast(
-            "Código inválido ou grupo indisponível. Confira o convite; após várias tentativas, aguarde 15 minutos.",
-          );
-          return;
-        }
-        state = dependencies.stateStore.createDraft();
-        message = "Você entrou no grupo";
-      } else if (kind === "shared-goal") {
-        var goalResult = await dependencies.groupRepository.createSharedGoal({
-          groupId: values.group_id,
-          title: values.title,
-          description: values.description,
-          userId: dependencies.getUserId(),
-        });
-        if (goalResult.error) {
-          console.error(
-            "Erro ao criar objetivo compartilhado:",
-            goalResult.error,
-          );
-          dependencies.toast(
-            "Não foi possível criar o objetivo: " + goalResult.error.message,
-          );
-          return;
-        }
-        state = dependencies.stateStore.createDraft();
-        message = "objetivo compartilhado criado";
-      } else if (kind === "profile") {
-        state.name = values.name.trim() || state.name;
-        if (values.h !== undefined && values.h !== "") {
-          state.goalH = Number(values.h);
-        }
-        message = "perfil salvo";
-      }
-
-      var saved = dependencies.stateStore.saveDraft(state);
-      dependencies.commit(message, saved);
     }
 
     return Object.freeze({ submit: submit });
@@ -511,6 +165,3 @@
 
   window.DesvelarFormController = Object.freeze({ create: create });
 })();
-
-
-

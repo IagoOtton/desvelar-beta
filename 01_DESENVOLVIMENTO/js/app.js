@@ -1,59 +1,5 @@
 (function () {
   "use strict";
-  var appScript = document.currentScript;
-  var lazyBundleSources = {
-    fitness: appScript && appScript.getAttribute("data-fitness-src"),
-    community: appScript && appScript.getAttribute("data-community-src"),
-  };
-  var lazyBundlePromises = Object.create(null);
-
-  function loadLazyBundle(name, isLoaded) {
-    if (isLoaded()) return Promise.resolve();
-    if (lazyBundlePromises[name]) return lazyBundlePromises[name];
-
-    var source = lazyBundleSources[name];
-    if (!source) {
-      return Promise.reject(new Error("O recurso solicitado não está disponível."));
-    }
-
-    var promise = new Promise(function (resolve, reject) {
-      var script = document.createElement("script");
-      script.src = source;
-      script.async = true;
-      script.onload = resolve;
-      script.onerror = function () {
-        reject(new Error("Não foi possível carregar o recurso solicitado."));
-      };
-      document.head.appendChild(script);
-    }).catch(function (error) {
-      delete lazyBundlePromises[name];
-      throw error;
-    });
-
-    lazyBundlePromises[name] = promise;
-    return promise;
-  }
-
-  function loadTabBundle(tabId) {
-    if (tabId === "atividade_fisica") {
-      return loadLazyBundle("fitness", function () {
-        return Boolean(
-          window.DesvelarStrengthViews && window.DesvelarStrengthController,
-        );
-      });
-    }
-    if (tabId === "comunidade") {
-      return loadLazyBundle("community", function () {
-        return Boolean(
-          window.DesvelarCommunityViews &&
-            window.DesvelarCommunityController &&
-            window.DesvelarCommunityRepository,
-        );
-      });
-    }
-    return Promise.resolve();
-  }
-
   var U = window.DesvelarUtils;
 
   if (!U) {
@@ -62,14 +8,10 @@
 
   var pad = U.pad;
   var ds = U.ds;
-  var pd = U.pd;
   var addDays = U.addDays;
   var today = U.today;
   var wkStart = U.wkStart;
-  var MES = U.MES;
-  var DIAS = U.DIAS;
   var fmtD = U.fmtD;
-  var daysBetween = U.daysBetween;
 
   var F = window.DesvelarFormatting;
 
@@ -88,21 +30,10 @@
   if (!DataModel) {
     throw new Error("O modelo de dados do DESVELAR não foi carregado.");
   }
-  var LISTS = DataModel.LISTS;
-  var TAGGED = DataModel.TAGGED;
   var normalize = DataModel.normalize;
   var mergeLegacyData = DataModel.mergeLegacyData;
   var UsageAnalytics = window.DesvelarUsageAnalytics.create(window.desvelarSupabase);
   var isUsageAdmin = false;
-  var SiteMessagesController = window.DesvelarSiteMessagesController.create({
-    repository: window.DesvelarSiteMessagesRepository,
-    esc: esc,
-    isAdmin: function () { return isUsageAdmin; },
-    toast: function (message) { toast(message); },
-    onSent: function () {
-      if (tab === "painel_controle") render();
-    },
-  });
   var PomodoroDomain = window.DesvelarPomodoroDomain.create({
     uid: uid,
     dateKey: ds,
@@ -111,20 +42,9 @@
     addDays: addDays,
   });
   var zen = false;
-  var finM = new Date();
   var S = null,
-    tab = "inicio",
-    activityView = "training",
-    readingView = "overview",
-    editingStrengthRoutineId = "",
-    selectedMeasurementMetric = "weightKg",
-    selectedMeasurementRange = "all",
-    selectedPerformanceExercise = "",
-    selectedPerformanceMetric = "maxWeight",
-    calM = new Date(),
-    selDay = today(),
-    saveOk = true,
-    wipeArm = 0;
+    tab = "estudo",
+    saveOk = true;
 
   /* ---------- dados ---------- */
   var localData = window.DesvelarLocalDataRepository.create({
@@ -252,7 +172,7 @@
   }
   var TagCatalog = window.DesvelarTagCatalog.create({
     getState: stateStore.getState,
-    taggedLists: TAGGED,
+    taggedLists: ["sessions", "questions", "mistakes", "themes"],
     key: T.key,
     escapeHtml: esc,
     common: Common,
@@ -270,19 +190,11 @@
     tagKey: tkey,
     tagLabel: tlabel,
     sum: sum,
-    today: today,
-    addDays: addDays,
   });
   var groupMin = Analytics.groupMin;
   var accByTag = Analytics.accuracyByTag;
   var minsOn = Analytics.minutesOn;
   var minsRange = Analytics.minutesInRange;
-  var pagesRange = Analytics.pagesInRange;
-  var streak = Analytics.streak;
-  var qTotRange = Analytics.questionTotalsInRange;
-  var bookLog = Analytics.bookLog;
-  var gprog = Analytics.goalProgress;
-  var pagesRangeBook = Analytics.pagesForBookInRange;
 
   /* ---------- gráficos ---------- */
   var C = window.DesvelarCharts;
@@ -295,8 +207,6 @@
 
   var barChart = C.barChart;
   var areaChart = C.areaChart;
-  var kpi = C.kpi;
-  var ring = C.ring;
   /* ---------- telas ---------- */
   var ModuleRegistry = window.DesvelarModuleRegistry.create(DataModel.MODULE_IDS);
 
@@ -320,7 +230,7 @@
         ],
       ]);
     }
-    var activeNavTab = ["foco", "temas", "desempenho"].indexOf(tab) !== -1
+    var activeNavTab = ["foco", "temas", "erros", "desempenho"].indexOf(tab) !== -1
       ? "estudo"
       : tab;
     return N.render(
@@ -340,12 +250,6 @@
     });
   }
 
-  var BRL = function (n) {
-    return n.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
   var ViewRegistry = window.DesvelarViewRegistry.create({
     stateStore: stateStore,
     studyReviews: StudyReviewDomain,
@@ -353,19 +257,12 @@
       today: today,
       wkStart: wkStart,
       addDays: addDays,
-      pd: pd,
-      MES: MES,
-      DIAS: DIAS,
       fmtD: fmtD,
-      pad: pad,
-      ds: ds,
-      daysBetween: daysBetween,
     },
     formatting: {
       esc: esc,
       fmtM: fmtM,
       sum: sum,
-      BRL: BRL,
     },
     tags: {
       key: tkey,
@@ -379,62 +276,16 @@
       accuracyByTag: accByTag,
       minsOn: minsOn,
       minsRange: minsRange,
-      pagesRange: pagesRange,
-      streak: streak,
-      questionTotalsInRange: qTotRange,
-      pagesRangeBook: pagesRangeBook,
-      bookLog: bookLog,
-      goalProgress: gprog,
     },
     charts: {
       barChart: barChart,
       areaChart: areaChart,
-      kpi: kpi,
-      ring: ring,
     },
     head: head,
-    getActiveTab: function () {
-      return tab;
-    },
-    getReadingView: function () {
-      return readingView;
-    },
-    getActivityView: function () {
-      return activityView;
-    },
-    getEditingRoutineId: function () {
-      return editingStrengthRoutineId;
-    },
-    getSelectedMeasurementMetric: function () {
-      return selectedMeasurementMetric;
-    },
-    getSelectedMeasurementRange: function () {
-      return selectedMeasurementRange;
-    },
-    getSelectedPerformanceExercise: function () {
-      return selectedPerformanceExercise;
-    },
-    getSelectedPerformanceMetric: function () {
-      return selectedPerformanceMetric;
-    },
-    getUserId: function () {
-      return window.desvelarUser.id;
-    },
-    getFinanceMonth: function () {
-      return finM;
-    },
-    getCalendar: function () {
-      return { month: calM, selectedDay: selDay };
-    },
-    getZen: function () {
-      return zen;
-    },
+    getActiveTab: function () { return tab; },
     getCloudSyncStatus: cloudSync.getStatusLabel,
-    getWipeArm: function () { return wipeArm; },
-    groupRepository: window.DesvelarGroupRepository,
-    siteMessagesRepository: window.DesvelarSiteMessagesRepository,
-    modules: ModuleRegistry.systemModules,
     usageAnalytics: UsageAnalytics,
+    getZen: function () { return zen; },
     circumference: PC,
     phaseName: phaseName,
     pomoRemaining: pomoRem,
@@ -443,94 +294,47 @@
     formatClock: fmtClock,
   });
   var VIEWS = ViewRegistry.pages;
-  var tickerHtml = ViewRegistry.tickerHtml;
   var AccountController = window.DesvelarAccountController.create({
-    getUser: function () {
-      return window.desvelarUser;
-    },
+    getUser: function () { return window.desvelarUser; },
     auth: window.desvelarSupabase.auth,
     flush: cloudSync.flush,
     toast: toast,
-    confirm: function (message) {
-      return window.confirm(message);
-    },
-    reload: function () {
-      window.location.reload();
-    },
+    confirm: function (message) { return window.confirm(message); },
+    reload: function () { window.location.reload(); },
   });
   var FormController = window.DesvelarFormController.create({
     stateStore: stateStore,
-    getSelectedDay: function () {
-      return selDay;
-    },
-    getUserId: function () {
-      return window.desvelarUser.id;
-    },
     uid: uid,
+    today: today,
     commit: commit,
     toast: toast,
-    groupRepository: window.DesvelarGroupRepository,
-    feedbackRepository: window.DesvelarFeedbackRepository,
   });
+  var studyRouteIds = ["estudo", "foco", "temas", "erros", "desempenho"];
+  var routeIds = studyRouteIds.concat(["sistema", "painel_controle"]);
   var ActionController = window.DesvelarActionController.create({
     stateStore: stateStore,
     isStudyReviewDue: StudyReviewDomain.isDue,
     scheduleStudyReview: StudyReviewDomain.schedule,
     setTheme: applyTheme,
-    verifyPassword: AccountController.verifyPassword,
     signOut: AccountController.signOut,
-    confirm: function (message) {
-      return window.confirm(message);
-    },
+    confirm: function (message) { return window.confirm(message); },
     toast: toast,
     getUiState: function () {
-      return {
-        tab: tab,
-        readingView: readingView,
-        zen: zen,
-        finM: finM,
-        calM: calM,
-        selDay: selDay,
-        wipeArm: wipeArm,
-      };
+      return { tab: tab, zen: zen };
     },
     setUiState: function (updates) {
       if (Object.prototype.hasOwnProperty.call(updates, "tab")) {
-        if (updates.tab === "comunidade") {
-          if (window.DesvelarCommunityRepository) {
-            window.DesvelarCommunityRepository.invalidateFeed();
-            window.DesvelarCommunityRepository.invalidatePage();
-          }
-        }
         var previousTab = tab;
         tab = updates.tab;
         if (tab !== previousTab) UsageAnalytics.recordArea(tab);
       }
-      if (Object.prototype.hasOwnProperty.call(updates, "readingView")) {
-        if (["overview", "session", "shelf", "progress"].indexOf(updates.readingView) !== -1) {
-          readingView = updates.readingView;
-        }
-      }
       if (Object.prototype.hasOwnProperty.call(updates, "zen")) {
         zen = updates.zen;
-      }
-      if (Object.prototype.hasOwnProperty.call(updates, "finM")) {
-        finM = updates.finM;
-      }
-      if (Object.prototype.hasOwnProperty.call(updates, "calM")) {
-        calM = updates.calM;
-      }
-      if (Object.prototype.hasOwnProperty.call(updates, "selDay")) {
-        selDay = updates.selDay;
-      }
-      if (Object.prototype.hasOwnProperty.call(updates, "wipeArm")) {
-        wipeArm = updates.wipeArm;
       }
     },
     uid: uid,
     today: today,
     dateKey: ds,
-    parseDate: pd,
     pomoRem: pomoRem,
     pomoStart: pomoStart,
     pomoPause: pomoPause,
@@ -540,113 +344,10 @@
     refreshPomodoro: showPomodoroDecision,
     render: render,
     commit: commit,
-    moduleIds: DataModel.MODULE_IDS,
     isTabEnabled: function (tabId) {
-      if (tabId === "painel_controle") return isUsageAdmin;
-      if (tabId === "inicio" || tabId === "sistema" || tabId === "grupos") {
-        return true;
-      }
-      if (["foco", "temas", "erros", "desempenho"].indexOf(tabId) !== -1) {
-        tabId = "estudo";
-      }
-      if (DataModel.MODULE_IDS.indexOf(tabId) === -1) return false;
-      var state = stateStore.getState();
-      return !state || !state.enabledTabs || state.enabledTabs[tabId] !== false;
+      return routeIds.indexOf(tabId) !== -1 && (tabId !== "painel_controle" || isUsageAdmin);
     },
-  });
-  var CommunityController = null;
-  function ensureCommunityController() {
-    if (CommunityController) return CommunityController;
-    if (!window.DesvelarCommunityController || !window.DesvelarCommunityRepository) {
-      throw new Error("Os recursos da comunidade não foram carregados.");
-    }
-    CommunityController = window.DesvelarCommunityController.create({
-      repository: window.DesvelarCommunityRepository,
-      getUserId: function () {
-        return window.desvelarUser.id;
-      },
-      toast: toast,
-      render: render,
-    });
-    return CommunityController;
-  }
-
-  var StrengthController = null;
-  function ensureStrengthController() {
-    if (StrengthController) return StrengthController;
-    if (!window.DesvelarStrengthController) {
-      throw new Error("Os recursos de atividade física não foram carregados.");
-    }
-    StrengthController = window.DesvelarStrengthController.create({
-      stateStore: stateStore,
-      getActivityView: function () {
-        return activityView;
-      },
-      setActivityView: function (view) {
-        var previousView = activityView;
-        activityView = view;
-        if (tab === "atividade_fisica" && view !== previousView) {
-          var usageAreaByView = {
-            training: "atividade_treino",
-            active: "atividade_treino",
-            summary: "atividade_treino",
-            routines: "atividade_rotinas",
-            "routine-editor": "atividade_rotinas",
-            history: "atividade_historico",
-            performance: "atividade_desempenho",
-            measurements: "atividade_medidas",
-          };
-          UsageAnalytics.recordArea(usageAreaByView[view]);
-        }
-      },
-      setActiveTab: function (activeTab) {
-        tab = activeTab;
-      },
-      getEditingRoutineId: function () {
-        return editingStrengthRoutineId;
-      },
-      setEditingRoutineId: function (id) {
-        editingStrengthRoutineId = id;
-      },
-      getSelectedMeasurementMetric: function () {
-        return selectedMeasurementMetric;
-      },
-      setSelectedMeasurementMetric: function (metric) {
-        selectedMeasurementMetric = metric;
-      },
-      getSelectedMeasurementRange: function () {
-        return selectedMeasurementRange;
-      },
-      setSelectedMeasurementRange: function (range) {
-        selectedMeasurementRange = range;
-      },
-      getSelectedPerformanceExercise: function () {
-        return selectedPerformanceExercise;
-      },
-      setSelectedPerformanceExercise: function (exercise) {
-        selectedPerformanceExercise = exercise;
-      },
-      getSelectedPerformanceMetric: function () {
-        return selectedPerformanceMetric;
-      },
-      setSelectedPerformanceMetric: function (metric) {
-        selectedPerformanceMetric = metric;
-      },
-      uid: uid,
-      today: today,
-      commit: commit,
-      toast: toast,
-      confirm: function (message) {
-        return window.confirm(message);
-      },
-      measurementFields: window.DesvelarBodyMeasurements.FIELDS,
-      exerciseKey: window.DesvelarStrengthTraining.exerciseKey,
-      lastPerformance: window.DesvelarStrengthTraining.lastPerformance,
-    });
-    return StrengthController;
-  }
-
-  function focusRenderedTarget(options) {
+  });  function focusRenderedTarget(options) {
     if (!options) return;
 
     var target = options.focusId
@@ -706,28 +407,12 @@
     }
   }
 
-  function updateReadingTimerClock() {
-    var clock = document.getElementById("reading-timer-clock");
-    if (!clock) return;
-    var elapsedMs = Number(clock.dataset.elapsedMs);
-    if (!Number.isFinite(elapsedMs) || elapsedMs < 0) elapsedMs = 0;
-    if (clock.dataset.running === "true") {
-      var startedAt = Number(clock.dataset.startedAt);
-      if (Number.isFinite(startedAt) && startedAt > 0) elapsedMs += Math.max(0, Date.now() - startedAt);
-    }
-    var totalSeconds = Math.floor(elapsedMs / 1000);
-    var hours = Math.floor(totalSeconds / 3600);
-    var minutes = Math.floor((totalSeconds % 3600) / 60);
-    var seconds = totalSeconds % 60;
-    clock.textContent = hours ? pad(hours) + ":" + pad(minutes) + ":" + pad(seconds) : pad(minutes) + ":" + pad(seconds);
-  }
-
   function render(options) {
     buildTags();
     document.getElementById("sidenav").innerHTML =
       '<div class="brand">' +
       LOGO +
-      '<div><span class="wm">DESVELAR</span><small>ferramentas pessoais · comunidades</small></div></div>' +
+      '<div><span class="wm">DESVELAR</span><small>foco · constância · progresso</small></div></div>' +
       navHtml(true) +
       '<div class="sync' +
       (saveOk ? "" : " bad") +
@@ -737,98 +422,71 @@
     document.getElementById("botnav").innerHTML = navHtml(false);
     if (tab !== "foco") zen = false;
     document.body.classList.toggle("zen", zen);
+
     var currentTab = tab;
-    var isStudyTab =
-      ["estudo", "foco", "temas", "erros", "desempenho"].indexOf(
-        currentTab,
-      ) !== -1;
-    var pageTicker = function () {
-      return zen || currentTab === "inicio" || currentTab === "atividade_fisica" || currentTab === "painel_controle" || currentTab === "leitura" || isStudyTab
-        ? ""
-        : tickerHtml();
-    };
+    var isStudyTab = studyRouteIds.indexOf(currentTab) !== -1;
     var view = document.getElementById("view");
     view.setAttribute("aria-busy", "true");
     view.innerHTML =
-      pageTicker() +
       cloudSyncMobileStatusHtml() +
       pomodoroDecisionBannerHtml() +
-      '<div class="card page-loading" role="status" aria-live="polite">' +
-      '<span class="page-loading-spinner" aria-hidden="true"></span>' +
-      "<span>Carregando…</span></div>";
+      '<div class="card page-loading" role="status" aria-live="polite"><span class="page-loading-spinner" aria-hidden="true"></span><span>Carregando…</span></div>';
 
     Promise.resolve()
       .then(function () {
-        return loadTabBundle(currentTab);
-      })
-      .then(function () {
-        if (currentTab === "atividade_fisica") ensureStrengthController();
-        if (currentTab === "comunidade") ensureCommunityController();
-        return VIEWS[currentTab]();
+        var page = VIEWS[currentTab];
+        if (typeof page !== "function") {
+          throw new Error("A tela solicitada não está disponível.");
+        }
+        return page();
       })
       .then(function (html) {
-        if (tab === currentTab) {
-          view.innerHTML =
-            pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() + html;
-          if (isStudyTab) {
-            var studyMobileBrand = document.querySelector(
-              "#view .study-mobile-brand",
-            );
-            var mobileSyncStatus = document.getElementById(
-              "cloud-sync-mobile-status",
-            );
-            if (studyMobileBrand && mobileSyncStatus) {
-              studyMobileBrand.appendChild(mobileSyncStatus);
-            }
+        if (tab !== currentTab) return;
+        view.innerHTML =
+          cloudSyncMobileStatusHtml() +
+          pomodoroDecisionBannerHtml() +
+          html;
+        if (isStudyTab) {
+          var studyMobileBrand = document.querySelector("#view .study-mobile-brand");
+          var mobileSyncStatus = document.getElementById("cloud-sync-mobile-status");
+          if (studyMobileBrand && mobileSyncStatus) {
+            studyMobileBrand.appendChild(mobileSyncStatus);
           }
-          if (currentTab === "atividade_fisica") {
-            var activityMobileBrand = document.querySelector(
-              "#view .study-mobile-brand",
-            );
-            var activitySyncStatus = document.getElementById(
-              "cloud-sync-mobile-status",
-            );
-            if (activityMobileBrand && activitySyncStatus) {
-              activityMobileBrand.appendChild(activitySyncStatus);
-            }
-          }
-          var areaTabs = document.querySelector("#view .area-tabs");
-          if (options && Number.isFinite(options.areaScrollLeft)) {
-            if (areaTabs) areaTabs.scrollLeft = options.areaScrollLeft;
-          } else if (areaTabs) {
-            var activeAreaTab = areaTabs.querySelector('[aria-current="page"]');
-            if (activeAreaTab) {
-              var tabsRect = areaTabs.getBoundingClientRect();
-              var activeTabRect = activeAreaTab.getBoundingClientRect();
-              var centeredScroll =
-                areaTabs.scrollLeft +
-                activeTabRect.left -
-                tabsRect.left -
-                (areaTabs.clientWidth - activeTabRect.width) / 2;
-              areaTabs.scrollLeft = Math.max(
-                0,
-                Math.min(centeredScroll, areaTabs.scrollWidth - areaTabs.clientWidth),
-              );
-            }
-          }
-          tick();
-          updateReadingTimerClock();
-          view.setAttribute("aria-busy", "false");
-          focusRenderedTarget(options);
         }
+        var areaTabs = document.querySelector("#view .area-tabs");
+        if (options && Number.isFinite(options.areaScrollLeft)) {
+          if (areaTabs) areaTabs.scrollLeft = options.areaScrollLeft;
+        } else if (areaTabs) {
+          var activeAreaTab = areaTabs.querySelector('[aria-current="page"]');
+          if (activeAreaTab) {
+            var tabsRect = areaTabs.getBoundingClientRect();
+            var activeTabRect = activeAreaTab.getBoundingClientRect();
+            var centeredScroll =
+              areaTabs.scrollLeft +
+              activeTabRect.left -
+              tabsRect.left -
+              (areaTabs.clientWidth - activeTabRect.width) / 2;
+            areaTabs.scrollLeft = Math.max(
+              0,
+              Math.min(centeredScroll, areaTabs.scrollWidth - areaTabs.clientWidth),
+            );
+          }
+        }
+        tick();
+        view.setAttribute("aria-busy", "false");
+        focusRenderedTarget(options);
       })
       .catch(function (error) {
         console.error("Erro ao carregar a tela " + currentTab + ":", error);
         if (tab !== currentTab) return;
-
         view.innerHTML =
-          pageTicker() + cloudSyncMobileStatusHtml() + pomodoroDecisionBannerHtml() +
-          '<div class="card"><h2 tabindex="-1">Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" data-a="retry">Tentar novamente</button></div>';
+          cloudSyncMobileStatusHtml() +
+          pomodoroDecisionBannerHtml() +
+          '<div class="card"><h2 tabindex="-1">Não foi possível abrir esta tela</h2><p class="m">Verifique sua conexão e tente novamente.</p><button class="btn" type="button" data-a="retry">Tentar novamente</button></div>';
         view.setAttribute("aria-busy", "false");
         focusRenderedTarget(options);
       });
-  }
-  function toast(msg, action) {
+  }  function toast(msg, action) {
     var el = document.createElement("div");
     el.className = "toast";
     var text = document.createElement("span");
@@ -980,8 +638,6 @@
 
   /* ---------- ações ---------- */
   document.addEventListener("click", function (event) {
-    if (SiteMessagesController.handleClick(event)) return;
-
     if (event.target.closest('[data-a="site-analytics-refresh"]')) {
       render();
       return;
@@ -992,158 +648,63 @@
       openMobileMore.open = false;
     }
 
-    if (event.target.closest("[data-strength-action], [data-strength-view]")) {
-      try {
-        ensureStrengthController().handleClick(event);
-      } catch (error) {
-        console.error("Erro ao processar treino de musculação:", error);
-        toast("Não foi possível concluir esta ação. Seus dados salvos foram mantidos.");
-      }
-      return;
-    }
-
-    if (event.target.closest("[data-community-action]")) {
-      ensureCommunityController().handleClick(event).catch(function (error) {
-        console.error("Erro ao processar ação:", error);
-        toast("Não foi possível concluir esta ação. Tente novamente.");
-      });
-      return;
-    }
-
     ActionController.handleClick(event).catch(function (error) {
       console.error("Erro ao processar ação:", error);
       toast("Não foi possível concluir esta ação. Tente novamente.");
     });
   });
+
   document.addEventListener("submit", function (event) {
-    if (event.target.closest('form[data-form="site-broadcast"]')) {
-      event.preventDefault();
-      SiteMessagesController.prepareBroadcast(event.target);
-      return;
-    }
-
-    if (event.target.closest("form[data-strength-form]")) {
-      try {
-        ensureStrengthController().submit(event);
-      } catch (error) {
-        console.error("Erro ao salvar treino de musculação:", error);
-        toast("Não foi possível salvar esta informação. Tente novamente.");
-      }
-      return;
-    }
-
-    if (event.target.closest("form[data-community-form]")) {
-      ensureCommunityController().submit(event).catch(function (error) {
-        console.error("Erro ao processar formulário:", error);
-        toast("Não foi possível concluir esta ação. Tente novamente.");
-      });
-      return;
-    }
-
     FormController.submit(event).catch(function (error) {
-      console.error("Erro ao processar formulário:", error);
-      toast("Não foi possível concluir esta ação. Tente novamente.");
+      console.error("Erro ao salvar:", error);
+      toast("Não foi possível salvar. Tente novamente.");
     });
   });
+
   document.addEventListener("change", function (event) {
-    var readingProgressBook = event.target.closest("#reading-progress-book");
-    if (readingProgressBook) {
-      var selectedReadingOption = readingProgressBook.options[readingProgressBook.selectedIndex];
-      var readingProgressPage = document.getElementById("reading-progress-page");
-      var readingProgressPosition = document.getElementById("reading-progress-position");
-      var currentReadingPage = Number(selectedReadingOption && selectedReadingOption.dataset.current) || 0;
-      var totalReadingPages = Number(selectedReadingOption && selectedReadingOption.dataset.total) || 0;
-      if (readingProgressPage) {
-        readingProgressPage.min = String(currentReadingPage + 1);
-        readingProgressPage.max = String(totalReadingPages);
-        readingProgressPage.placeholder = String(currentReadingPage + 1);
-      }
-      if (readingProgressPosition) {
-        readingProgressPosition.textContent = "Você parou na página " + currentReadingPage + " de " + totalReadingPages + ".";
-      }
-      return;
-    }
-
-    var readingShelfFilter = event.target.closest("#reading-shelf-filter");
-    if (readingShelfFilter) {
-      var visibleBooks = 0;
-      var bookCards = document.querySelectorAll("#view [data-book-card]");
-      bookCards.forEach(function (card) {
-        var visible = readingShelfFilter.value === "all" ||
-          card.dataset.bookStatus === readingShelfFilter.value;
-        card.hidden = !visible;
-        if (visible) visibleBooks += 1;
-      });
-      var shelfCount = document.getElementById("reading-shelf-count");
-      if (shelfCount) {
-        shelfCount.textContent = visibleBooks +
-          (visibleBooks === 1 ? " livro exibido" : " livros exibidos");
-      }
-      return;
-    }
-
     var usageConsentInput = event.target.closest("#usage-analytics-consent");
-    if (usageConsentInput) {
-      var consentEnabled = usageConsentInput.checked;
-      var consentStatus = document.getElementById("usage-analytics-status");
-      usageConsentInput.disabled = true;
-      window.desvelarSupabase.auth.updateUser({
-        data: { usage_analytics_consent: consentEnabled },
-      }).then(function (authResult) {
-        if (authResult.error) return { ok: false, error: authResult.error };
-        return UsageAnalytics.setConsent(consentEnabled).then(function (result) {
-          if (result.ok) return result;
-          return window.desvelarSupabase.auth.updateUser({
-            data: { usage_analytics_consent: !consentEnabled },
-          }).then(function () {
-            return result;
-          }).catch(function () {
-            return result;
-          });
+    if (!usageConsentInput) return;
+
+    var consentEnabled = usageConsentInput.checked;
+    var consentStatus = document.getElementById("usage-analytics-status");
+    usageConsentInput.disabled = true;
+    window.desvelarSupabase.auth.updateUser({
+      data: { usage_analytics_consent: consentEnabled },
+    }).then(function (authResult) {
+      if (authResult.error) return { ok: false, error: authResult.error };
+      return UsageAnalytics.setConsent(consentEnabled).then(function (result) {
+        if (result.ok) return result;
+        return window.desvelarSupabase.auth.updateUser({
+          data: { usage_analytics_consent: !consentEnabled },
+        }).then(function () {
+          return result;
+        }).catch(function () {
+          return result;
         });
-      }).catch(function (error) {
-        return { ok: false, error: error };
-      }).then(function (result) {
-        usageConsentInput.disabled = false;
-        if (!result.ok) {
-          usageConsentInput.checked = !consentEnabled;
-          if (consentStatus) {
-            consentStatus.textContent = "Não foi possível salvar sua escolha. Tente novamente.";
-          }
-          toast("Não foi possível atualizar sua preferência de métricas.");
-          return;
-        }
-
-        if (consentStatus) {
-          consentStatus.textContent = consentEnabled
-            ? "Métricas ativadas nesta conta."
-            : "Métricas desativadas e histórico associado removido.";
-        }
-        if (consentEnabled) {
-          UsageAnalytics.recordArea(tab, true);
-          UsageAnalytics.recordPresence();
-        }
       });
-      return;
-    }
+    }).catch(function (error) {
+      return { ok: false, error: error };
+    }).then(function (result) {
+      usageConsentInput.disabled = false;
+      if (!result.ok) {
+        usageConsentInput.checked = !consentEnabled;
+        if (consentStatus) {
+          consentStatus.textContent = "Não foi possível salvar sua escolha. Tente novamente.";
+        }
+        toast("Não foi possível atualizar sua preferência de métricas.");
+        return;
+      }
 
-    if (event.target.closest("[data-strength-set-field], [data-strength-measurement-metric], [data-strength-measurement-range], [data-strength-performance-exercise], [data-strength-performance-metric], [data-strength-weekly-target], [data-strength-exercise-group]")) {
-      try {
-        ensureStrengthController().change(event);
-      } catch (error) {
-        console.error("Erro ao salvar série de musculação:", error);
-        toast("Não foi possível salvar esta série. Tente novamente.");
+      if (consentStatus) {
+        consentStatus.textContent = consentEnabled
+          ? "Métricas ativadas nesta conta."
+          : "Métricas desativadas e histórico associado removido.";
       }
-    }
-  });
-  document.addEventListener("input", function (event) {
-    if (event.target.closest("[data-strength-exercise-search], [data-strength-history-filter]")) {
-      try {
-        ensureStrengthController().input(event);
-      } catch (error) {
-        console.error("Erro ao filtrar treinos:", error);
+      if (consentEnabled) {
+        UsageAnalytics.recordArea(tab, true);
+        UsageAnalytics.recordPresence();
       }
-    }
+    });
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
@@ -1228,21 +789,16 @@
   }
 
   PomodoroRuntime.startClock();
-  window.setInterval(function () {
-    updateReadingTimerClock();
-    if (tab === "atividade_fisica" && StrengthController) StrengthController.tick();
-  }, 1000);
 
   var initSaved = persist();
   var legacyMigration = localData.hasLegacyMigration();
   var migrationFinalized = localData.finalizeLegacyMigration(initSaved);
   render();
-  SiteMessagesController.mount();
 
   UsageAnalytics.isAdmin().then(function (admin) {
     var tabChanged = !admin && tab === "painel_controle";
     isUsageAdmin = admin;
-    if (tabChanged) tab = "inicio";
+    if (tabChanged) tab = "estudo";
     if (admin || tabChanged) render();
   });
 
