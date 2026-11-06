@@ -48,7 +48,6 @@
           return;
         }
         pendingUndo = null;
-        window.clearTimeout(undo.timer);
         dependencies.commit("Exclusão desfeita", true, { focusHeading: true });
         return;
       }
@@ -262,13 +261,16 @@
       if (undoRestore) {
         dependencies.commit("", saved);
         if (!saved) return;
-        if (pendingUndo) window.clearTimeout(pendingUndo.timer);
-        var undoRecord = { token: String(++undoSequence), restore: undoRestore, timer: 0 };
+        var undoRecord = { token: String(++undoSequence), restore: undoRestore };
         pendingUndo = undoRecord;
-        undoRecord.timer = window.setTimeout(function () {
-          if (pendingUndo === undoRecord) pendingUndo = null;
-        }, 5000);
-        dependencies.toast(undoMessage, { type: "undo-delete", token: undoRecord.token, label: "Desfazer" });
+        dependencies.toast(undoMessage, {
+          type: "undo-delete",
+          token: undoRecord.token,
+          label: "Desfazer",
+          onExpire: function () {
+            if (pendingUndo === undoRecord) pendingUndo = null;
+          },
+        });
         return;
       }
 
