@@ -1,6 +1,6 @@
 # DESVELAR — beta
 
-O DESVELAR está sendo reorganizado para concentrar a experiência na ferramenta pessoal de **Estudos**. Esta branch local mantém o acesso às contas existentes e ao progresso sincronizado.
+O DESVELAR concentra a experiência atual na ferramenta pessoal de **Estudos**. Esta branch local está limpando o código que ficou fora do escopo, mantendo o acesso às contas existentes e ao progresso sincronizado.
 
 ## Escopo atual
 

@@ -361,93 +361,9 @@
       );
     }
 
-    function spark(vals, cls) {
-      var n = vals.length,
-        mx = Math.max.apply(null, vals.concat([1])),
-        id = "s" + ++chartN;
-
-      var pts = vals
-        .map(function (v, i) {
-          return (
-            ((i * 120) / (n - 1)).toFixed(1) +
-            "," +
-            (31 - (v / mx) * 27).toFixed(1)
-          );
-        })
-        .join(" ");
-
-      return (
-        '<svg class="sp ' +
-        F.esc(cls) +
-        '" viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' +
-        id +
-        '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".3"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs><polygon points="0,34 ' +
-        pts +
-        ' 120,34" fill="url(#' +
-        id +
-        ')"/><polyline points="' +
-        pts +
-        '" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>'
-      );
-    }
-
-    function kpi(label, value, d, series, note) {
-      var compact = String(value).length > 9;
-
-      return (
-        '<div class="kpi' +
-        (compact ? ' compact' : '') +
-        '"><span class="l">' +
-        F.esc(label) +
-        '</span><span class="v">' +
-        F.esc(value) +
-        '</span><span class="d ' +
-        F.esc(d.c) +
-        '">' +
-        F.esc(d.t) +
-        (note ? ' <span class="m">' + F.esc(note) + "</span>" : "") +
-        "</span>" +
-        (series ? spark(series, d.c) : "") +
-        "</div>"
-      );
-    }
-
-    function ring(pct, center, sub) {
-      var id = "r" + ++chartN,
-        r = 54,
-        C = 2 * Math.PI * r,
-        p = Math.max(0, Math.min(100, pct));
-
-      return (
-        '<div class="ringbox"><svg viewBox="0 0 132 132" aria-hidden="true"><defs><linearGradient id="' +
-        id +
-        '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--chart-primary)"/><stop offset="1" stop-color="var(--chart-secondary)"/></linearGradient></defs>' +
-        '<circle cx="66" cy="66" r="' +
-        r +
-        '" fill="none" stroke="var(--surface2)" stroke-width="11"/>' +
-        '<circle cx="66" cy="66" r="' +
-        r +
-        '" fill="none" stroke="url(#' +
-        id +
-        ')" stroke-width="11" stroke-linecap="round" stroke-dasharray="' +
-        (C * p) / 100 +
-        " " +
-        C +
-        '" transform="rotate(-90 66 66)"/></svg>' +
-        '<div class="c"><b>' +
-        F.esc(center) +
-        "</b><span>" +
-        F.esc(sub) +
-        "</span></div></div>"
-      );
-    }
-
     return {
       barChart: barChart,
       areaChart: areaChart,
-      spark: spark,
-      kpi: kpi,
-      ring: ring,
     };
   })();
 })();

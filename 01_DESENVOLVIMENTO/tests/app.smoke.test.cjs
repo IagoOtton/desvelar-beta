@@ -17,12 +17,10 @@ const INVITE_MIGRATION = path.join(
   "20261101140613_secure_group_invites.sql",
 );
 const STORAGE_KEY = "painel-estudos-v2:11111111-1111-4111-8111-111111111111";
-const XSS_PAYLOAD = '"><img src="/missing-image" onerror="window.__testXss = true">';
 const USER = {
   id: "11111111-1111-4111-8111-111111111111",
   email: "teste@desvelar.local",
 };
-const GROUP_ID = "22222222-2222-4222-8222-222222222222";
 
 test("migração de convites mantém compatibilidade e protege as tentativas", () => {
   const migration = fs.readFileSync(INVITE_MIGRATION, "utf8");
@@ -50,83 +48,6 @@ test("migração de convites mantém compatibilidade e protege as tentativas", (
 const MOCK_SDK = `
 (() => {
   const user = ${JSON.stringify(USER)};
-  const groups = [{
-    user_id: user.id,
-    groups: {
-      id: ${JSON.stringify(GROUP_ID)},
-      name: "Grupo de teste",
-      invite_code: "ABCD1234",
-    },
-  }];
-  const goals = [{
-    id: "goal-1",
-    group_id: ${JSON.stringify(GROUP_ID)},
-    title: "Preparar a prova",
-    description: "Revisar o conteúdo semanal",
-    completed: false,
-    created_at: "2026-01-01T12:00:00Z",
-  }];
-  const READER_GROUP_ID = "44444444-4444-4444-8444-444444444444";
-  const OTHER_USER_ID = "77777777-7777-4777-8777-777777777777";
-  const readerProfiles = [
-    {
-      user_id: user.id,
-      display_name: window.__testCommunityXss
-        ? '\"><img src="/missing-image" onerror="window.__testXss = true">'
-        : "Leitora de teste",
-      bio: "Leituras e conversas",
-    },
-    { user_id: OTHER_USER_ID, display_name: "Outro leitor", bio: "" },
-  ];
-  let communityProfile = window.__testCommunityProfileMissing ? null : readerProfiles[0];
-  const communityPosts = [
-    {
-      id: "post-seed",
-      author_id: OTHER_USER_ID,
-      body: window.__testCommunityXss
-        ? '<img src="/missing-image" onerror="window.__testXss = true">'
-        : "Terminei um capítulo muito bom hoje.",
-      book_title: "O livro de teste",
-      book_author: "Autora de teste",
-      created_at: "2026-01-02T12:00:00.000Z",
-      reader_profiles: { display_name: "Outro leitor" },
-      community_post_comments: [
-        {
-          id: "comment-seed",
-          author_id: user.id,
-          body: "Também estou lendo!",
-          created_at: "2026-01-02T13:00:00.000Z",
-          reader_profiles: { display_name: "Leitora de teste" },
-        },
-      ],
-      community_post_reactions: [{ user_id: OTHER_USER_ID }],
-    },
-  ];
-  const readerGroups = [
-    {
-      id: READER_GROUP_ID,
-      name: "Clube de teste",
-      description: "Grupo de leitura para testes",
-      invite_code: "READ1234",
-      created_by: user.id,
-    },
-    {
-      id: "55555555-5555-4555-8555-555555555555",
-      name: "Clube aberto",
-      description: "Grupo disponível para entrar",
-      invite_code: "JOIN1234",
-      created_by: OTHER_USER_ID,
-    },
-  ];
-  const readerGroupMembers = [
-    { user_id: user.id, role: "owner", joined_at: "2026-01-01T00:00:00.000Z", reader_groups: readerGroups[0] },
-  ];
-  const readerGroupCycles = [];
-  const readerBookCandidates = [];
-  const readerNominations = [];
-  const readerProgress = [];
-  const communityReports = [];
-  let generatedId = 0;
   let accountData = null;
   let accountRevision = 0;
   window.__mockCalls = [];
@@ -188,26 +109,14 @@ const MOCK_SDK = `
         });
         return { data: { user }, error: window.__testUpdateUserError || null };
       },
+      signOut: async () => {
+        window.__testAuthenticated = false;
+        return { error: null };
+      },
     },
     from(table) {
-      const query = { table, filters: {}, inFilters: {}, selection: "*", maxRows: null };
-      const dataForQuery = () => {
-        switch (table) {
-          case "group_members": return groups;
-          case "shared_goals": return goals;
-          case "reader_profiles": return readerProfiles;
-          case "community_posts": return communityPosts;
-          case "community_post_comments": return communityPosts.flatMap((post) => post.community_post_comments);
-          case "community_post_reactions": return communityPosts.flatMap((post) => post.community_post_reactions);
-          case "reader_group_members": return readerGroupMembers;
-          case "reader_group_cycles": return readerGroupCycles;
-          case "reader_group_book_candidates": return readerBookCandidates;
-          case "reader_group_nominations": return readerNominations;
-          case "reader_group_progress_updates": return readerProgress;
-          default: return [];
-        }
-      };
-      const builder = {
+      const query = { table, filters: {}, selection: "*" };
+      return {
         select(columns) {
           query.selection = columns;
           return this;
@@ -216,226 +125,26 @@ const MOCK_SDK = `
           query.filters[column] = value;
           return this;
         },
-        in(column, values) {
-          query.inFilters[column] = values;
-          return this;
-        },
-        order(column, options) {
-          query.order = { column, options };
-          return this;
-        },
-        limit(count) {
-          query.maxRows = count;
-          return this;
-        },
         maybeSingle() {
           window.__mockCalls.push({ type: "select", table, query });
-          if (table === "reader_profiles") {
-            return Promise.resolve({
-              data: communityProfile && communityProfile.user_id === query.filters.user_id
-                ? communityProfile
-                : null,
-              error: null,
-            });
-          }
-          if (table === "community_posts") {
-            return Promise.resolve({
-              data: communityPosts.find((post) => post.id === query.filters.id) || null,
-              error: null,
-            });
-          }
-          if (table !== "app_user_data") {
+          if (table !== "app_user_data" || !accountData) {
             return Promise.resolve({ data: null, error: null });
           }
           return Promise.resolve({
-            data: accountData
-              ? {
-                  data: accountData,
-                  revision: accountRevision,
-                  updated_at: "2026-01-01T00:00:00.000Z",
-                }
-              : null,
+            data: {
+              data: JSON.parse(JSON.stringify(accountData)),
+              revision: accountRevision,
+              updated_at: "2026-01-01T00:00:00.000Z",
+            },
             error: null,
           });
         },
-        upsert(values) {
-          window.__mockCalls.push({ type: "upsert", table, values });
-          if (table === "reader_profiles") {
-            communityProfile = { ...values };
-            const index = readerProfiles.findIndex((profile) => profile.user_id === values.user_id);
-            if (index >= 0) readerProfiles[index] = communityProfile;
-            else readerProfiles.push(communityProfile);
-          }
-          return Promise.resolve({ data: values, error: null });
-        },
-        insert(values) {
-          window.__mockCalls.push({ type: "insert", table, values });
-          if (window.__testCommunityActionError && table.startsWith("community_")) {
-            return Promise.resolve({ data: null, error: { message: "Erro de comunidade simulado", code: "XX000" } });
-          }
-          const createdAt = "2026-02-01T12:00:00.000Z";
-          if (table === "community_posts") {
-            communityPosts.unshift({
-              id: "post-" + (++generatedId),
-              ...values,
-              created_at: createdAt,
-              reader_profiles: { display_name: communityProfile.display_name },
-              community_post_comments: [],
-              community_post_reactions: [],
-            });
-          } else if (table === "community_post_comments") {
-            const post = communityPosts.find((item) => item.id === values.post_id);
-            if (post) post.community_post_comments.push({
-              id: "comment-" + (++generatedId),
-              ...values,
-              created_at: createdAt,
-              reader_profiles: { display_name: communityProfile.display_name },
-            });
-          } else if (table === "community_post_reactions") {
-            const post = communityPosts.find((item) => item.id === values.post_id);
-            if (post && !post.community_post_reactions.some((item) => item.user_id === values.user_id)) {
-              post.community_post_reactions.push(values);
-            }
-          } else if (table === "reader_group_progress_updates") {
-            readerProgress.unshift({ id: "progress-" + (++generatedId), ...values, created_at: createdAt });
-          }
-          return Promise.resolve({ data: [], error: null });
-        },
-        delete() {
-          query.operation = "delete";
-          return this;
-        },
-        then(resolve, reject) {
-          window.__mockCalls.push({ type: "select", table, query });
-          if (query.operation === "delete") {
-            const post = communityPosts.find((item) => item.id === query.filters.post_id);
-            if (post) post.community_post_reactions = post.community_post_reactions.filter(
-              (item) => item.user_id !== query.filters.user_id,
-            );
-            return Promise.resolve({ data: null, error: null }).then(resolve, reject);
-          }
-          if (table === "shared_goals" && window.__testFailSharedGoals) {
-            return Promise.reject(new Error("Erro de rede simulado")).then(resolve, reject);
-          }
-          if (table === "shared_goals" && window.__testSharedGoalsResponseError) {
-            return Promise.resolve({
-              data: null,
-              error: { message: "Erro de consulta simulado" },
-            }).then(resolve, reject);
-          }
-          if (table === "community_posts" && window.__testCommunityReadError) {
-            return Promise.resolve({ data: null, error: { message: "Erro de consulta da comunidade" } }).then(resolve, reject);
-          }
-          let rows = dataForQuery().filter((row) =>
-            Object.entries(query.filters).every(([column, value]) => row[column] === value) &&
-            Object.entries(query.inFilters).every(([column, values]) => values.includes(row[column])),
-          );
-          if (query.order) {
-            const { column, options } = query.order;
-            rows = rows.slice().sort((a, b) => {
-              const comparison = String(a[column]).localeCompare(String(b[column]));
-              return options.ascending ? comparison : -comparison;
-            });
-          }
-          const data = query.maxRows === null ? rows : rows.slice(0, query.maxRows);
-          return Promise.resolve({ data, error: null }).then(resolve, reject);
-        },
       };
-      return builder;
     },
-    async rpc(name, args) {
+    async rpc(name, args = {}) {
       window.__mockCalls.push({ type: "rpc", name, args });
       if (window.__testFailRpc) throw new Error("Erro de RPC simulado");
-      if (name === "get_community_post_stats") {
-        return {
-          data: args.p_post_ids.map((postId) => {
-            const post = communityPosts.find((item) => item.id === postId);
-            return {
-              post_id: postId,
-              comment_count: post ? post.community_post_comments.length : 0,
-              reaction_count: post ? post.community_post_reactions.length : 0,
-              reacted_by_user: Boolean(
-                post && post.community_post_reactions.some((item) => item.user_id === user.id),
-              ),
-            };
-          }),
-          error: null,
-        };
-      }
-      if (name === "get_reader_group_cycle_summaries") {
-        const groupedCycles = readerGroupCycles.filter((cycle) =>
-          args.p_group_ids.includes(cycle.group_id),
-        );
-        const totalByGroup = groupedCycles.reduce((totals, cycle) => {
-          totals[cycle.group_id] = (totals[cycle.group_id] || 0) + 1;
-          return totals;
-        }, {});
-        const recentByGroup = new Map();
-        groupedCycles
-          .slice()
-          .sort((a, b) => String(b.cycle_month).localeCompare(String(a.cycle_month)))
-          .forEach((cycle) => {
-            const groupCycles = recentByGroup.get(cycle.group_id) || [];
-            if (groupCycles.length < args.p_cycles_per_group) groupCycles.push(cycle);
-            recentByGroup.set(cycle.group_id, groupCycles);
-          });
-        return {
-          data: Array.from(recentByGroup.values()).flat().map((cycle) => {
-            return {
-              ...cycle,
-              candidate_count: cycle.status === "nominations"
-                ? readerBookCandidates.filter((candidate) => candidate.cycle_id === cycle.id).length
-                : 0,
-              progress_count: cycle.status === "reading"
-                ? readerProgress.filter((entry) => entry.cycle_id === cycle.id).length
-                : 0,
-              total_cycle_count: totalByGroup[cycle.group_id] || 0,
-            };
-          }),
-          error: null,
-        };
-      }
-      if (name === "get_reader_group_cycle_details") {
-        const cycle = readerGroupCycles.find((item) => item.id === args.p_cycle_id);
-        if (!cycle) return { data: [], error: null };
-        const candidates = cycle.status === "nominations"
-          ? readerBookCandidates
-            .filter((candidate) => candidate.cycle_id === cycle.id)
-            .map((candidate) => ({
-              id: candidate.id,
-              cycle_id: candidate.cycle_id,
-              title: candidate.title,
-              author: candidate.author,
-              isbn: candidate.isbn,
-              nominated_at: candidate.nominated_at,
-              nomination_count: readerNominations.filter(
-                (nomination) => nomination.candidate_id === candidate.id,
-              ).length,
-            }))
-          : [];
-        const allProgress = cycle.status === "reading"
-          ? readerProgress
-            .filter((entry) => entry.cycle_id === cycle.id)
-            .slice()
-            .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
-          : [];
-        return {
-          data: [{
-            cycle_id: cycle.id,
-            candidates,
-            progress: allProgress.slice(0, 8).map((entry) => ({
-              ...entry,
-              reader_profiles: {
-                display_name: readerProfiles.find((profile) => profile.user_id === entry.user_id)?.display_name
-                  || communityProfile?.display_name
-                  || "Leitor",
-              },
-            })),
-            progress_count: allProgress.length,
-          }],
-          error: null,
-        };
-      }
+
       if (name === "save_my_app_data") {
         if (args.p_expected_revision !== accountRevision) {
           return {
@@ -459,97 +168,22 @@ const MOCK_SDK = `
           error: null,
         };
       }
-      if (name === "create_group_with_owner") {
-        const createdGroupId = "33333333-3333-4333-8333-333333333333";
-        groups.push({
-          user_id: user.id,
-          groups: {
-            id: createdGroupId,
-            name: args.p_name,
-            invite_code: "A1B2C3D4E5F60718",
-          },
-        });
-        return { data: createdGroupId, error: null };
+
+      if (
+        name === "get_my_usage_analytics_consent" ||
+        name === "get_my_usage_analytics_consent_prompt" ||
+        name === "is_site_usage_admin"
+      ) {
+        return { data: false, error: null };
       }
-      if (name === "join_group_by_invite") {
-        const group = groups.find(
-          (item) => item.groups.invite_code === String(args.p_invite_code).toUpperCase(),
-        );
-        return { data: group ? group.groups.id : null, error: null };
-      }
-      if (name === "create_reader_group") {
-        const groupId = "reader-group-" + (++generatedId);
-        const group = {
-          id: groupId,
-          name: args.p_name,
-          description: args.p_description,
-          invite_code: "A1B2C3D4E5F60718",
-          created_by: user.id,
-        };
-        readerGroups.push(group);
-        readerGroupMembers.push({ user_id: user.id, role: "owner", joined_at: "2026-02-01T00:00:00.000Z", reader_groups: group });
-        return { data: groupId, error: null };
-      }
-      if (name === "join_reader_group") {
-        const group = readerGroups.find((item) => item.invite_code === args.p_invite_code);
-        if (!group) return { data: null, error: null };
-        if (!readerGroupMembers.some((item) => item.reader_groups.id === group.id)) {
-          readerGroupMembers.push({ user_id: user.id, role: "member", joined_at: "2026-02-01T00:00:00.000Z", reader_groups: group });
-        }
-        return { data: group.id, error: null };
-      }
-      if (name === "open_reader_cycle") {
-        const cycleId = "cycle-" + (++generatedId);
-        readerGroupCycles.push({
-          id: cycleId,
-          group_id: args.p_group_id,
-          cycle_month: args.p_cycle_month,
-          status: args.p_book_title ? "reading" : "nominations",
-          selected_title: args.p_book_title,
-          selected_author: args.p_book_author,
-          selected_isbn: args.p_book_isbn,
-        });
-        return { data: cycleId, error: null };
-      }
-      if (name === "nominate_reader_book") {
-        const key = args.p_cycle_id + ":" + args.p_title.toLocaleLowerCase() + ":" + args.p_author.toLocaleLowerCase();
-        let candidate = readerBookCandidates.find((item) => item.key === key);
-        if (!candidate) {
-          candidate = {
-            id: "candidate-" + (++generatedId),
-            key,
-            cycle_id: args.p_cycle_id,
-            title: args.p_title,
-            author: args.p_author,
-            isbn: args.p_isbn,
-            nominated_at: "2026-02-01T12:00:00.000Z",
-          };
-          readerBookCandidates.push(candidate);
-        }
-        if (!readerNominations.some((item) => item.candidate_id === candidate.id && item.user_id === user.id)) {
-          readerNominations.push({ candidate_id: candidate.id, cycle_id: args.p_cycle_id, user_id: user.id });
-        }
-        return { data: candidate.id, error: null };
-      }
-      if (name === "draw_reader_book") {
-        const cycle = readerGroupCycles.find((item) => item.id === args.p_cycle_id);
-        const nomination = readerNominations.find((item) => item.cycle_id === args.p_cycle_id);
-        const candidate = nomination && readerBookCandidates.find((item) => item.id === nomination.candidate_id);
-        if (!cycle || !candidate) return { data: null, error: { message: "Indiquem ao menos um livro antes do sorteio" } };
-        cycle.status = "reading";
-        cycle.selected_title = candidate.title;
-        cycle.selected_author = candidate.author;
-        cycle.selected_isbn = candidate.isbn;
-        return { data: candidate.id, error: null };
-      }
-      return { data: ${JSON.stringify(GROUP_ID)}, error: null };
+
+      return { data: null, error: null };
     },
   };
 
   window.supabase = { createClient: () => client };
 })();
 `;
-
 let server;
 let browser;
 let baseUrl;
@@ -628,12 +262,6 @@ after(async () => {
 async function openApp({
   authenticated = true,
   failRpc = false,
-  failSharedGoals = false,
-  sharedGoalsResponseError = false,
-  noCommunityProfile = false,
-  communityReadError = false,
-  communityActionError = false,
-  communityXss = false,
   legacyData = null,
   signInError = null,
   signUpError = null,
@@ -652,12 +280,6 @@ async function openApp({
   await page.addInitScript((options) => {
     window.__testAuthenticated = options.authenticated;
     window.__testFailRpc = options.failRpc;
-    window.__testFailSharedGoals = options.failSharedGoals;
-    window.__testSharedGoalsResponseError = options.sharedGoalsResponseError;
-    window.__testCommunityProfileMissing = options.noCommunityProfile;
-    window.__testCommunityReadError = options.communityReadError;
-    window.__testCommunityActionError = options.communityActionError;
-    window.__testCommunityXss = options.communityXss;
     window.__testSignInError = options.signInError;
     window.__testSignUpError = options.signUpError;
     window.__testResendError = options.resendError;
@@ -669,12 +291,6 @@ async function openApp({
   }, {
     authenticated,
     failRpc,
-    failSharedGoals,
-    sharedGoalsResponseError,
-    noCommunityProfile,
-    communityReadError,
-    communityActionError,
-    communityXss,
     legacyData,
     signInError,
     signUpError,
@@ -1333,108 +949,7 @@ test("configura barreiras estáticas básicas para autenticação", () => {
   assert.match(userDataSql, /revoke all on function public\.save_my_app_data/i);
 });
 
-test.skip("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar", async () => {
-  const { context, page } = await openApp();
 
-  try {
-    await waitForApp(page);
-    await page
-      .getByText("Metas dos grupos", { exact: true })
-      .waitFor({ state: "visible" });
-    await page
-      .getByText("Preparar a prova", { exact: true })
-      .waitFor({ state: "visible" });
-
-    await page.locator('#view [data-tab="grupos"]').click();
-    await page
-      .locator('form[data-form="group"] input[name="name"]')
-      .fill("Grupo novo");
-    await page
-      .locator('form[data-form="group"] button[type="submit"]')
-      .click();
-    await page.waitForFunction(
-      () =>
-        window.__mockCalls.some(
-          (call) => call.type === "rpc" && call.name === "create_group_with_owner",
-        ),
-      null,
-      { timeout: 5_000 },
-    );
-    await page
-      .locator("#view .card")
-      .filter({ hasText: "A1B2C3D4E5F60718" })
-      .getByText("Grupo novo", { exact: true })
-      .waitFor({ state: "visible", timeout: 10_000 });
-
-    const createGroupCall = await page.evaluate(() =>
-      window.__mockCalls.find(
-        (call) => call.type === "rpc" && call.name === "create_group_with_owner",
-      ),
-    );
-    assert.deepEqual(createGroupCall.args, { p_name: "Grupo novo" });
-
-    await page.locator('#sidenav [data-tab="agenda"]').click();
-    await page.locator("#k-title").waitFor({ state: "visible" });
-    await page.locator("#k-title").fill("Atividade persistente de teste");
-    await page.locator('form[data-form="task"] button[type="submit"]').click();
-    await page
-      .locator("#view .list .t")
-      .filter({ hasText: "Atividade persistente de teste" })
-      .waitFor({ state: "visible" });
-    await page
-      .locator("#view li")
-      .filter({ hasText: "Atividade persistente de teste" })
-      .locator('[data-a="toggle"]')
-      .click();
-    await page
-      .locator("#view li.done")
-      .filter({ hasText: "Atividade persistente de teste" })
-      .waitFor({ state: "visible" });
-
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="agenda"]').click();
-    await page
-      .locator("#view .list .t")
-      .filter({ hasText: "Atividade persistente de teste" })
-      .waitFor({ state: "visible" });
-    assert.equal(
-      await page.evaluate((storageKey) => {
-        const data = JSON.parse(localStorage.getItem(storageKey));
-        const task = data.tasks.find(
-          (item) => item.title === "Atividade persistente de teste",
-        );
-        return task && task.done;
-      }, STORAGE_KEY),
-      true,
-    );
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("renderiza a agenda e salva novos compromissos", async () => {
-  const { context, page } = await openApp();
-
-  try {
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="agenda"]').click();
-    await page.locator("#e-title").fill("Compromisso da agenda");
-    await page.locator('form[data-form="event"] button[type="submit"]').click();
-    await page
-      .locator("#view .list .t")
-      .filter({ hasText: "Compromisso da agenda" })
-      .waitFor({ state: "visible" });
-
-    const saved = await page.evaluate((storageKey) => {
-      const data = JSON.parse(localStorage.getItem(storageKey));
-      return data.events.some((event) => event.title === "Compromisso da agenda");
-    }, STORAGE_KEY);
-    assert.equal(saved, true);
-  } finally {
-    await context.close();
-  }
-});
 
 test("salva dados pelas telas acadêmicas extraídas", async () => {
   const { context, page } = await openApp();
@@ -1664,317 +1179,6 @@ test("não oferece apagamento global e preserva os dados da conta", async () => 
     const after = await page.evaluate((storageKey) => JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
     assert.ok(after.habits.some((item) => item.id === "legacy-habit"));
     assert.ok(after.goals.some((item) => item.id === "legacy-goal"));
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("exibe erro de consulta de objetivos sem esconder o restante da aba Grupos", async () => {
-  const { context, page } = await openApp({ sharedGoalsResponseError: true });
-
-  try {
-    await waitForApp(page);
-    await page.locator('#view [data-tab="grupos"]').click();
-    await page
-      .getByText("Não foi possível carregar os objetivos compartilhados agora.", { exact: true })
-      .waitFor({ state: "visible" });
-    await page
-      .locator("#view p")
-      .filter({ hasText: "Grupo de teste" })
-      .first()
-      .waitFor({ state: "visible" });
-    await page.locator('form[data-form="group"] input[name="name"]').waitFor({ state: "visible" });
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("mostra estado de erro e permite repetir uma tela após falha de rede", async () => {
-  const { context, page } = await openApp({ failSharedGoals: true });
-
-  try {
-    await waitForApp(page);
-    await page.locator('#view [data-tab="grupos"]').click();
-    await page
-      .getByText("Não foi possível abrir esta tela", { exact: true })
-      .waitFor({ state: "visible" });
-
-    await page.evaluate(() => {
-      window.__testFailSharedGoals = false;
-    });
-    await page.locator('[data-a="retry"]').click();
-    await page.locator('form[data-form="group"] input[name="name"]').waitFor({ state: "visible" });
-    await page
-      .locator("#view p")
-      .filter({ hasText: "Grupo de teste" })
-      .first()
-      .waitFor({ state: "visible" });
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("mostra um erro amigável quando uma ação do Supabase rejeita", async () => {
-  const { context, page } = await openApp({ failRpc: true });
-
-  try {
-    await waitForApp(page);
-    await page.locator('#view [data-tab="grupos"]').click();
-    await page.locator('form[data-form="group"] input[name="name"]').fill("Grupo indisponível");
-    await page.locator('form[data-form="group"] button[type="submit"]').click();
-    await page
-      .getByText("Não foi possível concluir esta ação. Tente novamente.", { exact: true })
-      .waitFor({ state: "visible" });
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("cria perfil, publica, reage, comenta e denuncia na Comunidade", async () => {
-  const { context, page } = await openApp({ noCommunityProfile: true });
-
-  try {
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="comunidade"]').click();
-    await page.locator('form[data-community-form="profile"]').waitFor({ state: "visible" });
-    assert.equal(await page.locator('form[data-community-form="post"]').count(), 0);
-
-    await page.locator('form[data-community-form="profile"] input[name="display_name"]').fill("Leitora nova");
-    await page.locator('form[data-community-form="profile"] textarea[name="bio"]').fill("Gosto de ficção científica");
-    await page.locator('form[data-community-form="profile"] button[type="submit"]').click();
-    await page.locator('form[data-community-form="post"]').waitFor({ state: "visible" });
-
-    await page.locator('form[data-community-form="post"] textarea[name="body"]').fill("Minha primeira conversa sobre livros");
-    await page.locator('form[data-community-form="post"] input[name="book_title"]').fill("Mar Aberto");
-    await page.locator('form[data-community-form="post"] input[name="book_author"]').fill("Autora Exemplo");
-    await page.locator('form[data-community-form="post"] button[type="submit"]').click();
-    const newPost = page.locator(".community-post").filter({ hasText: "Minha primeira conversa sobre livros" });
-    await newPost.waitFor({ state: "visible" });
-    await newPost.getByText("Mar Aberto", { exact: true }).waitFor({ state: "visible" });
-
-    const seedPost = page.locator(".community-post").filter({ hasText: "Terminei um capítulo muito bom hoje." });
-    await seedPost.locator('[data-community-action="reaction"]').click();
-    await seedPost.getByRole("button", { name: /2 curtidas/ }).waitFor({ state: "visible" });
-
-    await seedPost.locator('form[data-community-form="comment"] input[name="body"]').fill("Vou colocar na minha lista!");
-    await seedPost.locator('form[data-community-form="comment"] button[type="submit"]').click();
-    await seedPost.getByText("Vou colocar na minha lista!", { exact: true }).waitFor({ state: "visible" });
-
-    await seedPost.locator("details.community-report > summary").click();
-    await seedPost.locator('form[data-community-form="report"] select[name="reason"]').selectOption("inappropriate");
-    await seedPost.locator('form[data-community-form="report"] textarea[name="details"]').fill("Denúncia de teste");
-    await seedPost.locator('form[data-community-form="report"] button[type="submit"]').click();
-    await page.getByText("Denúncia enviada. Obrigado por ajudar a manter a comunidade segura.", { exact: true }).waitFor({ state: "visible" });
-
-    const savedCalls = await page.evaluate(() => window.__mockCalls);
-    assert.ok(savedCalls.some((call) => call.type === "upsert" && call.table === "reader_profiles" && call.values.display_name === "Leitora nova"));
-    assert.ok(savedCalls.some((call) => call.type === "insert" && call.table === "community_posts" && call.values.book_title === "Mar Aberto"));
-    assert.ok(savedCalls.some((call) => call.type === "insert" && call.table === "community_post_comments" && call.values.body === "Vou colocar na minha lista!"));
-    assert.ok(savedCalls.some((call) => call.type === "insert" && call.table === "community_post_reports" && call.values.reason === "inappropriate"));
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("cria grupo de leitura, abre ciclo, recebe indicação, sorteia e salva progresso", async () => {
-  const { context, page } = await openApp();
-
-  try {
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="comunidade"]').click();
-    await page.locator('form[data-community-form="create-group"] input[name="name"]').fill("Clube recém-criado");
-    await page.locator('form[data-community-form="create-group"] textarea[name="description"]').fill("Leituras mensais");
-    await page.locator('form[data-community-form="create-group"] button[type="submit"]').click();
-
-    const group = page.locator(".community-group-card").filter({ hasText: "Clube recém-criado" });
-    await group.waitFor({ state: "visible" });
-    await group.locator("details.community-open-cycle > summary").click();
-    await group.locator('form[data-community-form="open-cycle"] button[type="submit"]').click();
-    await group.getByText("Indicações abertas", { exact: true }).waitFor({ state: "visible" });
-    await group.locator('[data-community-action="load-cycle-details"]').click();
-    await group.locator('form[data-community-form="nominate"]').waitFor({ state: "visible" });
-
-    await group.locator('form[data-community-form="nominate"] input[name="title"]').fill("O planeta azul");
-    await group.locator('form[data-community-form="nominate"] input[name="author"]').fill("L. Leitora");
-    await group.locator('form[data-community-form="nominate"] button[type="submit"]').click();
-    await group.getByText("O planeta azul", { exact: true }).waitFor({ state: "visible" });
-
-    page.once("dialog", (dialog) => dialog.accept());
-    await group.locator('[data-community-action="draw"]').click();
-    await group.locator(".community-selected-book").getByText("O planeta azul", { exact: true }).waitFor({ state: "visible" });
-
-    const progressForm = group.locator('form[data-community-form="progress"]');
-    async function rejectProgress(values, message) {
-      await progressForm.evaluate((form, nextValues) => {
-        Object.entries(nextValues).forEach(([name, value]) => {
-          form.querySelector(`[name="${name}"]`).value = value;
-        });
-        form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-      }, values);
-      await page.getByText(message, { exact: true }).waitFor({ state: "visible" });
-      assert.equal(
-        await page.evaluate(() => window.__mockCalls.filter(
-          (call) => call.type === "insert" && call.table === "reader_group_progress_updates",
-        ).length),
-        0,
-      );
-    }
-
-    await rejectProgress(
-      { percent: "101", pages: "", total_pages: "" },
-      "O percentual precisa ser um número inteiro entre 0 e 100.",
-    );
-    await rejectProgress(
-      { percent: "", pages: "20", total_pages: "" },
-      "Informe as páginas lidas e o total de páginas juntos.",
-    );
-    await rejectProgress(
-      { percent: "", pages: "101", total_pages: "100" },
-      "As páginas lidas não podem passar do total do livro.",
-    );
-
-    await progressForm.locator('input[name="percent"]').fill("35");
-    await progressForm.locator('input[name="pages"]').fill("");
-    await progressForm.locator('input[name="total_pages"]').fill("");
-    await progressForm.locator('textarea[name="note"]').fill("A história começou a ficar intensa.");
-    await progressForm.locator('button[type="submit"]').click();
-    await group.getByText("A história começou a ficar intensa.", { exact: true }).waitFor({ state: "visible" });
-
-    const savedCalls = await page.evaluate(() => window.__mockCalls);
-    const createGroup = savedCalls.find((call) => call.type === "rpc" && call.name === "create_reader_group");
-    const openCycle = savedCalls.find((call) => call.type === "rpc" && call.name === "open_reader_cycle");
-    const nomination = savedCalls.find((call) => call.type === "rpc" && call.name === "nominate_reader_book");
-    const draw = savedCalls.find((call) => call.type === "rpc" && call.name === "draw_reader_book");
-    const progress = savedCalls.find((call) => call.type === "insert" && call.table === "reader_group_progress_updates");
-    assert.deepEqual(createGroup.args, { p_name: "Clube recém-criado", p_description: "Leituras mensais" });
-    assert.equal(openCycle.args.p_book_title, null);
-    assert.equal(nomination.args.p_title, "O planeta azul");
-    assert.ok(draw);
-    assert.equal(progress.values.percent_complete, 35);
-    assert.equal(progress.values.note, "A história começou a ficar intensa.");
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("entra em grupo de leitura usando código de convite", async () => {
-  const { context, page } = await openApp();
-
-  try {
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="comunidade"]').click();
-    await page.locator('form[data-community-form="join-group"] input[name="invite_code"]').fill("join1234");
-    await page.locator('form[data-community-form="join-group"] button[type="submit"]').click();
-    await page.locator(".community-group-card").filter({ hasText: "Clube aberto" }).waitFor({ state: "visible" });
-
-    const joinCall = await page.evaluate(() => window.__mockCalls.find((call) => call.type === "rpc" && call.name === "join_reader_group"));
-    assert.deepEqual(joinCall.args, { p_invite_code: "JOIN1234" });
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("aceita formatos de convite de leitura e apresenta o erro sem falso sucesso", async () => {
-  const { context, page } = await openApp();
-
-  try {
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="comunidade"]').click();
-    const communityCode = page.locator(
-      'form[data-community-form="join-group"] input[name="invite_code"]',
-    );
-    assert.equal(await communityCode.getAttribute("maxlength"), "16");
-    assert.match(await communityCode.getAttribute("pattern"), /\[A-Fa-f0-9\]\{16\}/);
-    assert.equal(
-      await communityCode.evaluate((input) => {
-        input.value = "ABCD1234";
-        return input.checkValidity();
-      }),
-      true,
-    );
-    assert.equal(
-      await communityCode.evaluate((input) => {
-        input.value = "A1B2C3D4E5F60718";
-        return input.checkValidity();
-      }),
-      true,
-    );
-    await communityCode.fill("BADCODE1");
-    await page.locator('form[data-community-form="join-group"] button[type="submit"]').click();
-    await page
-      .getByText(
-        "Código inválido ou grupo indisponível. Confira o convite; após várias tentativas, aguarde 15 minutos.",
-        { exact: true },
-      )
-      .last()
-      .waitFor({ state: "visible" });
-
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("inclui Comunidade nas abas configuráveis e respeita ativar/desativar", async () => {
-  const { context, page } = await openApp();
-
-  try {
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="comunidade"]').waitFor({ state: "visible" });
-    await page.locator('#sidenav [data-tab="sistema"]').click();
-
-    const setting = page.locator('[data-a="module-toggle"][data-module="comunidade"]');
-    await setting.waitFor({ state: "visible" });
-    assert.equal(await setting.isChecked(), true);
-    await setting.uncheck();
-    await page.locator('#sidenav [data-tab="comunidade"]').waitFor({ state: "detached" });
-    assert.equal(
-      await page.evaluate((storageKey) => JSON.parse(localStorage.getItem(storageKey)).enabledTabs.comunidade, STORAGE_KEY),
-      false,
-    );
-
-    await page.locator('[data-a="module-toggle"][data-module="comunidade"]').check();
-    await page.locator('#sidenav [data-tab="comunidade"]').waitFor({ state: "visible" });
-  } finally {
-    await context.close();
-  }
-});
-
-test.skip("a Comunidade mostra erro de leitura sem ocultar grupos e evita HTML em conteúdo de leitores", async () => {
-  const failed = await openApp({ communityReadError: true });
-
-  try {
-    await waitForApp(failed.page);
-    await failed.page.locator('#sidenav [data-tab="comunidade"]').click();
-    await failed.page.getByText("Não foi possível carregar as publicações agora. Tente atualizar a tela.", { exact: true }).waitFor({ state: "visible" });
-    await failed.page.getByText("Clube de teste", { exact: true }).waitFor({ state: "visible" });
-  } finally {
-    await failed.context.close();
-  }
-
-  const xss = await openApp({ communityXss: true });
-  try {
-    await waitForApp(xss.page);
-    await xss.page.locator('#sidenav [data-tab="comunidade"]').click();
-    await xss.page.locator(".community-post").waitFor({ state: "visible" });
-    await xss.page.waitForTimeout(50);
-    assert.equal(await xss.page.locator('#view img[src="/missing-image"]').count(), 0);
-    assert.equal(await xss.page.evaluate(() => window.__testXss === true), false);
-  } finally {
-    await xss.context.close();
-  }
-});
-
-test.skip("mostra erro amigável quando uma ação do feed falha", async () => {
-  const { context, page } = await openApp({ communityActionError: true });
-
-  try {
-    await waitForApp(page);
-    await page.locator('#sidenav [data-tab="comunidade"]').click();
-    const post = page.locator(".community-post").filter({ hasText: "Terminei um capítulo muito bom hoje." });
-    await post.locator('form[data-community-form="comment"] input[name="body"]').fill("Comentário que falhará");
-    await post.locator('form[data-community-form="comment"] button[type="submit"]').click();
-    await page.getByText(/Não foi possível concluir\. Verifique os dados e tente novamente\./).waitFor({ state: "visible" });
-    assert.equal(await post.getByText("Comentário que falhará", { exact: true }).count(), 0);
   } finally {
     await context.close();
   }

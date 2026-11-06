@@ -217,9 +217,7 @@
   }
 
   function navHtml(heads) {
-    var state = stateStore.getState();
-    var enabledTabs = state ? state.enabledTabs || {} : {};
-    var visibleTabs = ModuleRegistry.visibleTabs(enabledTabs);
+    var visibleTabs = ModuleRegistry.visibleTabs();
     if (isUsageAdmin) {
       visibleTabs = visibleTabs.concat([
         [

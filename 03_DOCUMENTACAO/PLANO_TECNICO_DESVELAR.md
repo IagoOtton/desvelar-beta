@@ -1,5 +1,7 @@
 # DESVELAR --- Plano Técnico do Projeto
 
+> Plano histórico, escrito para uma versão anterior do produto. Seções e funcionalidades citadas aqui não descrevem o escopo atual; use [ARQUITETURA_E_ESCOPO_ATUAL.md](ARQUITETURA_E_ESCOPO_ATUAL.md) como referência vigente. Mantido apenas como registro de decisões e contexto.
+
 **Documento de referência --- versão 1.0**\
 **Objetivo:** orientar a evolução do DESVELAR de um painel pessoal para
 uma aplicação modular, segura, sincronizada e potencialmente
