@@ -4604,7 +4604,8 @@ body:has(#view .study-heading--notebook) .study-heading--notebook {
   font-size: 14px;
 }
 
-#view:has(.study-heading--notebook) .area-tabs {
+#view:has(.study-heading--notebook) .area-tabs,
+#view:has(> .reading-area-tabs) .area-tabs {
   position: relative;
   gap: 8px;
   margin: 0;
@@ -4619,11 +4620,13 @@ body:has(#view .study-heading--notebook) .study-heading--notebook {
   mask-image: none;
 }
 
-#view:has(.study-heading--notebook) .area-tabs::-webkit-scrollbar {
+#view:has(.study-heading--notebook) .area-tabs::-webkit-scrollbar,
+#view:has(> .reading-area-tabs) .area-tabs::-webkit-scrollbar {
   display: none;
 }
 
-#view:has(.study-heading--notebook) .area-tab {
+#view:has(.study-heading--notebook) .area-tab,
+#view:has(> .reading-area-tabs) .area-tab {
   min-height: 44px;
   padding: 8px 12px;
   border: 0;
@@ -4633,7 +4636,8 @@ body:has(#view .study-heading--notebook) .study-heading--notebook {
   font-weight: 500;
 }
 
-#view:has(.study-heading--notebook) .area-tab:hover:not([aria-current="page"]) {
+#view:has(.study-heading--notebook) .area-tab:hover:not([aria-current="page"]),
+#view:has(> .reading-area-tabs) .area-tab:hover:not([aria-current="page"]) {
   background: transparent;
   color: var(--ink);
 }
@@ -5035,13 +5039,15 @@ body:has(#view .study-heading--notebook) .study-heading--notebook {
     font-size: 13px;
   }
 
-  #view:has(.study-heading--notebook) .area-tabs {
+  #view:has(.study-heading--notebook) .area-tabs,
+  #view:has(> .reading-area-tabs) .area-tabs {
     margin-top: -2px;
     flex-wrap: wrap;
     overflow: visible;
   }
 
-  #view:has(.study-heading--notebook) .area-tab {
+  #view:has(.study-heading--notebook) .area-tab,
+  #view:has(> .reading-area-tabs) .area-tab {
     flex: 1 1 calc((100% - 12px) / 3);
     min-height: 42px;
     padding-inline: 11px;
@@ -9232,5 +9238,904 @@ body:has(#view .study-heading--strength) nav.bottom {
   .strength-dashboard-routine-link {
     grid-column: auto;
   }
+}
+
+/* Leitura: uma biblioteca noturna, visualmente separada de Estudos. */
+html:has(#view > .reading-area-tabs) {
+  background: #171113;
+  scrollbar-width: none;
+}
+
+html:has(#view > .reading-area-tabs)::-webkit-scrollbar {
+  display: none;
+}
+
+body:has(#view > .reading-area-tabs) {
+  --bg: #171113;
+  --surface: #241b1e;
+  --surface2: #332429;
+  --line: #61474b;
+  --ink: #f3ece8;
+  --muted: #c9bfba;
+  --a1: #e4b968;
+  --a2: #914858;
+  --good: #a5bb8c;
+  --warn: #e4b968;
+  --bad: #ef9082;
+  --on-a: #291a1a;
+  --shadow: 0 18px 46px rgba(0, 0, 0, 0.38);
+  --dots: rgba(228, 185, 104, 0.025);
+  --grad: linear-gradient(135deg, #c18e43, #f0d18a);
+  color-scheme: dark;
+  background:
+    radial-gradient(900px 620px at 8% -18%, rgba(115, 48, 65, 0.24), transparent 64%),
+    radial-gradient(760px 540px at 96% 4%, rgba(211, 157, 83, 0.13), transparent 60%),
+    linear-gradient(160deg, #171113, #100d0f 72%);
+  background-attachment: fixed;
+}
+
+body:has(#view > .reading-area-tabs)::before {
+  opacity: 0.12;
+}
+
+#view:has(> .reading-area-tabs) {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100svh - 44px);
+  padding: clamp(20px, 2.5vw, 38px);
+  overflow: hidden;
+  border: 1px solid rgba(198, 151, 91, 0.22);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 84% 0%, rgba(209, 158, 82, 0.12), transparent 32%),
+    radial-gradient(ellipse at 8% 24%, rgba(116, 48, 64, 0.16), transparent 42%),
+    linear-gradient(150deg, rgba(48, 31, 36, 0.98), rgba(27, 21, 24, 0.99) 58%, #191315);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 231, 192, 0.045);
+}
+
+#view:has(> .reading-area-tabs)::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  background: url("../assets/library-shelves.svg") right center / min(48%, 600px) 100% no-repeat;
+  content: "";
+  opacity: 0.55;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 47%, rgba(0, 0, 0, 0.42) 68%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 47%, rgba(0, 0, 0, 0.42) 68%, #000 100%);
+}
+
+#view:has(> .reading-area-tabs) > * {
+  position: relative;
+  z-index: 1;
+}
+
+#view:has(> .reading-area-tabs) > div:first-child::before {
+  display: block;
+  margin-bottom: 10px;
+  color: #e4b968;
+  content: "SUA BIBLIOTECA PARTICULAR";
+  font: 600 10px/1.4 var(--body);
+  letter-spacing: 0.13em;
+}
+
+#view:has(> .reading-area-tabs) > div:first-child h1 {
+  color: #f7f2ef;
+  font: 600 clamp(34px, 4vw, 48px)/1.12 var(--display);
+  letter-spacing: -0.025em;
+}
+
+#view:has(> .reading-area-tabs) > div:first-child .sub {
+  max-width: 62ch;
+  margin-top: 9px;
+  color: #c9bfba;
+  font-size: 15px;
+}
+
+#view .reading-area-tabs .area-tab[aria-current="page"] {
+  color: #fff4ed;
+  background: #713344;
+  box-shadow: none;
+}
+
+#view:has(> .reading-area-tabs) .reading-view,
+#view:has(> .reading-area-tabs) .reading-section {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  min-width: 0;
+}
+
+#view:has(> .reading-area-tabs) .reading-view h2,
+#view:has(> .reading-area-tabs) .reading-section-heading h2,
+#view:has(> .reading-area-tabs) .book h3 {
+  color: #f7f2ef;
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+#view:has(> .reading-area-tabs) .card {
+  border-color: rgba(209, 169, 111, 0.25);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(54, 39, 44, 0.84), rgba(35, 27, 30, 0.89));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 236, 208, 0.035);
+}
+
+#view:has(> .reading-area-tabs) .card:has(> form[data-form]) {
+  border-color: rgba(209, 169, 111, 0.32);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(200, 146, 72, 0.09), transparent 48%),
+    linear-gradient(145deg, rgba(52, 38, 43, 0.88), rgba(35, 27, 30, 0.92) 76%);
+}
+
+#view:has(> .reading-area-tabs) .eyebrow,
+#view:has(> .reading-area-tabs) .reading-section-heading .eyebrow {
+  color: #e4b968;
+}
+
+#view:has(> .reading-area-tabs) .reading-today-card {
+  border-color: rgba(228, 185, 104, 0.32);
+  background:
+    radial-gradient(ellipse at 90% 5%, rgba(228, 185, 104, 0.15), transparent 34%),
+    linear-gradient(115deg, #38252a, #281e22 70%);
+}
+
+#view:has(> .reading-area-tabs) .reading-today-card h2,
+#view:has(> .reading-area-tabs) .reading-today-streak strong {
+  color: #f0ca7c;
+}
+
+#view:has(> .reading-area-tabs) .reading-current-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: rgba(228, 185, 104, 0.38);
+  background:
+    radial-gradient(ellipse at 92% 6%, rgba(225, 177, 92, 0.17), transparent 35%),
+    linear-gradient(132deg, #4a2931, #302127 56%, #251b1f);
+}
+
+#view:has(> .reading-area-tabs) .reading-current-card::after {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: 28px;
+  width: 118px;
+  height: 164px;
+  border: 1px solid rgba(235, 198, 129, 0.14);
+  border-radius: 5px 10px 10px 5px;
+  background: linear-gradient(90deg, rgba(16, 11, 13, 0.28) 0 9px, rgba(227, 182, 105, 0.06) 10px, rgba(131, 63, 71, 0.12));
+  box-shadow: 8px 8px 0 -2px rgba(209, 157, 89, 0.07), 15px 15px 30px rgba(0, 0, 0, 0.14);
+  content: "";
+  opacity: 0.7;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(5deg);
+}
+
+#view:has(> .reading-area-tabs) .reading-current-book,
+#view:has(> .reading-area-tabs) .reading-session-shortcut {
+  position: relative;
+  z-index: 1;
+}
+
+#view:has(> .reading-area-tabs) .reading-current-book h2 {
+  font-size: clamp(25px, 3vw, 34px);
+}
+
+#view:has(> .reading-area-tabs) .reading-timer-card {
+  border-color: rgba(228, 185, 104, 0.34);
+  background:
+    radial-gradient(ellipse at 90% 8%, rgba(210, 157, 84, 0.15), transparent 34%),
+    linear-gradient(145deg, #312226, #21191d);
+}
+
+#view:has(> .reading-area-tabs) .reading-timer-clock {
+  color: #f0ca7c;
+  font: 600 clamp(38px, 6vw, 70px)/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  text-shadow: 0 0 28px rgba(222, 173, 92, 0.18);
+}
+
+#view:has(> .reading-area-tabs) .reading-timer-actions .btn,
+#view:has(> .reading-area-tabs) .reading-current-book .btn {
+  min-height: 44px;
+}
+
+#view:has(> .reading-area-tabs) .reading-book-grid > .book[data-book-status="reading"] {
+  border-left: 3px solid #d9ae62;
+}
+
+#view:has(> .reading-area-tabs) .book-status-badge {
+  border-color: rgba(228, 185, 104, 0.26);
+  background: rgba(228, 185, 104, 0.12);
+  color: #f0ca7c;
+}
+
+#view:has(> .reading-area-tabs) .reading-view input,
+#view:has(> .reading-area-tabs) .reading-view select,
+#view:has(> .reading-area-tabs) .reading-view textarea {
+  border-color: #654c50;
+  background-color: #21191d;
+  color: #f5ead8;
+}
+
+#view:has(> .reading-area-tabs) .reading-view input:focus,
+#view:has(> .reading-area-tabs) .reading-view select:focus,
+#view:has(> .reading-area-tabs) .reading-view textarea:focus {
+  border-color: #e4b968;
+  box-shadow: 0 0 0 3px rgba(228, 185, 104, 0.16);
+}
+
+#view:has(> .reading-area-tabs) .reading-view input::placeholder,
+#view:has(> .reading-area-tabs) .reading-view textarea::placeholder {
+  color: #a9978b;
+}
+
+#view:has(> .reading-area-tabs) .reading-view :focus-visible {
+  outline-color: #f0ca7c;
+}
+
+#view:has(> .reading-area-tabs) .reading-view details > summary {
+  color: #e4b968;
+}
+
+#view:has(> .reading-area-tabs) .reading-view .bar {
+  background: #49373b;
+}
+
+#view:has(> .reading-area-tabs) .reading-view .bar > b {
+  background: linear-gradient(90deg, #a94f57, #e4b968);
+}
+
+@media (max-width: 860px) {
+  #view:has(> .reading-area-tabs) {
+    min-height: auto;
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  #view:has(> .reading-area-tabs) {
+    padding: 18px 14px 20px;
+    border-radius: 22px;
+  }
+
+  #view:has(> .reading-area-tabs) > div:first-child h1 {
+    font-size: 36px;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-today-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-today-streak {
+    min-width: 68px;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-current-card::after {
+    right: 8px;
+    width: 78px;
+    height: 112px;
+    opacity: 0.34;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #view:has(> .reading-area-tabs) .reading-overview-stats .tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-timer-controls {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-timer-clock {
+    padding: 10px 0;
+    text-align: left;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-timer-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-timer-actions .btn {
+    min-height: 46px;
+    white-space: normal;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-timer-actions .btn:only-child {
+    grid-column: 1 / -1;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-timer-actions .btn:last-child:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  #view:has(> .reading-area-tabs) .reading-current-book .btn + .btn {
+    margin: 8px 0 0;
+  }
+}
+
+/* Atividade física: cenário imersivo de academia, sem elementos do mockup. */
+body:has(#view .study-heading--strength) {
+  background:
+    linear-gradient(90deg, rgba(8, 13, 10, 0.6), rgba(8, 13, 10, 0.42) 56%, rgba(8, 13, 10, 0.3)),
+    url("../assets/gym-background.jpg") 58% center / cover no-repeat,
+    linear-gradient(180deg, #111a14, #101713 72%);
+  background-attachment: fixed, fixed, fixed;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) body:has(#view .study-heading--strength) {
+    background:
+      linear-gradient(90deg, rgba(238, 240, 230, 0.88), rgba(238, 240, 230, 0.8) 56%, rgba(238, 240, 230, 0.72)),
+      url("../assets/gym-background.jpg") 58% center / cover no-repeat,
+      #eef0e6;
+    background-attachment: fixed, fixed, fixed;
+  }
+}
+
+:root[data-theme="light"] body:has(#view .study-heading--strength) {
+  background:
+    linear-gradient(90deg, rgba(238, 240, 230, 0.88), rgba(238, 240, 230, 0.8) 56%, rgba(238, 240, 230, 0.72)),
+    url("../assets/gym-background.jpg") 58% center / cover no-repeat,
+    #eef0e6;
+  background-attachment: fixed, fixed, fixed;
+}
+
+@media (max-width: 700px) {
+  body:has(#view .study-heading--strength) {
+    background-position: center, 78% center, center;
+  }
+}
+
+@media (max-width: 700px) and (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) body:has(#view .study-heading--strength) {
+    background-position: center, 78% center, center;
+  }
+}
+
+@media (max-width: 700px) {
+  :root[data-theme="light"] body:has(#view .study-heading--strength) {
+    background-position: center, 78% center, center;
+  }
+}
+
+/* Cartões de treino em vidro discreto, deixando o cenário aparecer suavemente. */
+body:has(#view .study-heading--strength) #view :is(
+  .strength-start-card,
+  .strength-section-card,
+  .strength-routine-editor,
+  .strength-active-aside,
+  .strength-add-exercise,
+  .strength-week-card,
+  .strength-calendar-card,
+  .strength-summary-hero,
+  .strength-performance-focus,
+  .strength-exercise-card
+) {
+  background: linear-gradient(145deg, rgba(34, 46, 38, 0.88), rgba(25, 35, 29, 0.84));
+}
+
+body:has(#view .study-heading--strength) #view .strength-dashboard-hero {
+  background:
+    radial-gradient(ellipse at 88% 12%, rgba(210, 243, 107, 0.1), transparent 34%),
+    linear-gradient(125deg, rgba(32, 55, 42, 0.9), rgba(19, 33, 25, 0.84));
+}
+
+body:has(#view .study-heading--strength) #view :is(
+  .strength-routine-card,
+  .strength-exercise-card,
+  .strength-measurement-stat,
+  .strength-measurement-record,
+  .strength-measurement-value,
+  .strength-routine-row,
+  .strength-history-edit-form,
+  .strength-summary-stats > div,
+  .strength-performance-focus-stats > div
+) {
+  background: rgba(34, 46, 38, 0.8);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) body:has(#view .study-heading--strength) #view :is(
+    .strength-start-card,
+    .strength-section-card,
+    .strength-routine-editor,
+    .strength-active-aside,
+    .strength-add-exercise,
+    .strength-week-card,
+    .strength-calendar-card,
+    .strength-summary-hero,
+    .strength-performance-focus,
+    .strength-exercise-card
+  ) {
+    background: linear-gradient(145deg, rgba(251, 252, 245, 0.9), rgba(230, 236, 223, 0.86));
+  }
+
+  :root:not([data-theme="dark"]) body:has(#view .study-heading--strength) #view :is(
+    .strength-routine-card,
+    .strength-exercise-card,
+    .strength-measurement-stat,
+    .strength-measurement-record,
+    .strength-measurement-value,
+    .strength-routine-row,
+    .strength-history-edit-form,
+    .strength-summary-stats > div,
+    .strength-performance-focus-stats > div
+  ) {
+    background: rgba(230, 236, 223, 0.84);
+  }
+}
+
+:root[data-theme="light"] body:has(#view .study-heading--strength) #view :is(
+  .strength-start-card,
+  .strength-section-card,
+  .strength-routine-editor,
+  .strength-active-aside,
+  .strength-add-exercise,
+  .strength-week-card,
+  .strength-calendar-card,
+  .strength-summary-hero,
+  .strength-performance-focus,
+  .strength-exercise-card
+) {
+  background: linear-gradient(145deg, rgba(251, 252, 245, 0.9), rgba(230, 236, 223, 0.86));
+}
+
+:root[data-theme="light"] body:has(#view .study-heading--strength) #view :is(
+  .strength-routine-card,
+  .strength-exercise-card,
+  .strength-measurement-stat,
+  .strength-measurement-record,
+  .strength-measurement-value,
+  .strength-routine-row,
+  .strength-history-edit-form,
+  .strength-summary-stats > div,
+  .strength-performance-focus-stats > div
+) {
+  background: rgba(230, 236, 223, 0.84);
+}
+
+/* Visão geral: reaproveita o fundo de olhos da entrada do app. */
+#view:has(.home-overview) {
+  --bg: #070807;
+  --surface: #151815;
+  --surface2: #1d211e;
+  --line: #343b35;
+  --ink: #f1f3ee;
+  --muted: #a9b0a8;
+  --a1: #9ab39a;
+  --a2: #b8795d;
+  --good: #9ab39a;
+  --warn: #d8b178;
+  --bad: #e69c91;
+  --on-a: #111511;
+  --grad: linear-gradient(125deg, #9ab39a, #b8795d);
+  --chart-primary: #9ab39a;
+  --chart-secondary: #b8795d;
+  --chart-goal: #d8b178;
+  --chart-grid: #343b35;
+  --chart-text: #a9b0a8;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  color-scheme: dark;
+}
+
+#view > .home-overview {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  min-height: calc(100svh - 44px);
+  padding: clamp(20px, 2.7vw, 36px);
+  overflow: hidden;
+  border: 1px solid rgba(160, 174, 157, 0.2);
+  border-radius: 28px;
+  background-color: #070807;
+  background-image:
+    url("../assets/auth-eyes-pattern.svg"),
+    radial-gradient(ellipse at 50% 45%, rgba(103, 119, 101, 0.14), transparent 58%),
+    radial-gradient(ellipse at 50% 0%, rgba(176, 112, 82, 0.08), transparent 46%);
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-position: center, center, center;
+  background-size: 320px 250px, auto, auto;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+#view > .home-overview > div:first-child::before {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--a1);
+  content: "DESVELAR · SEU ESPAÇO";
+  font: 600 10px / 1.4 var(--mono);
+  letter-spacing: 0.16em;
+}
+
+#view > .home-overview h1 {
+  color: var(--ink);
+  font: 600 clamp(32px, 4vw, 46px) / 1.1 var(--display);
+  letter-spacing: -0.04em;
+}
+
+#view > .home-overview .sub {
+  color: var(--muted);
+}
+
+#view > .home-overview .card {
+  border-color: rgba(160, 174, 157, 0.22);
+  border-radius: 20px;
+  background: linear-gradient(155deg, rgba(22, 25, 22, 0.94), rgba(12, 14, 12, 0.92));
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+#view > .home-overview .kpi,
+#view > .home-overview .tile,
+#view > .home-overview .quick-action {
+  border-color: rgba(160, 174, 157, 0.2);
+  background: rgba(21, 24, 21, 0.9);
+  color: var(--ink);
+}
+
+#view > .home-overview .quick-action:hover {
+  border-color: rgba(154, 179, 154, 0.55);
+  background: rgba(29, 33, 30, 0.96);
+}
+
+#view > .home-overview .quick-action-icon {
+  background: rgba(154, 179, 154, 0.13);
+  color: var(--a1);
+}
+
+#view > .home-overview .welcome-state {
+  border-color: rgba(160, 174, 157, 0.28);
+  background:
+    radial-gradient(circle at 92% 12%, rgba(184, 121, 93, 0.13), transparent 18rem),
+    linear-gradient(155deg, rgba(22, 25, 22, 0.95), rgba(12, 14, 12, 0.93));
+}
+
+#view > .home-overview .welcome-kicker {
+  color: var(--a1);
+}
+
+#view > .home-overview .home-active-workout {
+  border-color: rgba(154, 179, 154, 0.34);
+  background: linear-gradient(115deg, rgba(30, 43, 33, 0.94), rgba(15, 18, 15, 0.92));
+}
+
+#view > .home-overview .home-active-workout .eyebrow {
+  color: var(--a1);
+}
+
+body:has(#view .home-overview) nav.side .nb[aria-current="page"],
+body:has(#view .home-overview) nav.bottom .nb[aria-current="page"] {
+  background: #9ab39a;
+  color: #111511;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) #view:has(.home-overview) {
+    --bg: #f0ede3;
+    --surface: #fffdf7;
+    --surface2: #f7f3e9;
+    --line: #d9d3c7;
+    --ink: #26352e;
+    --muted: #69756c;
+    --a1: #55785d;
+    --a2: #ad674e;
+    --good: #55785d;
+    --warn: #9b6c2c;
+    --bad: #a8443d;
+    --on-a: #fffdf7;
+    --grad: linear-gradient(125deg, #55785d, #ad674e);
+    --chart-primary: #55785d;
+    --chart-secondary: #ad674e;
+    --chart-goal: #9b6c2c;
+    --chart-grid: #d9d3c7;
+    --chart-text: #69756c;
+    --shadow: 0 10px 28px rgba(46, 48, 37, 0.1);
+    color-scheme: light;
+  }
+
+  :root:not([data-theme="dark"]) #view > .home-overview {
+    border-color: rgba(70, 80, 66, 0.2);
+    background-color: #f0ede3;
+    background-image:
+      url("../assets/auth-eyes-pattern.svg"),
+      radial-gradient(ellipse at 50% 45%, rgba(95, 120, 92, 0.08), transparent 58%),
+      radial-gradient(ellipse at 50% 0%, rgba(176, 112, 82, 0.07), transparent 46%);
+    box-shadow: 0 18px 50px rgba(46, 48, 37, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  :root:not([data-theme="dark"]) #view > .home-overview .card {
+    border-color: rgba(70, 80, 66, 0.2);
+    background: linear-gradient(155deg, rgba(255, 253, 247, 0.94), rgba(247, 243, 233, 0.92));
+    box-shadow: 0 8px 24px rgba(46, 48, 37, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  :root:not([data-theme="dark"]) #view > .home-overview .kpi,
+  :root:not([data-theme="dark"]) #view > .home-overview .tile,
+  :root:not([data-theme="dark"]) #view > .home-overview .quick-action {
+    border-color: rgba(70, 80, 66, 0.2);
+    background: rgba(255, 253, 247, 0.9);
+    color: var(--ink);
+  }
+
+  :root:not([data-theme="dark"]) #view > .home-overview .quick-action:hover {
+    background: rgba(247, 243, 233, 0.98);
+  }
+
+  :root:not([data-theme="dark"]) #view > .home-overview .welcome-state {
+    background:
+      radial-gradient(circle at 92% 12%, rgba(173, 103, 78, 0.1), transparent 18rem),
+      linear-gradient(155deg, rgba(255, 253, 247, 0.96), rgba(247, 243, 233, 0.94));
+  }
+
+  :root:not([data-theme="dark"]) #view > .home-overview .home-active-workout {
+    background: linear-gradient(115deg, rgba(232, 239, 227, 0.96), rgba(255, 253, 247, 0.94));
+  }
+
+  :root:not([data-theme="dark"]) body:has(#view .home-overview) nav.side .nb[aria-current="page"],
+  :root:not([data-theme="dark"]) body:has(#view .home-overview) nav.bottom .nb[aria-current="page"] {
+    background: #55785d;
+    color: #fffdf7;
+  }
+}
+
+:root[data-theme="light"] #view:has(.home-overview) {
+  --bg: #f0ede3;
+  --surface: #fffdf7;
+  --surface2: #f7f3e9;
+  --line: #d9d3c7;
+  --ink: #26352e;
+  --muted: #69756c;
+  --a1: #55785d;
+  --a2: #ad674e;
+  --good: #55785d;
+  --warn: #9b6c2c;
+  --bad: #a8443d;
+  --on-a: #fffdf7;
+  --grad: linear-gradient(125deg, #55785d, #ad674e);
+  --chart-primary: #55785d;
+  --chart-secondary: #ad674e;
+  --chart-goal: #9b6c2c;
+  --chart-grid: #d9d3c7;
+  --chart-text: #69756c;
+  --shadow: 0 10px 28px rgba(46, 48, 37, 0.1);
+  color-scheme: light;
+}
+
+:root[data-theme="light"] #view > .home-overview {
+  border-color: rgba(70, 80, 66, 0.2);
+  background-color: #f0ede3;
+  background-image:
+    url("../assets/auth-eyes-pattern.svg"),
+    radial-gradient(ellipse at 50% 45%, rgba(95, 120, 92, 0.08), transparent 58%),
+    radial-gradient(ellipse at 50% 0%, rgba(176, 112, 82, 0.07), transparent 46%);
+  box-shadow: 0 18px 50px rgba(46, 48, 37, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+:root[data-theme="light"] #view > .home-overview .card {
+  border-color: rgba(70, 80, 66, 0.2);
+  background: linear-gradient(155deg, rgba(255, 253, 247, 0.94), rgba(247, 243, 233, 0.92));
+  box-shadow: 0 8px 24px rgba(46, 48, 37, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+:root[data-theme="light"] #view > .home-overview .kpi,
+:root[data-theme="light"] #view > .home-overview .tile,
+:root[data-theme="light"] #view > .home-overview .quick-action {
+  border-color: rgba(70, 80, 66, 0.2);
+  background: rgba(255, 253, 247, 0.9);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] #view > .home-overview .quick-action:hover {
+  background: rgba(247, 243, 233, 0.98);
+}
+
+:root[data-theme="light"] #view > .home-overview .welcome-state {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(173, 103, 78, 0.1), transparent 18rem),
+    linear-gradient(155deg, rgba(255, 253, 247, 0.96), rgba(247, 243, 233, 0.94));
+}
+
+:root[data-theme="light"] #view > .home-overview .home-active-workout {
+  background: linear-gradient(115deg, rgba(232, 239, 227, 0.96), rgba(255, 253, 247, 0.94));
+}
+
+:root[data-theme="light"] body:has(#view .home-overview) nav.side .nb[aria-current="page"],
+:root[data-theme="light"] body:has(#view .home-overview) nav.bottom .nb[aria-current="page"] {
+  background: #55785d;
+  color: #fffdf7;
+}
+
+@media (max-width: 860px) {
+  #view > .home-overview {
+    min-height: calc(100svh - 132px);
+  }
+}
+
+@media (max-width: 600px) {
+  #view > .home-overview {
+    gap: 12px;
+    padding: 16px 13px 20px;
+    border-radius: 22px;
+    background-size: 270px 211px, auto, auto;
+  }
+
+  #view > .home-overview > div:first-child::before {
+    font-size: 9px;
+  }
+
+  #view > .home-overview h1 {
+    font-size: 34px;
+  }
+}
+
+/* Mantém o fundo externo e toda a navegação na paleta da Visão geral. */
+html:has(#view > .home-overview) {
+  background: #070807;
+}
+
+body:has(#view > .home-overview) {
+  --bg: #070807;
+  --surface: #151815;
+  --surface2: #1d211e;
+  --line: #343b35;
+  --ink: #f1f3ee;
+  --muted: #a9b0a8;
+  --a1: #9ab39a;
+  --a2: #b8795d;
+  --on-a: #111511;
+  --dots: rgba(154, 179, 154, 0.025);
+  background: #070807;
+  color: var(--ink);
+}
+
+body:has(#view > .home-overview)::before {
+  opacity: 0.24;
+}
+
+body:has(#view > .home-overview) nav.side,
+body:has(#view > .home-overview) nav.bottom {
+  color: var(--ink);
+}
+
+body:has(#view > .home-overview) nav.side .ng,
+body:has(#view > .home-overview) nav.bottom .ng {
+  color: var(--muted);
+}
+
+body:has(#view > .home-overview) nav.side .nb,
+body:has(#view > .home-overview) nav.bottom .nb {
+  color: var(--muted);
+}
+
+body:has(#view > .home-overview) nav.side .nb:hover,
+body:has(#view > .home-overview) nav.bottom .nb:hover {
+  border-color: rgba(154, 179, 154, 0.28);
+  background: rgba(154, 179, 154, 0.1);
+  color: var(--ink);
+}
+
+body:has(#view > .home-overview) nav.side .nb[aria-current="page"],
+body:has(#view > .home-overview) nav.bottom .nb[aria-current="page"],
+body:has(#view > .home-overview) nav.bottom summary.nb[aria-current="page"] {
+  border-color: rgba(154, 179, 154, 0.58);
+  background: #9ab39a;
+  color: #111511;
+}
+
+body:has(#view > .home-overview) nav.bottom {
+  border-color: rgba(154, 179, 154, 0.26);
+  background: rgba(12, 14, 12, 0.94);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+}
+
+body:has(#view > .home-overview) nav.bottom .mobile-more-menu {
+  border-color: rgba(154, 179, 154, 0.26);
+  background: rgba(15, 18, 15, 0.98);
+}
+
+body:has(#view > .home-overview) :focus-visible {
+  outline-color: #9ab39a;
+}
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme="dark"]):has(body #view > .home-overview) {
+    background: #f0ede3;
+  }
+
+  :root:not([data-theme="dark"]) body:has(#view > .home-overview) {
+    --bg: #f0ede3;
+    --surface: #fffdf7;
+    --surface2: #f7f3e9;
+    --line: #d9d3c7;
+    --ink: #26352e;
+    --muted: #69756c;
+    --a1: #55785d;
+    --a2: #ad674e;
+    --on-a: #fffdf7;
+    --dots: rgba(85, 120, 93, 0.025);
+    background: #f0ede3;
+  }
+
+  :root:not([data-theme="dark"]) body:has(#view > .home-overview) nav.bottom {
+    border-color: rgba(70, 80, 66, 0.2);
+    background: rgba(255, 253, 247, 0.95);
+    box-shadow: 0 10px 28px rgba(46, 48, 37, 0.12);
+  }
+
+  :root:not([data-theme="dark"]) body:has(#view > .home-overview) nav.bottom .mobile-more-menu {
+    border-color: rgba(70, 80, 66, 0.2);
+    background: rgba(255, 253, 247, 0.98);
+  }
+
+  :root:not([data-theme="dark"]) body:has(#view > .home-overview) nav.side .nb[aria-current="page"],
+  :root:not([data-theme="dark"]) body:has(#view > .home-overview) nav.bottom .nb[aria-current="page"],
+  :root:not([data-theme="dark"]) body:has(#view > .home-overview) nav.bottom summary.nb[aria-current="page"] {
+    border-color: rgba(85, 120, 93, 0.58);
+    background: #55785d;
+    color: #fffdf7;
+  }
+
+  :root:not([data-theme="dark"]) body:has(#view > .home-overview) :focus-visible {
+    outline-color: #55785d;
+  }
+}
+
+html[data-theme="light"]:has(body #view > .home-overview) {
+  background: #f0ede3;
+}
+
+:root[data-theme="light"] body:has(#view > .home-overview) {
+  --bg: #f0ede3;
+  --surface: #fffdf7;
+  --surface2: #f7f3e9;
+  --line: #d9d3c7;
+  --ink: #26352e;
+  --muted: #69756c;
+  --a1: #55785d;
+  --a2: #ad674e;
+  --on-a: #fffdf7;
+  --dots: rgba(85, 120, 93, 0.025);
+  background: #f0ede3;
+}
+
+:root[data-theme="light"] body:has(#view > .home-overview) nav.bottom {
+  border-color: rgba(70, 80, 66, 0.2);
+  background: rgba(255, 253, 247, 0.95);
+  box-shadow: 0 10px 28px rgba(46, 48, 37, 0.12);
+}
+
+:root[data-theme="light"] body:has(#view > .home-overview) nav.bottom .mobile-more-menu {
+  border-color: rgba(70, 80, 66, 0.2);
+  background: rgba(255, 253, 247, 0.98);
+}
+
+:root[data-theme="light"] body:has(#view > .home-overview) nav.side .nb[aria-current="page"],
+:root[data-theme="light"] body:has(#view > .home-overview) nav.bottom .nb[aria-current="page"],
+:root[data-theme="light"] body:has(#view > .home-overview) nav.bottom summary.nb[aria-current="page"] {
+  border-color: rgba(85, 120, 93, 0.58);
+  background: #55785d;
+  color: #fffdf7;
+}
+
+:root[data-theme="light"] body:has(#view > .home-overview) :focus-visible {
+  outline-color: #55785d;
 }
 

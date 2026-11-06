@@ -753,7 +753,7 @@
 
       return dependencies.head(
         "Leitura",
-        "Sua estante, seu ritmo e seu espaço para aproveitar cada livro.",
+        "Sua biblioteca pessoal, à meia-luz: escolha um livro, encontre seu ritmo e acompanhe cada leitura.",
       ) + '<nav class="area-tabs reading-area-tabs" aria-label="Seções da Leitura">' + readingNavigation +
         '</nav><div class="reading-view reading-view--' + readingView + '">' + viewContent + '</div>';
     }

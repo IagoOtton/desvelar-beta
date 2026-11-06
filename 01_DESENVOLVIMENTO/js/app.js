@@ -743,7 +743,7 @@
         currentTab,
       ) !== -1;
     var pageTicker = function () {
-      return zen || currentTab === "inicio" || currentTab === "atividade_fisica" || currentTab === "painel_controle" || isStudyTab
+      return zen || currentTab === "inicio" || currentTab === "atividade_fisica" || currentTab === "painel_controle" || currentTab === "leitura" || isStudyTab
         ? ""
         : tickerHtml();
     };
