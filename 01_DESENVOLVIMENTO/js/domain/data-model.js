@@ -58,14 +58,16 @@
   var STUDY_TYPES = ["theory", "questions", "class", "review", "other"];
   function emptyState() {
     return {
-      v: 9,
+      v: 10,
       name: "",
       goalH: 20,
       sessions: [],
       books: [],
       readingSettings: {
         annualGoal: 12,
+        dailyPageGoal: 10,
       },
+      readingRun: null,
       events: [],
       tasks: [],
       questions: [],
@@ -415,7 +417,20 @@
         : {};
       return {
         annualGoal: boundedInteger(settings.annualGoal, 12, 1, 365),
+        dailyPageGoal: boundedInteger(settings.dailyPageGoal, 10, 1, 500),
       };
+    }
+
+    function normalizeReadingRun(value, books) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+      var bookId = typeof value.bookId === "string" ? value.bookId : "";
+      var status = value.status === "running" || value.status === "paused" ? value.status : "";
+      var elapsedMs = Number(value.elapsedMs);
+      var startedAt = Number(value.startedAt);
+      var hasBook = books.some(function (book) { return book.id === bookId; });
+      if (!bookId || !hasBook || !status || !Number.isFinite(elapsedMs) || elapsedMs < 0) return null;
+      if (status === "running" && (!Number.isFinite(startedAt) || startedAt <= 0)) return null;
+      return { id: cleanId(value.id, "reading-run"), bookId: bookId, status: status, startedAt: status === "running" ? startedAt : 0, elapsedMs: Math.floor(elapsedMs) };
     }
 
     function normalizeStudyReviewMetadata(theme) {
@@ -495,6 +510,7 @@
     o.bodyMeasurements.forEach(normalizeBodyMeasurement);
     o.strengthSettings = normalizeStrengthSettings(o.strengthSettings);
     o.readingSettings = normalizeReadingSettings(o.readingSettings);
+    o.readingRun = normalizeReadingRun(o.readingRun, o.books);
 
     delete o.timer;
 
@@ -568,7 +584,7 @@
     o.name = typeof o.name === "string" ? o.name : "";
     delete o.lastBackup;
 
-    o.v = 9;
+    o.v = 10;
 
     return o;
   }
@@ -770,6 +786,7 @@
     mergeForSync: mergeForSync,
   });
 })();
+
 
 
 

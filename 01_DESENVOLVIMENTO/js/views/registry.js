@@ -224,6 +224,7 @@
       studyTypeField: studyFields.typeField,
       studyTypeLabel: studyFields.typeLabel,
       head: studyHead,
+      getReadingView: dependencies.getReadingView,
       sum: formatting.sum,
       tkey: tags.key,
       groupMin: analytics.groupMin,

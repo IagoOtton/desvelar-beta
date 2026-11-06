@@ -309,6 +309,7 @@
       }
       if (!hasRecords) {
         return (
+          '<div class="home-overview">' +
           head(
             hi + (S.name ? ", " + S.name : ""),
             pd(t).getDate() +
@@ -321,7 +322,8 @@
           '<section class="card welcome-state"><div class="welcome-kicker">PRIMEIROS PASSOS</div><h2>Seu espaço está pronto</h2><p>Registre uma sessão ou escolha uma ação para começar. Seus indicadores e gráficos aparecem aqui conforme você avança.</p><div class="welcome-actions">' +
           startActionsHtml +
           "</div></section>" +
-          groupGoalsHtml
+          groupGoalsHtml +
+          "</div>"
         );
       }
       var segs = groupMin(ws, we),
@@ -479,6 +481,7 @@
             "ro-title",
           );
       return (
+        '<div class="home-overview">' +
         head(
           hi + (S.name ? ", " + S.name : ""),
           pd(t).getDate() +
@@ -518,7 +521,8 @@
         leg +
         '</div></div><div class="card"><h2>Mapa de conhecimento</h2>' +
         brainGraph(280) +
-        "</div></div>"
+        "</div></div>" +
+        "</div>"
       );
     }
 

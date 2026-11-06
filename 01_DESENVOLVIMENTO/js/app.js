@@ -115,6 +115,7 @@
   var S = null,
     tab = "inicio",
     activityView = "training",
+    readingView = "overview",
     editingStrengthRoutineId = "",
     selectedMeasurementMetric = "weightKg",
     selectedMeasurementRange = "all",
@@ -395,6 +396,9 @@
     getActiveTab: function () {
       return tab;
     },
+    getReadingView: function () {
+      return readingView;
+    },
     getActivityView: function () {
       return activityView;
     },
@@ -482,6 +486,7 @@
     getUiState: function () {
       return {
         tab: tab,
+        readingView: readingView,
         zen: zen,
         finM: finM,
         calM: calM,
@@ -500,6 +505,11 @@
         var previousTab = tab;
         tab = updates.tab;
         if (tab !== previousTab) UsageAnalytics.recordArea(tab);
+      }
+      if (Object.prototype.hasOwnProperty.call(updates, "readingView")) {
+        if (["overview", "session", "shelf", "progress"].indexOf(updates.readingView) !== -1) {
+          readingView = updates.readingView;
+        }
       }
       if (Object.prototype.hasOwnProperty.call(updates, "zen")) {
         zen = updates.zen;
@@ -696,6 +706,22 @@
     }
   }
 
+  function updateReadingTimerClock() {
+    var clock = document.getElementById("reading-timer-clock");
+    if (!clock) return;
+    var elapsedMs = Number(clock.dataset.elapsedMs);
+    if (!Number.isFinite(elapsedMs) || elapsedMs < 0) elapsedMs = 0;
+    if (clock.dataset.running === "true") {
+      var startedAt = Number(clock.dataset.startedAt);
+      if (Number.isFinite(startedAt) && startedAt > 0) elapsedMs += Math.max(0, Date.now() - startedAt);
+    }
+    var totalSeconds = Math.floor(elapsedMs / 1000);
+    var hours = Math.floor(totalSeconds / 3600);
+    var minutes = Math.floor((totalSeconds % 3600) / 60);
+    var seconds = totalSeconds % 60;
+    clock.textContent = hours ? pad(hours) + ":" + pad(minutes) + ":" + pad(seconds) : pad(minutes) + ":" + pad(seconds);
+  }
+
   function render(options) {
     buildTags();
     document.getElementById("sidenav").innerHTML =
@@ -717,7 +743,7 @@
         currentTab,
       ) !== -1;
     var pageTicker = function () {
-      return zen || currentTab === "inicio" || currentTab === "atividade_fisica" || currentTab === "painel_controle" || isStudyTab
+      return zen || currentTab === "inicio" || currentTab === "atividade_fisica" || currentTab === "painel_controle" || currentTab === "leitura" || isStudyTab
         ? ""
         : tickerHtml();
     };
@@ -786,6 +812,7 @@
             }
           }
           tick();
+          updateReadingTimerClock();
           view.setAttribute("aria-busy", "false");
           focusRenderedTarget(options);
         }
@@ -1019,6 +1046,24 @@
     });
   });
   document.addEventListener("change", function (event) {
+    var readingProgressBook = event.target.closest("#reading-progress-book");
+    if (readingProgressBook) {
+      var selectedReadingOption = readingProgressBook.options[readingProgressBook.selectedIndex];
+      var readingProgressPage = document.getElementById("reading-progress-page");
+      var readingProgressPosition = document.getElementById("reading-progress-position");
+      var currentReadingPage = Number(selectedReadingOption && selectedReadingOption.dataset.current) || 0;
+      var totalReadingPages = Number(selectedReadingOption && selectedReadingOption.dataset.total) || 0;
+      if (readingProgressPage) {
+        readingProgressPage.min = String(currentReadingPage + 1);
+        readingProgressPage.max = String(totalReadingPages);
+        readingProgressPage.placeholder = String(currentReadingPage + 1);
+      }
+      if (readingProgressPosition) {
+        readingProgressPosition.textContent = "Você parou na página " + currentReadingPage + " de " + totalReadingPages + ".";
+      }
+      return;
+    }
+
     var readingShelfFilter = event.target.closest("#reading-shelf-filter");
     if (readingShelfFilter) {
       var visibleBooks = 0;
@@ -1184,6 +1229,7 @@
 
   PomodoroRuntime.startClock();
   window.setInterval(function () {
+    updateReadingTimerClock();
     if (tab === "atividade_fisica" && StrengthController) StrengthController.tick();
   }, 1000);
 

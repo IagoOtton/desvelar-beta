@@ -141,6 +141,19 @@
         window.scrollTo(0, 0);
         return;
       }
+      if (action === "reading-view") {
+        var nextReadingView = button.dataset.readingView;
+        if (["overview", "session", "shelf", "progress"].indexOf(nextReadingView) === -1) return;
+        var readingAreaTabs = button.closest(".area-tabs");
+        var readingAreaScrollLeft = readingAreaTabs ? readingAreaTabs.scrollLeft : null;
+        dependencies.setUiState({ readingView: nextReadingView });
+        dependencies.render({
+          focusHeading: event.detail === 0,
+          areaScrollLeft: readingAreaScrollLeft,
+        });
+        window.scrollTo(0, 0);
+        return;
+      }
       if (action === "retry") {
         dependencies.render();
         return;
@@ -207,7 +220,48 @@
 
       var state = dependencies.stateStore.createDraft();
 
-      if (action === "pomo-start") {
+      if (action === "reading-start") {
+        if (state.readingRun) { dependencies.toast("Já existe uma sessão de leitura ativa."); return; }
+        var timerSelect = document.getElementById("reading-timer-book");
+        var selectedReadingBook = state.books.find(function (book) { return book.id === (timerSelect && timerSelect.value); });
+        if (!selectedReadingBook) { dependencies.toast("Escolha um livro da estante para iniciar."); return; }
+        state.readingRun = { id: dependencies.uid(), bookId: selectedReadingBook.id, status: "running", startedAt: Date.now(), elapsedMs: 0 };
+        message = "Sessão de leitura iniciada.";
+      } else if (action === "reading-pause") {
+        var timerToPause = state.readingRun;
+        if (!timerToPause || timerToPause.status !== "running") return;
+        timerToPause.elapsedMs = Math.max(0, Number(timerToPause.elapsedMs) || 0) + Math.max(0, Date.now() - Number(timerToPause.startedAt || 0));
+        timerToPause.startedAt = 0;
+        timerToPause.status = "paused";
+        message = "Sessão de leitura pausada.";
+      } else if (action === "reading-resume") {
+        var timerToResume = state.readingRun;
+        if (!timerToResume || timerToResume.status !== "paused") return;
+        timerToResume.startedAt = Date.now();
+        timerToResume.status = "running";
+        message = "Sessão de leitura retomada.";
+      } else if (action === "reading-finish") {
+        var timerToFinish = state.readingRun;
+        if (!timerToFinish) return;
+        var timerBook = state.books.find(function (book) { return book.id === timerToFinish.bookId; });
+        var timerElapsedMs = Math.max(0, Number(timerToFinish.elapsedMs) || 0);
+        if (timerToFinish.status === "running") timerElapsedMs += Math.max(0, Date.now() - Number(timerToFinish.startedAt || 0));
+        var timerMinutes = Math.round(timerElapsedMs / 60000);
+        if (timerBook && timerMinutes >= 1) {
+          state.readlog.push({ id: dependencies.uid(), bookId: timerBook.id, date: dependencies.today(), from: timerBook.read, to: timerBook.read, pages: 0, min: timerMinutes, timed: true });
+          message = "Sessão registrada: " + timerMinutes + " min. A página atual não foi alterada.";
+        } else if (timerBook) {
+          message = "Sessão menor que 30 segundos encerrada sem registro.";
+        } else {
+          message = "O livro desta sessão não está mais na estante.";
+        }
+        state.readingRun = null;
+      } else if (action === "reading-cancel") {
+        if (!state.readingRun) return;
+        if (!dependencies.confirm("Descartar esta sessão de leitura sem registrar o tempo?")) return;
+        state.readingRun = null;
+        message = "Sessão de leitura descartada.";
+      } else if (action === "pomo-start") {
         dependencies.pomoStart(
           (document.getElementById("pomo-tag").value || "").trim(),
           ((document.getElementById("pomo-intent") || {}).value || "").trim(),
@@ -358,21 +412,23 @@
 
         var entry = state.readlog[entryIndex];
         var changedBooks = [];
-        state.books.forEach(function (book) {
-          if (book.id === entry.bookId && book.read === entry.to) {
-            changedBooks.push({
-              id: book.id,
-              previousRead: book.read,
-              previousStatus: book.status,
-              previousFinishedAt: book.finishedAt || "",
-            });
-            book.read = entry.from;
-            if (entry.to >= book.total && book.status === "completed") {
-              book.status = entry.from > 0 ? "reading" : "planned";
-              book.finishedAt = "";
+        if (entry.timed !== true) {
+          state.books.forEach(function (book) {
+            if (book.id === entry.bookId && book.read === entry.to) {
+              changedBooks.push({
+                id: book.id,
+                previousRead: book.read,
+                previousStatus: book.status,
+                previousFinishedAt: book.finishedAt || "",
+              });
+              book.read = entry.from;
+              if (entry.to >= book.total && book.status === "completed") {
+                book.status = entry.from > 0 ? "reading" : "planned";
+                book.finishedAt = "";
+              }
             }
-          }
-        });
+          });
+        }
         state.readlog.splice(entryIndex, 1);
 
         undoRestore = function (draft) {
