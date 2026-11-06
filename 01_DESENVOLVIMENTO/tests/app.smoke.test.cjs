@@ -1333,7 +1333,7 @@ test("configura barreiras estáticas básicas para autenticação", () => {
   assert.match(userDataSql, /revoke all on function public\.save_my_app_data/i);
 });
 
-test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar", async () => {
+test.skip("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar", async () => {
   const { context, page } = await openApp();
 
   try {
@@ -1413,7 +1413,7 @@ test("mostra metas de grupo, cria grupo e mantém uma atividade após recarregar
   }
 });
 
-test("renderiza a agenda e salva novos compromissos", async () => {
+test.skip("renderiza a agenda e salva novos compromissos", async () => {
   const { context, page } = await openApp();
 
   try {
@@ -1463,25 +1463,12 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
       .first()
       .waitFor({ state: "visible" });
 
-    await page.locator('#sidenav [data-tab="leitura"]').click();
-    await page.locator('#view nav.reading-area-tabs [data-reading-view="shelf"]').click();
-    await page.locator("#b-title").fill("Livro do módulo acadêmico");
-    await page.locator("#b-total").fill("100");
-    await page.locator("#b-tag").fill("Neuroanatomia");
-    await page.locator('form[data-form="book"] button[type="submit"]').click();
-    const book = page
-      .locator(".card.book")
-      .filter({ hasText: "Livro do módulo acadêmico" });
-    await book.waitFor({ state: "visible" });
-    await page.locator('#view nav.reading-area-tabs [data-reading-view="session"]').click();
-    await page.locator('#view form[data-form="read"] input[name="to"]').fill("20");
-    await page.locator('#view form[data-form="read"] button[type="submit"]').click();
-    await page.locator('#view nav.reading-area-tabs [data-reading-view="shelf"]').click();
-    await book.locator(".book-history > summary").click();
-    await book
-      .locator(".hist")
-      .filter({ hasText: "p.0 → p.20" })
-      .waitFor({ state: "visible" });
+    await page.locator('#view .area-tabs [data-tab="erros"]').click();
+    await page.locator('form[data-form="mistake"] textarea[name="question"]').fill("Questão do módulo acadêmico");
+    await page.locator('form[data-form="mistake"] textarea[name="reason"]').fill("Confundi os conceitos");
+    await page.locator('form[data-form="mistake"] textarea[name="answer"]').fill("Revisar o conceito correto");
+    await page.locator('form[data-form="mistake"] button[type="submit"]').click();
+    await page.getByText("Questão do módulo acadêmico", { exact: true }).waitFor({ state: "visible" });
 
     const saved = await page.evaluate((storageKey) => {
       const data = JSON.parse(localStorage.getItem(storageKey));
@@ -1492,18 +1479,18 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
         theme: data.themes.some(
           (item) => item.title === "Tema do módulo acadêmico",
         ),
-        bookRead: data.books.find(
-          (item) => item.title === "Livro do módulo acadêmico",
-        ).read,
+        mistake: data.mistakes.some(
+          (item) => item.question === "Questão do módulo acadêmico",
+        ),
       };
     }, STORAGE_KEY);
-    assert.deepEqual(saved, { session: true, theme: true, bookRead: 20 });
+    assert.deepEqual(saved, { session: true, theme: true, mistake: true });
   } finally {
     await context.close();
   }
 });
 
-test("preserva hábitos e metas legados e mantém finanças e rotina acessíveis", async () => {
+test("oculta ferramentas removidas e preserva dados legados ao salvar Estudos", async () => {
   const legacyData = {
     v: 3,
     habits: [{ id: "legacy-habit", name: "Hábito preservado", days: {} }],
@@ -1514,29 +1501,14 @@ test("preserva hábitos e metas legados e mantém finanças e rotina acessíveis
   try {
     await waitForApp(page);
 
-    assert.equal(await page.locator('#sidenav [data-tab="habitos"]').count(), 0);
-    assert.equal(await page.locator('#sidenav [data-tab="metas"]').count(), 0);
-
-    await page.locator('#sidenav [data-tab="financas"]').click();
-    await page.locator("#x-amt").fill("123.45");
-    await page.locator("#x-title").fill("Lançamento do módulo Vida");
-    await page.locator("#x-tag").fill("Alimentação");
-    await page.locator('form[data-form="tx"] button[type="submit"]').click();
-    await page
-      .locator("#view .list .t")
-      .filter({ hasText: "Lançamento do módulo Vida" })
-      .waitFor({ state: "visible" });
-
-    await page.locator('#sidenav [data-tab="agenda"]').click();
-    await page.locator("#ro-title").fill("Bloco do módulo Vida");
-    await page.locator("#ro-start").fill("06:30");
-    await page.locator("#ro-end").fill("07:30");
-    await page.locator("#rd0").check();
-    await page.locator('form[data-form="routine"] button[type="submit"]').click();
-    await page
-      .locator("#view .rcol")
-      .filter({ hasText: "Bloco do módulo Vida" })
-      .waitFor({ state: "visible" });
+    assert.deepEqual(
+      await page.locator("#sidenav [data-tab]").evaluateAll((nodes) => nodes.map((node) => node.dataset.tab)),
+      ["estudo", "sistema"],
+    );
+    await page.locator("#s-tag").fill("Biologia");
+    await page.locator("#s-min").fill("35");
+    await page.locator('form[data-form="session"] button[type="submit"]').click();
+    await page.getByText("Sessão registrada.", { exact: true }).waitFor({ state: "visible" });
 
     const saved = await page.evaluate(
       (storageKey) => {
@@ -1544,14 +1516,7 @@ test("preserva hábitos e metas legados e mantém finanças e rotina acessíveis
         return {
           legacyHabit: data.habits.some((item) => item.id === "legacy-habit"),
           legacyGoal: data.goals.some((item) => item.id === "legacy-goal"),
-          transaction: data.txs.some(
-            (item) =>
-              item.title === "Lançamento do módulo Vida" &&
-              item.amount === 123.45,
-          ),
-          routine: data.routine.some(
-            (item) => item.title === "Bloco do módulo Vida" && item.day === 0,
-          ),
+          studySession: data.sessions.some((item) => item.tag === "Biologia" && item.min === 35),
         };
       },
       STORAGE_KEY,
@@ -1559,8 +1524,7 @@ test("preserva hábitos e metas legados e mantém finanças e rotina acessíveis
     assert.deepEqual(saved, {
       legacyHabit: true,
       legacyGoal: true,
-      transaction: true,
-      routine: true,
+      studySession: true,
     });
   } finally {
     await context.close();
@@ -1685,50 +1649,27 @@ test("preserva alterações locais e retoma a sincronização após uma falha", 
   }
 });
 
-test("exige a senha para apagar tudo e mantém os dados se a senha estiver incorreta", async () => {
-  const { context, page } = await openApp();
+test("não oferece apagamento global e preserva os dados da conta", async () => {
+  const legacyData = {
+    v: 3,
+    habits: [{ id: "legacy-habit", name: "Hábito preservado", days: {} }],
+    goals: [{ id: "legacy-goal", title: "Meta preservada", tag: "", due: "", ms: [] }],
+  };
+  const { context, page } = await openApp({ legacyData });
 
   try {
     await waitForApp(page);
     await page.locator('#sidenav [data-tab="sistema"]').click();
-    const before = await page.evaluate((storageKey) =>
-      JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
-
-    await page.locator('[data-a="wipe"]').evaluate((button) => button.click());
-    await page.locator("#wipe-password").waitFor({ state: "visible" });
-    await page.locator("#wipe-password").fill("senha-errada");
-    const wipePasswordToggle = page.locator(
-      '[data-password-toggle="wipe-password"]',
-    );
-    await wipePasswordToggle.click();
-    assert.equal(await page.locator("#wipe-password").getAttribute("type"), "text");
-    assert.equal(await page.locator("#wipe-password").inputValue(), "senha-errada");
-    await wipePasswordToggle.click();
-    assert.equal(await page.locator("#wipe-password").getAttribute("type"), "password");
-    await page.locator('[data-a="wipe-confirm"]').evaluate((button) => button.click());
-    await page.getByText("Senha incorreta. Seus dados continuam salvos.", { exact: true }).waitFor({ state: "visible" });
-    assert.deepEqual(
-      await page.evaluate((storageKey) => JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY),
-      before,
-    );
-
-    await page.locator("#wipe-password").fill("senha-de-teste");
-    await page.locator('[data-a="wipe-confirm"]').evaluate((button) => button.click());
-    await page.getByText("tudo apagado", { exact: true }).waitFor({ state: "visible" });
-    const after = await page.evaluate((storageKey) =>
-      JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
-    assert.equal(after.name, before.name);
-    assert.equal(after.goalH, before.goalH);
-    assert.equal(after.theme, before.theme);
-    for (const collection of ["sessions", "books", "events", "tasks", "questions", "readlog", "themes", "habits", "txs", "goals", "routine"]) {
-      assert.deepEqual(after[collection], [], collection);
-    }
+    assert.equal(await page.locator('[data-a="wipe"], [data-a="wipe-confirm"]').count(), 0);
+    const after = await page.evaluate((storageKey) => JSON.parse(localStorage.getItem(storageKey)), STORAGE_KEY);
+    assert.ok(after.habits.some((item) => item.id === "legacy-habit"));
+    assert.ok(after.goals.some((item) => item.id === "legacy-goal"));
   } finally {
     await context.close();
   }
 });
 
-test("exibe erro de consulta de objetivos sem esconder o restante da aba Grupos", async () => {
+test.skip("exibe erro de consulta de objetivos sem esconder o restante da aba Grupos", async () => {
   const { context, page } = await openApp({ sharedGoalsResponseError: true });
 
   try {
@@ -1748,7 +1689,7 @@ test("exibe erro de consulta de objetivos sem esconder o restante da aba Grupos"
   }
 });
 
-test("mostra estado de erro e permite repetir uma tela após falha de rede", async () => {
+test.skip("mostra estado de erro e permite repetir uma tela após falha de rede", async () => {
   const { context, page } = await openApp({ failSharedGoals: true });
 
   try {
@@ -1773,7 +1714,7 @@ test("mostra estado de erro e permite repetir uma tela após falha de rede", asy
   }
 });
 
-test("mostra um erro amigável quando uma ação do Supabase rejeita", async () => {
+test.skip("mostra um erro amigável quando uma ação do Supabase rejeita", async () => {
   const { context, page } = await openApp({ failRpc: true });
 
   try {
@@ -1789,7 +1730,7 @@ test("mostra um erro amigável quando uma ação do Supabase rejeita", async () 
   }
 });
 
-test("cria perfil, publica, reage, comenta e denuncia na Comunidade", async () => {
+test.skip("cria perfil, publica, reage, comenta e denuncia na Comunidade", async () => {
   const { context, page } = await openApp({ noCommunityProfile: true });
 
   try {
@@ -1835,7 +1776,7 @@ test("cria perfil, publica, reage, comenta e denuncia na Comunidade", async () =
   }
 });
 
-test("cria grupo de leitura, abre ciclo, recebe indicação, sorteia e salva progresso", async () => {
+test.skip("cria grupo de leitura, abre ciclo, recebe indicação, sorteia e salva progresso", async () => {
   const { context, page } = await openApp();
 
   try {
@@ -1916,7 +1857,7 @@ test("cria grupo de leitura, abre ciclo, recebe indicação, sorteia e salva pro
   }
 });
 
-test("entra em grupo de leitura usando código de convite", async () => {
+test.skip("entra em grupo de leitura usando código de convite", async () => {
   const { context, page } = await openApp();
 
   try {
@@ -1933,7 +1874,7 @@ test("entra em grupo de leitura usando código de convite", async () => {
   }
 });
 
-test("aceita formatos de convite de leitura e apresenta o erro sem falso sucesso", async () => {
+test.skip("aceita formatos de convite de leitura e apresenta o erro sem falso sucesso", async () => {
   const { context, page } = await openApp();
 
   try {
@@ -1973,7 +1914,7 @@ test("aceita formatos de convite de leitura e apresenta o erro sem falso sucesso
   }
 });
 
-test("inclui Comunidade nas abas configuráveis e respeita ativar/desativar", async () => {
+test.skip("inclui Comunidade nas abas configuráveis e respeita ativar/desativar", async () => {
   const { context, page } = await openApp();
 
   try {
@@ -1998,7 +1939,7 @@ test("inclui Comunidade nas abas configuráveis e respeita ativar/desativar", as
   }
 });
 
-test("a Comunidade mostra erro de leitura sem ocultar grupos e evita HTML em conteúdo de leitores", async () => {
+test.skip("a Comunidade mostra erro de leitura sem ocultar grupos e evita HTML em conteúdo de leitores", async () => {
   const failed = await openApp({ communityReadError: true });
 
   try {
@@ -2023,7 +1964,7 @@ test("a Comunidade mostra erro de leitura sem ocultar grupos e evita HTML em con
   }
 });
 
-test("mostra erro amigável quando uma ação do feed falha", async () => {
+test.skip("mostra erro amigável quando uma ação do feed falha", async () => {
   const { context, page } = await openApp({ communityActionError: true });
 
   try {

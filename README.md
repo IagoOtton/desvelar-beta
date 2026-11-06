@@ -1,27 +1,29 @@
 # DESVELAR — beta
 
-Uma versão de teste do DESVELAR para receber feedback de um pequeno grupo de pessoas.
+O DESVELAR está sendo reorganizado para concentrar a experiência na ferramenta pessoal de **Estudos**. Esta branch local mantém o acesso às contas existentes e ao progresso sincronizado.
 
-## Como testar
+## Escopo atual
 
-1. Abra o link de beta compartilhado pelo responsável.
-2. Crie sua própria conta e confirme o e-mail.
-3. Explore as telas e use **Sistema → Enviar feedback** para relatar um problema ou sugerir uma melhoria.
+- **Estudos:** registro de sessões, Pomodoro, temas e revisões, caderno de erros e desempenho.
+- **Conta:** perfil privado, tema, sincronização, aviso de privacidade, consentimento de métricas e saída da conta.
+- **Painel de métricas:** área privada disponível apenas para a conta administradora.
+- **Autenticação:** entrar, criar conta e recuperar senha.
 
-## Como os dados são tratados
+As demais ferramentas e comunidades não aparecem nesta versão. O código que normaliza e sincroniza os dados antigos continua preservando seus campos e coleções; a interface simplesmente deixa de oferecê-los. Nenhum dado de conta é apagado por esta reorganização.
 
-- Estudos, tarefas, hábitos, metas pessoais, rotina, agenda, leitura e finanças ficam associados à conta e sincronizam entre dispositivos. Cada conta só acessa o próprio progresso.
-- O aplicativo mantém uma cópia local para uso sem conexão e tenta sincronizá-la quando a conexão volta. Confira em **Sistema** se aparece “Sincronizado com sua conta” antes de limpar os dados do navegador ou trocar de dispositivo. O app não oferece exportação/importação manual no momento.
-- Evite registrar informações pessoais, médicas ou financeiras sensíveis durante o beta.
-- Contas e dados dos grupos são tratados pelo Supabase. O texto enviado pelo formulário de feedback também é salvo no Supabase e associado à conta que o enviou.
-- A Comunidade usa um nome de exibição e uma apresentação escolhidos pela pessoa. Publicações ficam visíveis para contas autenticadas; ciclos, indicações e progresso de leitura ficam visíveis às pessoas daquele grupo.
-- Não publique dados pessoais sensíveis na Comunidade. As denúncias ficam registradas no Supabase e precisam ser revisadas pelo responsável do beta.
-- O código do aplicativo usa uma chave pública do Supabase. Ela não é uma senha; o acesso depende das políticas RLS do banco. Nunca coloque chaves `service_role` ou secret keys no frontend.
+## Dados, privacidade e sincronização
 
-Use o endereço publicado e entre na sua conta para acessar o progresso sincronizado. Dados que existiam apenas em uma cópia aberta por `file://` ficam isolados pelo navegador e não são transferidos automaticamente para o site.
+- O progresso é associado à conta e sincronizado pelo Supabase. A cópia local permite manter alterações pendentes quando a conexão falha.
+- Use **Conta → Sincronização** para conferir o estado antes de trocar de dispositivo ou limpar dados do navegador.
+- O consentimento de métricas é independente do aceite do aviso de privacidade e pode ser alterado em Conta. O painel mostra métricas agregadas à conta administradora.
+- As estruturas antigas de dados e as migrações do Supabase são mantidas. Esta mudança não altera tabelas, políticas, funções, contas nem registros no banco.
+- O frontend usa somente a chave pública do Supabase. Nunca coloque `service_role` ou secret keys no cliente.
 
-## Configuração para publicar
+## Desenvolvimento e publicação
 
-Veja [PUBLICAR_BETA.md](03_DOCUMENTACAO/PUBLICAR_BETA.md) para preparar o Supabase e publicar a versão em GitHub Pages.
+- Código-fonte do app: `01_DESENVOLVIMENTO/`.
+- Build estático: `scripts/build-beta.mjs`, que gera `dist-beta/` para o GitHub Pages.
+- Guia de publicação: [03_DOCUMENTACAO/PUBLICAR_BETA.md](03_DOCUMENTACAO/PUBLICAR_BETA.md).
+- Escopo e limites de preservação: [03_DOCUMENTACAO/ARQUITETURA_E_ESCOPO_ATUAL.md](03_DOCUMENTACAO/ARQUITETURA_E_ESCOPO_ATUAL.md).
 
-O workflow publica somente o aplicativo corrigido e seus arquivos `css/` e `js/` como site estático.
+O trabalho de reorganização está em uma branch local. A publicação atual não é alterada até que a versão local seja revisada e publicada por um fluxo separado.

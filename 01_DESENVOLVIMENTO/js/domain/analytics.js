@@ -2,46 +2,36 @@
   "use strict";
 
   function create(dependencies) {
-    var required = ["getState", "tagKey", "tagLabel", "sum", "today", "addDays"];
+    var required = ["getState", "tagKey", "tagLabel", "sum"];
     if (
       !dependencies ||
-      required.some(function (key) {
-        return typeof dependencies[key] !== "function";
-      })
+      required.some(function (key) { return typeof dependencies[key] !== "function"; })
     ) {
-      throw new Error("As dependências dos cálculos do DESVELAR não foram informadas.");
+      throw new Error("As dependências dos indicadores de Estudos não foram informadas.");
     }
 
     var cachedState = null;
     var sessionsIndex = null;
-    var readingIndex = null;
     var questionsIndex = null;
     var groupMinCache = Object.create(null);
     var accuracyCache = null;
-    var questionTotalsCache = null;
-    var goalProgressCache = new WeakMap();
 
     function snapshot() {
       var state = dependencies.getState();
       if (state !== cachedState) {
         cachedState = state;
         sessionsIndex = null;
-        readingIndex = null;
         questionsIndex = null;
         groupMinCache = Object.create(null);
         accuracyCache = null;
-        questionTotalsCache = null;
-        goalProgressCache = new WeakMap();
       }
       return state;
     }
 
     function addTotal(target, key, value) {
-      if (Object.prototype.hasOwnProperty.call(target, key)) {
-        target[key] += value;
-      } else {
-        target[key] = value;
-      }
+      target[key] = Object.prototype.hasOwnProperty.call(target, key)
+        ? target[key] + value
+        : value;
     }
 
     function buildPrefixIndex(totals) {
@@ -79,9 +69,8 @@
     }
 
     function rangeTotal(index, startDate, endDate) {
-      if (!index || !index.dates.length) return 0;
+      if (!index || !index.dates.length || startDate > endDate) return 0;
       if (!index.valid) return null;
-      if (startDate > endDate) return 0;
       var start = lowerBound(index.dates, startDate);
       var end = upperBound(index.dates, endDate);
       return index.prefix[end] - index.prefix[start];
@@ -117,81 +106,26 @@
       return sessionsIndex;
     }
 
-    function readingData() {
-      var state = snapshot();
-      if (readingIndex) return readingIndex;
-
-      var pagesByDate = Object.create(null);
-      var pagesByBookDate = Object.create(null);
-      var logsByBook = Object.create(null);
-      var hasOnlyFinitePages = true;
-      state.readlog.forEach(function (entry) {
-        var bookKey = typeof entry.bookId + ":" + String(entry.bookId);
-        if (!logsByBook[bookKey]) logsByBook[bookKey] = [];
-        logsByBook[bookKey].push(entry);
-
-        if (typeof entry.date !== "string") return;
-        if (typeof entry.pages !== "number" || !Number.isFinite(entry.pages)) {
-          hasOnlyFinitePages = false;
-        }
-        addTotal(pagesByDate, entry.date, entry.pages);
-        var bookPages = pagesByBookDate[bookKey];
-        if (!bookPages) {
-          bookPages = Object.create(null);
-          pagesByBookDate[bookKey] = bookPages;
-        }
-        addTotal(bookPages, entry.date, entry.pages);
-      });
-
-      readingIndex = {
-        dateTotals: buildPrefixIndex(pagesByDate),
-        hasOnlyFinitePages: hasOnlyFinitePages,
-        pagesByBookDate: pagesByBookDate,
-        bookPrefixes: Object.create(null),
-        logsByBook: logsByBook,
-        sortedLogsByBook: Object.create(null),
-      };
-      return readingIndex;
-    }
-
     function questionData() {
       var state = snapshot();
       if (questionsIndex) return questionsIndex;
 
-      var totalsByDate = Object.create(null);
-      var correctByDate = Object.create(null);
       var totalsByTag = Object.create(null);
-      var allTotal = 0;
-      var allCorrect = 0;
       state.questions.forEach(function (question) {
-        allTotal += question.total;
-        allCorrect += question.correct;
-        if (typeof question.date === "string") {
-          addTotal(totalsByDate, question.date, question.total);
-          addTotal(correctByDate, question.date, question.correct);
-        }
         var key = dependencies.tagKey(question.tag);
         if (!totalsByTag[key]) totalsByTag[key] = { total: 0, correct: 0 };
         totalsByTag[key].total += question.total;
         totalsByTag[key].correct += question.correct;
       });
-
-      questionsIndex = {
-        totalsByDate: buildPrefixIndex(totalsByDate),
-        correctByDate: buildPrefixIndex(correctByDate),
-        totalsByTag: totalsByTag,
-        allTotal: allTotal,
-        allCorrect: allCorrect,
-      };
+      questionsIndex = { totalsByTag: totalsByTag };
       return questionsIndex;
     }
 
     function groupMinByScan(state, startDate, endDate) {
-      var minutesByTag = {};
+      var minutesByTag = Object.create(null);
       state.sessions.forEach(function (session) {
         if (session.date >= startDate && session.date <= endDate) {
-          var key = dependencies.tagKey(session.tag);
-          minutesByTag[key] = (minutesByTag[key] || 0) + session.min;
+          addTotal(minutesByTag, dependencies.tagKey(session.tag), session.min);
         }
       });
       return Object.keys(minutesByTag)
@@ -233,13 +167,9 @@
           return { k: key, label: dependencies.tagLabel(key), m: minutesByTag[key] };
         })
         .sort(function (a, b) { return b.m - a.m; });
-      if (Object.keys(groupMinCache).length >= 32) {
-        groupMinCache = Object.create(null);
-      }
+      if (Object.keys(groupMinCache).length >= 32) groupMinCache = Object.create(null);
       groupMinCache[cacheKey] = result;
-      return result.map(function (item) {
-        return { k: item.k, label: item.label, m: item.m };
-      });
+      return result.map(function (item) { return { k: item.k, label: item.label, m: item.m }; });
     }
 
     function accuracyByTag() {
@@ -291,144 +221,11 @@
       }), function (session) { return session.min; });
     }
 
-    function pagesInRange(startDate, endDate) {
-      if (typeof startDate !== "string" || typeof endDate !== "string") {
-        var state = snapshot();
-        return dependencies.sum(state.readlog.filter(function (entry) {
-          return entry.date >= startDate && entry.date <= endDate;
-        }), function (entry) { return entry.pages; });
-      }
-      var indexed = readingData();
-      var total = rangeTotal(indexed.dateTotals, startDate, endDate);
-      if (total !== null && indexed.hasOnlyFinitePages) return total;
-      var state = snapshot();
-      return dependencies.sum(state.readlog.filter(function (entry) {
-        return entry.date >= startDate && entry.date <= endDate;
-      }), function (entry) { return entry.pages; });
-    }
-
-    function streak() {
-      var date = dependencies.today();
-      var count = 0;
-      if (!minutesOn(date)) date = dependencies.addDays(date, -1);
-      while (minutesOn(date) > 0) {
-        count++;
-        date = dependencies.addDays(date, -1);
-      }
-      return count;
-    }
-
-    function questionTotals(filter) {
-      var state = snapshot();
-      if (!filter) {
-        if (!questionTotalsCache) {
-          var index = questionData();
-          questionTotalsCache = {
-            t: index.allTotal,
-            c: index.allCorrect,
-          };
-        }
-        return { t: questionTotalsCache.t, c: questionTotalsCache.c };
-      }
-      var questions = state.questions.filter(filter);
-      return {
-        t: dependencies.sum(questions, function (question) { return question.total; }),
-        c: dependencies.sum(questions, function (question) { return question.correct; }),
-      };
-    }
-
-    function questionTotalsInRange(startDate, endDate) {
-      if (typeof startDate !== "string" || typeof endDate !== "string") {
-        var state = snapshot();
-        var questions = state.questions.filter(function (question) {
-          return question.date >= startDate && question.date <= endDate;
-        });
-        return {
-          t: dependencies.sum(questions, function (question) { return question.total; }),
-          c: dependencies.sum(questions, function (question) { return question.correct; }),
-        };
-      }
-      var index = questionData();
-      var total = rangeTotal(index.totalsByDate, startDate, endDate);
-      var correct = rangeTotal(index.correctByDate, startDate, endDate);
-      if (total === null || correct === null) {
-        var currentState = snapshot();
-        var matchingQuestions = currentState.questions.filter(function (question) {
-          return question.date >= startDate && question.date <= endDate;
-        });
-        return {
-          t: dependencies.sum(matchingQuestions, function (question) { return question.total; }),
-          c: dependencies.sum(matchingQuestions, function (question) { return question.correct; }),
-        };
-      }
-      return {
-        t: total,
-        c: correct,
-      };
-    }
-
-    function bookLog(book) {
-      var index = readingData();
-      var key = typeof book.id + ":" + String(book.id);
-      if (!Object.prototype.hasOwnProperty.call(index.sortedLogsByBook, key)) {
-        var logs = index.logsByBook[key] || [];
-        logs.sort(function (a, b) {
-          return a.date < b.date ? -1 : a.date > b.date ? 1 : a.to - b.to;
-        });
-        index.sortedLogsByBook[key] = Object.freeze(logs);
-      }
-      return index.sortedLogsByBook[key];
-    }
-
-    function pagesForBookInRange(book, startDate, endDate) {
-      var index = readingData();
-      var key = typeof book.id + ":" + String(book.id);
-      if (!index.bookPrefixes[key]) {
-        index.bookPrefixes[key] = buildPrefixIndex(index.pagesByBookDate[key] || Object.create(null));
-      }
-      if (typeof startDate !== "string" || typeof endDate !== "string") {
-        var state = snapshot();
-        return dependencies.sum(state.readlog.filter(function (entry) {
-          return entry.bookId === book.id && entry.date >= startDate && entry.date <= endDate;
-        }), function (entry) { return entry.pages; });
-      }
-      var total = rangeTotal(index.bookPrefixes[key], startDate, endDate);
-      if (total !== null) return total;
-      var state = snapshot();
-      return dependencies.sum(state.readlog.filter(function (entry) {
-        return entry.bookId === book.id && entry.date >= startDate && entry.date <= endDate;
-      }), function (entry) { return entry.pages; });
-    }
-
-    function goalProgress(goal) {
-      snapshot();
-      if (goalProgressCache.has(goal)) return goalProgressCache.get(goal);
-      var milestones = Array.isArray(goal.ms) ? goal.ms : [];
-      var result;
-      if (milestones.length) {
-        var completed = milestones.filter(function (milestone) {
-          return milestone.done;
-        }).length;
-        result = Math.round((completed / milestones.length) * 100);
-      } else {
-        result = Math.max(0, Math.min(100, goal.manual || 0));
-      }
-      goalProgressCache.set(goal, result);
-      return result;
-    }
-
     return Object.freeze({
       accuracyByTag: accuracyByTag,
-      bookLog: bookLog,
       groupMin: groupMin,
-      goalProgress: goalProgress,
       minutesInRange: minutesInRange,
       minutesOn: minutesOn,
-      pagesForBookInRange: pagesForBookInRange,
-      pagesInRange: pagesInRange,
-      questionTotals: questionTotals,
-      questionTotalsInRange: questionTotalsInRange,
-      streak: streak,
     });
   }
 

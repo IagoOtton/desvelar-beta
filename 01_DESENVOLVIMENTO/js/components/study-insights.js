@@ -3,141 +3,26 @@
 
   function create(dependencies) {
     var required = [
-      "getState",
-      "today",
-      "wkStart",
-      "addDays",
-      "fmtD",
-      "fmtM",
-      "esc",
-      "sum",
-      "BRL",
-      "minsOn",
-      "minsRange",
-      "pagesRange",
-      "streak",
-      "questionTotalsInRange",
-      "isReviewDue",
-      "tagKey",
-      "tagLabel",
-      "tagColor",
+      "getState", "today", "wkStart", "addDays", "fmtD", "fmtM", "esc",
+      "minsOn", "isReviewDue", "tagKey", "tagLabel", "tagColor",
     ];
-    if (
-      !dependencies ||
-      required.some(function (key) {
-        return typeof dependencies[key] !== "function";
-      })
-    ) {
-      throw new Error("As dependências dos indicadores do DESVELAR não foram informadas.");
+    if (!dependencies || required.some(function (key) { return typeof dependencies[key] !== "function"; })) {
+      throw new Error("As dependências dos indicadores de Estudos não foram informadas.");
     }
 
-    var S = null;
     var today = dependencies.today;
     var wkStart = dependencies.wkStart;
     var addDays = dependencies.addDays;
     var fmtD = dependencies.fmtD;
     var fmtM = dependencies.fmtM;
     var esc = dependencies.esc;
-    var sum = dependencies.sum;
-    var BRL = dependencies.BRL;
     var minsOn = dependencies.minsOn;
-    var minsRange = dependencies.minsRange;
-    var pagesRange = dependencies.pagesRange;
-    var streak = dependencies.streak;
-    var qTotRange = dependencies.questionTotalsInRange;
+    var isReviewDue = dependencies.isReviewDue;
     var tkey = dependencies.tagKey;
     var tlabel = dependencies.tagLabel;
     var tcolor = dependencies.tagColor;
-
-    function dlt(cur, prev) {
-      if (!cur && !prev) return { t: "— sem dados", c: "flat" };
-      if (!prev) return { t: "▲ novo", c: "up" };
-      var p = Math.round(((cur - prev) / prev) * 100);
-      return {
-        t: p > 0 ? "▲ +" + p + "%" : p < 0 ? "▼ −" + Math.abs(p) + "%" : "■ 0%",
-        c: p > 0 ? "up" : p < 0 ? "down" : "flat",
-      };
-    }
-    function tickerHtml() {
-      S = dependencies.getState();
-      var t = today(),
-        ws = wkStart(t),
-        we = addDays(ws, 6),
-        pws = addDays(ws, -7),
-        pwe = addDays(ws, -1);
-      var wk = minsRange(ws, we),
-        pw = minsRange(pws, pwe),
-        day = minsOn(t),
-        yd = minsOn(addDays(t, -1));
-      var q1 = qTotRange(ws, we),
-        q0 = qTotRange(pws, pwe);
-      var a1 = q1.t ? Math.round((q1.c / q1.t) * 100) : null,
-        a0 = q0.t ? Math.round((q0.c / q0.t) * 100) : null;
-      var da =
-        a1 == null
-          ? { t: "—", c: "flat" }
-          : a0 == null
-            ? { t: "▲ novo", c: "up" }
-            : {
-                t: (a1 >= a0 ? "▲ +" : "▼ −") + Math.abs(a1 - a0) + "pp",
-                c: a1 > a0 ? "up" : a1 < a0 ? "down" : "flat",
-              };
-      var pg = pagesRange(ws, we),
-        ppg = pagesRange(pws, pwe),
-        ym = t.slice(0, 7);
-      var sd = sum(
-        S.txs.filter(function (x) {
-          return x.date.slice(0, 7) === ym;
-        }),
-        function (x) {
-          return x.type === "in" ? x.amount : -x.amount;
-        },
-      );
-      var np = S.sessions.filter(function (x) {
-          return x.date === t && x.pomo;
-        }).length,
-        rev = S.themes.filter(function (x) {
-          return dependencies.isReviewDue(x, t);
-        }).length;
-      var it = [
-        ["HORAS·SEM", fmtM(wk), dlt(wk, pw)],
-        ["HOJE", fmtM(day), dlt(day, yd)],
-        ["ACERTO", a1 == null ? "–" : a1 + "%", da],
-        ["PÁGINAS", String(pg), dlt(pg, ppg)],
-        ["SEQUÊNCIA", streak() + "d", { t: "", c: "flat" }],
-        ["POMODOROS", String(np), { t: "hoje", c: "flat" }],
-        [
-          "SALDO·MÊS",
-          BRL(sd),
-          { t: sd >= 0 ? "▲" : "▼", c: sd >= 0 ? "up" : "down" },
-        ],
-        ["REVISÃO", String(rev), { t: "para hoje", c: rev ? "down" : "up" }],
-      ];
-      var half = it
-        .map(function (i) {
-          return (
-            '<span class="tkp"><b>' +
-            esc(i[0]) +
-            "</b>" +
-            esc(i[1]) +
-            ' <span class="' +
-            esc(i[2].c) +
-            '">' +
-            esc(i[2].t) +
-            "</span></span>"
-          );
-        })
-        .join("");
-      return (
-        '<div class="ticker" role="marquee" aria-label="Indicadores resumidos"><div class="track"><span class="half">' +
-        half +
-        '</span><span class="half" aria-hidden="true">' +
-        half +
-        "</span></div></div>"
-      );
-    }
     function brainGraph(H) {
-      S = dependencies.getState();
+      var S = dependencies.getState();
       var W = 640,
         cx = W / 2,
         cy = H / 2,
@@ -164,7 +49,7 @@
         .slice(0, 7);
       if (!arr.length)
         return (
-          '<div class="home-empty"><p class="empty">Registre uma sessão com matéria para começar seu mapa de conhecimento.</p><button class="btn sm" data-a="tab" data-tab="estudo" data-focus="s-tag">Registrar sessão</button></div>'
+          '<div class="study-insights-empty"><p class="empty">Registre uma sessão com matéria para começar seu mapa de conhecimento.</p><button class="btn sm" data-a="tab" data-tab="estudo" data-focus="s-tag">Registrar sessão</button></div>'
         );
       var rx = W * 0.3,
         ry = H * 0.29,
@@ -304,55 +189,6 @@
         '<div class="glegend"><span><i style="background:var(--bad)"></i>muito difícil</span><span><i style="background:var(--warn)"></i>difícil</span><span><i style="background:var(--a1)"></i>médio</span><span><i style="background:var(--good)"></i>fácil</span><span>nós claros = revisado</span></div>'
       );
     }
-    function donut(segs, center, sub, small) {
-      var r = 58,
-        C = 2 * Math.PI * r,
-        tot = sum(segs, function (s) {
-          return s.m;
-        }),
-        cum = 0,
-        s = "";
-      s +=
-        '<circle cx="75" cy="75" r="' +
-        r +
-        '" fill="none" stroke="var(--surface2)" stroke-width="14"/>';
-      if (tot > 0)
-        segs.forEach(function (g) {
-          var len = (g.m / tot) * C,
-            gap = segs.length > 1 ? 3 : 0;
-          if (len > gap)
-            s +=
-              '<circle cx="75" cy="75" r="' +
-              r +
-              '" fill="none" style="stroke:' +
-              tcolor(g.k) +
-              '" stroke-width="14" stroke-dasharray="' +
-              (len - gap) +
-              " " +
-              (C - len + gap) +
-              '" stroke-dashoffset="' +
-              -cum +
-              '" transform="rotate(-90 75 75)"><title>' +
-              esc(
-                g.label +
-                  ": " +
-                  (small ? BRL(g.m) : fmtM(g.m)),
-              ) +
-              "</title></circle>";
-          cum += len;
-        });
-      return (
-        '<div class="ringbox' +
-        (small ? " sm" : "") +
-        '"><svg viewBox="0 0 150 150" aria-hidden="true">' +
-        s +
-        '</svg><div class="c"><b>' +
-        esc(center) +
-        "</b><span>" +
-        esc(sub) +
-        "</span></div></div>"
-      );
-    }
     function heat() {
       var t = today(),
         start = addDays(wkStart(t), -77),
@@ -385,16 +221,8 @@
       );
     }
 
-    return Object.freeze({
-      delta: dlt,
-      tickerHtml: tickerHtml,
-      brainGraph: brainGraph,
-      donut: donut,
-      heat: heat,
-    });
+    return Object.freeze({ brainGraph: brainGraph, heat: heat });
   }
 
-  window.DesvelarActivityInsights = Object.freeze({ create: create });
+  window.DesvelarStudyInsights = Object.freeze({ create: create });
 })();
-
-

@@ -3,8 +3,6 @@
 
   var authScript = document.currentScript;
   var appScriptSrc = authScript && authScript.getAttribute("data-app-src");
-  var fitnessScriptSrc = authScript && authScript.getAttribute("data-fitness-src");
-  var communityScriptSrc = authScript && authScript.getAttribute("data-community-src");
   var root = document.getElementById("auth-root");
   if (!root) return;
 
@@ -30,7 +28,7 @@
       <div class="auth-intro">
         <p class="auth-kicker">UM PASSO DE CADA VEZ</p>
         <h1 id="auth-heading">Seu espaço para avançar.</h1>
-        <p class="auth-lead">Estudos, atividade física, leitura e finanças — ferramentas pessoais e comunidades para avançar no seu ritmo.</p>
+        <p class="auth-lead">Seu espaço para estudar com constância e acompanhar sua evolução.</p>
       </div>
 
       <div class="auth-form-wrap">
@@ -353,12 +351,6 @@
       window.addEventListener("error", captureAppRuntimeError, true);
 
       appScript.src = appSource;
-      if (fitnessScriptSrc) {
-        appScript.setAttribute("data-fitness-src", fitnessScriptSrc);
-      }
-      if (communityScriptSrc) {
-        appScript.setAttribute("data-community-src", communityScriptSrc);
-      }
       appScript.onload = function () {
         window.removeEventListener("error", captureAppRuntimeError, true);
         if (appRuntimeError) {

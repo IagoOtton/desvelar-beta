@@ -2,27 +2,16 @@
   "use strict";
 
   window.DesvelarNavigation = (function () {
-    var PRIMARY_MOBILE_TAB_IDS = [
-      "inicio",
-      "agenda",
-      "estudo",
-      "atividade_fisica",
-    ];
+    var PRIMARY_MOBILE_TAB_IDS = ["estudo"];
     var MORE_ICON = "M4 6h16M4 12h16M4 18h16";
 
     function renderTab(tab, activeTab, isMobile) {
       var label = tab[1];
-      var accessibleLabel = "";
-      if (isMobile && tab[0] === "atividade_fisica") {
-        label = "Atividade";
-        accessibleLabel = ' aria-label="Atividade física"';
-      }
 
       return (
         '<button class="nb" type="button" data-a="tab" data-tab="' +
         tab[0] +
         '"' +
-        accessibleLabel +
         (activeTab === tab[0] ? ' aria-current="page"' : "") +
         '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' +
         tab[2] +
