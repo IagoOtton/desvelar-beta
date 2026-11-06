@@ -7,6 +7,7 @@
       "uid", "today", "dateKey", "isStudyReviewDue", "scheduleStudyReview",
       "pomoRem", "pomoStart", "pomoPause", "pomoComplete", "pomoFinishStudy",
       "pomoEndBreak", "refreshPomodoro", "render", "commit", "isTabEnabled",
+      "getEditingSessionId", "setEditingSessionId",
     ];
     if (
       !dependencies ||
@@ -36,6 +37,7 @@
       var undoRestore = null;
       var undoMessage = "Registro removido.";
       var recordFirstStudyRecord = false;
+      var clearEditingSessionAfterSave = false;
 
       if (action === "undo-delete") {
         var undo = pendingUndo;
@@ -89,6 +91,19 @@
 
       if (action === "retry") {
         dependencies.render();
+        return;
+      }
+
+      if (action === "session-edit") {
+        if (!button.dataset.id) return;
+        dependencies.setEditingSessionId(button.dataset.id);
+        dependencies.render({ focusId: "s-tag" });
+        return;
+      }
+
+      if (action === "session-edit-cancel") {
+        dependencies.setEditingSessionId("");
+        dependencies.render({ focusId: "s-tag" });
         return;
       }
 
@@ -219,6 +234,9 @@
         var index = items.findIndex(function (item) { return item.id === button.dataset.id; });
         if (index === -1 || (button.dataset.confirm && !dependencies.confirm(button.dataset.confirm))) return;
         var deletedItem = items[index];
+        clearEditingSessionAfterSave =
+          collection === "sessions" &&
+          dependencies.getEditingSessionId() === deletedItem.id;
         items.splice(index, 1);
         undoRestore = function (draft) { restoreAt(draft[collection], deletedItem, index); };
         var deleteMessages = {
@@ -251,6 +269,9 @@
       }
 
       var saved = dependencies.stateStore.saveDraft(state);
+      if (saved && clearEditingSessionAfterSave) {
+        dependencies.setEditingSessionId("");
+      }
       if (
         saved &&
         recordFirstStudyRecord &&

@@ -24,6 +24,7 @@
       "studyTypeField",
       "studyTypeLabel",
       "getStudyGuideState",
+      "getEditingSessionId",
       "isReviewDue",
       "head",
       "sum",
@@ -269,6 +270,40 @@
         guideHtml =
           '<div class="study-guide-reopen"><button class="btn sm" type="button" data-a="study-guide-open">Como começar</button></div>';
       }
+      var editingSessionId = dependencies.getEditingSessionId();
+      var editingSession = editingSessionId
+        ? state.sessions.find(function (item) { return item.id === editingSessionId; }) || null
+        : null;
+      var isEditingSession = Boolean(editingSessionId);
+      var sessionMinValue = editingSession ? Number(editingSession.min) : 60;
+      var sessionMinMax =
+        Number.isFinite(sessionMinValue) && sessionMinValue > 720
+          ? sessionMinValue
+          : 720;
+      var sessionDetailsOpen =
+        editingSession &&
+        (editingSession.topic || editingSession.studyType || editingSession.note)
+          ? " open"
+          : "";
+      var sessionTagField = dependencies
+        .tagInput("s-tag", "ex.: Biologia, Inglês")
+        .replace(
+          'id="s-tag"',
+          'id="s-tag" value="' +
+            dependencies.esc(editingSession ? editingSession.tag || "" : "") +
+            '"',
+        );
+      var sessionTopicField = dependencies
+        .topicField("s-topic", "ex.: Ciclo celular")
+        .replace(
+          'id="s-topic"',
+          'id="s-topic" value="' +
+            dependencies.esc(editingSession ? editingSession.topic || "" : "") +
+            '"',
+        );
+      var sessionTypeField = dependencies
+        .studyTypeField("s-type", editingSession ? editingSession.studyType : "")
+        .replace("Tipo (opcional)", "Tipo de estudo (opcional)");
       return (
         dependencies.head(
           "Estudos",
@@ -276,22 +311,46 @@
         ) +
         guideHtml +
         '<div class="study-overview"><div class="study-overview-primary">' +
-        '<section class="card study-session-form-card"><p class="study-eyebrow">Nova sessão</p><h2>O que você vai estudar?</h2><p class="study-card-description">Guarde matéria, assunto e tempo em um só lugar.</p><form class="row study-session-form" data-form="session">' +
+        '<section class="card study-session-form-card"><p class="study-eyebrow">' +
+        (isEditingSession ? "Editar sessão salva" : "Nova sessão") +
+        '</p><h2>' +
+        (isEditingSession ? "Editar sessão" : "O que você vai estudar?") +
+        '</h2><p class="study-card-description">' +
+        (isEditingSession
+          ? "Altere os dados desta sessão salva."
+          : "Guarde matéria, assunto e tempo em um só lugar.") +
+        '</p><form class="row study-session-form" data-form="session"' +
+        (isEditingSession
+          ? ' data-session-id="' + dependencies.esc(editingSessionId) + '"'
+          : "") +
+        ">" +
         '<label class="f grow study-session-subject">Matéria' +
-        dependencies.tagInput("s-tag", "ex.: Biologia, Inglês") +
+        sessionTagField +
         "</label>" +
-        '<label class="f study-session-minutes">Minutos<input id="s-min" type="number" name="min" min="1" max="720" value="60" required></label>' +
-        '<label class="f study-session-date">Data<input id="s-date" type="date" name="date" value="' +
-        t +
+        '<label class="f study-session-minutes">Minutos<input id="s-min" type="number" name="min" min="1" max="' +
+        dependencies.esc(sessionMinMax) +
+        '" value="' +
+        dependencies.esc(sessionMinValue) +
         '" required></label>' +
-        '<details class="study-session-details"><summary>Adicionar detalhes (opcional)</summary><div class="study-session-detail-fields">' +
-        dependencies.topicField("s-topic", "ex.: Ciclo celular") +
-        dependencies
-          .studyTypeField("s-type")
-          .replace("Tipo (opcional)", "Tipo de estudo (opcional)") +
-        '<label class="f grow">Anotação (opcional)<input id="s-note" class="grow" name="note" maxlength="120" placeholder="Ponto que quero lembrar"></label>' +
+        '<label class="f study-session-date">Data<input id="s-date" type="date" name="date" value="' +
+        dependencies.esc(editingSession ? editingSession.date : t) +
+        '" required></label>' +
+        '<details class="study-session-details"' +
+        sessionDetailsOpen +
+        '><summary>Adicionar detalhes (opcional)</summary><div class="study-session-detail-fields">' +
+        sessionTopicField +
+        sessionTypeField +
+        '<label class="f grow">Anotação (opcional)<input id="s-note" class="grow" name="note" maxlength="120" placeholder="Ponto que quero lembrar" value="' +
+        dependencies.esc(editingSession ? editingSession.note || "" : "") +
+        '"></label>' +
         '</div></details>' +
-        '<button class="btn pri" type="submit">Registrar sessão</button></form></section>' +
+        '<button class="btn pri" type="submit">' +
+        (isEditingSession ? "Salvar alterações" : "Registrar sessão") +
+        "</button>" +
+        (isEditingSession
+          ? '<button class="btn study-session-cancel" type="button" data-a="session-edit-cancel">Cancelar</button>'
+          : "") +
+        '</form></section>' +
         '<section class="card study-weekly-card"><h2><span class="study-week-title-desktop">Semana por matéria</span><span class="study-week-title-mobile">Esta semana</span></h2>' +
         '<div class="study-week-rows">' +
         (g.length
@@ -338,7 +397,9 @@
                     : '<span class="study-session-status-spacer" aria-hidden="true"></span>') +
                   '<span class="study-session-duration num">' +
                   dependencies.fmtM(x.min) +
-                  '</span><button class="ico study-session-delete" data-a="del" data-k="sessions" data-id="' +
+                  '</span><button class="btn sm study-session-edit" type="button" data-a="session-edit" data-id="' +
+                  dependencies.esc(x.id) +
+                  '">Editar</button><button class="ico study-session-delete" data-a="del" data-k="sessions" data-id="' +
                   dependencies.esc(x.id) +
                   '" aria-label="Apagar sessão">×</button></li>'
                 );
