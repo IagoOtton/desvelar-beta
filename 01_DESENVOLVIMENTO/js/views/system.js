@@ -28,25 +28,11 @@
 
     function areaLabel(area) {
       var labels = {
-        inicio: "Visão geral",
-        agenda: "Agenda",
         estudo: "Estudos",
         foco: "Pomodoro",
         temas: "Temas e revisões",
         erros: "Erros",
         desempenho: "Desempenho dos estudos",
-        atividade_fisica: "Atividade física",
-        atividade_treino: "Treino",
-        atividade_rotinas: "Rotinas de treino",
-        atividade_historico: "Histórico de treinos",
-        atividade_desempenho: "Desempenho físico",
-        atividade_medidas: "Medidas corporais",
-        leitura: "Leitura",
-        financas: "Finanças",
-        comunidade_estudos: "Comunidade de estudos",
-        comunidade_atividade_fisica: "Comunidade de atividade física",
-        comunidade: "Comunidade de leitura",
-        grupos: "Grupos",
       };
       return labels[area] || "Área do app";
     }
@@ -56,7 +42,7 @@
       var enabled = Boolean(consent && consent.enabled);
       return (
         '<section class="card usage-consent-card" aria-labelledby="usage-consent-title"><p class="eyebrow">ESCOLHA OPCIONAL</p><h2 id="usage-consent-title">Métricas de uso</h2>' +
-        '<p>As métricas mostram à administração quais áreas são abertas e com que frequência. Não incluem anotações nem o conteúdo do seu progresso. Você pode mudar sua escolha quando quiser.</p>' +
+        '<p>As métricas mostram, em totais, quais ferramentas de Estudos são abertas e com que frequência. Com esta autorização atualizada, também registramos a data do primeiro registro de sessão feito após autorizar e se você voltou a Estudos em outro dia nos 7 dias seguintes. Não coletamos matéria, assunto, anotações ou conteúdo do progresso. Você pode mudar sua escolha quando quiser.</p>' +
         '<label class="usage-consent-toggle"><span><strong>Compartilhar métricas de uso</strong><small>Ao desativar, apagamos as métricas associadas à sua conta.</small></span>' +
         '<input id="usage-analytics-consent" type="checkbox"' +
         (enabled ? " checked" : "") +
@@ -73,7 +59,12 @@
 
     function dashboardCard(metrics) {
       if (!metrics) return "";
-      var areas = Array.isArray(metrics.area_usage) ? metrics.area_usage : [];
+      var currentStudyAreas = ["estudo", "foco", "temas", "erros", "desempenho"];
+      var areas = Array.isArray(metrics.area_usage)
+        ? metrics.area_usage.filter(function (item) {
+            return item && currentStudyAreas.indexOf(item.area) !== -1;
+          })
+        : [];
       var daily = Array.isArray(metrics.daily_active_users)
         ? metrics.daily_active_users
         : [];
@@ -86,6 +77,9 @@
       var consentPercent = registered
         ? Math.round((consented / registered) * 100)
         : 0;
+      var activation = metrics.activation_metrics && Number(metrics.activation_metrics.version) >= 1
+        ? metrics.activation_metrics
+        : null;
       var maxAreaOpens = areas.reduce(function (max, item) {
         return Math.max(max, Number(item.opens) || 0);
       }, 0);
@@ -114,7 +108,7 @@
               " aberturas</small></li>"
             );
           }).join("")
-        : '<li class="site-usage-empty">Ainda não há atividade compartilhada. Os dados consideram apenas contas que autorizaram as métricas.</li>';
+        : '<li class="site-usage-empty">Ainda não há atividade compartilhada nas ferramentas atuais de Estudos. Registros de áreas antigas são preservados, mas não aparecem neste painel.</li>';
       var dailyValues = daily.map(function (item) {
         return Math.max(0, Number(item.users) || 0);
       });
@@ -159,11 +153,24 @@
       var generatedAt = metrics.generated_at
         ? new Date(metrics.generated_at).toLocaleString("pt-BR")
         : "";
+      var activationCard = activation
+        ? '<section class="site-control-chart-card site-activation-card"><div><p class="site-control-eyebrow">ATIVAÇÃO · MÉTRICAS OPCIONAIS</p><h3>Primeiro registro e retorno</h3><p>Dados de contas que autorizaram a versão atualizada do consentimento.</p></div><div class="site-activation-metrics"><article><span>Primeiro registro de Estudos · 30 dias</span><strong>' +
+          count(activation.first_study_records_30d) +
+          '</strong><small>contas que salvaram sua primeira sessão após autorizar</small></article><article><span>Retorno a Estudos em até 7 dias</span><strong>' +
+          (activation.return_rate_7d == null ? "—" : count(activation.return_rate_7d) + "%") +
+          '</strong><small>' +
+          (Number(activation.eligible_first_records_7d) > 0
+            ? count(activation.returned_after_first_record_7d) + " de " + count(activation.eligible_first_records_7d) + " contas da coorte madura"
+            : "Aguardando a primeira coorte completar 7 dias") +
+          '</small></article></div><p class="site-activation-note">Escopo atualizado autorizado por ' +
+          count(activation.scope_consent_users) +
+          ' contas. Conta como retorno abrir qualquer ferramenta de Estudos em outro dia nos 7 dias seguintes ao primeiro registro. Matéria, assunto e anotações não são enviados.</p></section>'
+        : '<section class="site-control-chart-card site-activation-card"><div><p class="site-control-eyebrow">ATIVAÇÃO · MÉTRICAS OPCIONAIS</p><h3>Primeiro registro e retorno</h3></div><p class="site-activation-pending">As métricas de ativação aparecem depois que a migration do Supabase for aplicada. Nenhum dado está sendo estimado.</p></section>';
 
       return (
         '<section class="card site-usage-dashboard" aria-labelledby="site-usage-title">' +
         '<div class="site-usage-heading"><div><p class="site-control-eyebrow">SOMENTE ADMINISTRADOR · VISÃO PRIVADA</p><h2 id="site-usage-title">Visão do DESVELAR</h2></div><button class="btn sm" type="button" data-a="site-analytics-refresh">Atualizar dados</button></div>' +
-        '<p class="site-control-copy">As contas cadastradas e o consentimento aparecem separados. Os gráficos não exibem nomes nem registros individuais de uso.</p>' +
+        '<p class="site-control-copy">Os gráficos mostram uso agregado das ferramentas atuais de Estudos. As métricas de primeira sessão e retorno só contam quem autorizou o escopo atualizado; nomes, matérias e anotações não aparecem.</p>' +
         '<div class="site-usage-kpis"><article class="site-usage-kpi"><small>Contas cadastradas</small><strong>' +
         count(registered) +
         '</strong><span>Todas as contas existentes</span></article><article class="site-usage-kpi"><small>Autorizaram métricas</small><strong>' +
@@ -189,9 +196,9 @@
         dailyChart +
         '</div></section><section class="site-control-chart-card"><div><p class="site-control-eyebrow">ENGAJAMENTO</p><h3>Janela de atividade</h3><p>Contas ativas em janelas de tempo diferentes.</p></div><div class="site-usage-windows">' +
         activityBars +
-        '</div></section><section class="site-control-chart-card"><div><p class="site-control-eyebrow">USO POR ÁREA · 30 DIAS</p><h3>O que as pessoas abrem</h3><p>Aberturas entre contas que ativaram as métricas.</p></div><ol class="site-usage-areas">' +
+        '</div></section><section class="site-control-chart-card"><div><p class="site-control-eyebrow">USO DAS FERRAMENTAS ATUAIS · 30 DIAS</p><h3>Estudos em uso</h3><p>Aberturas das ferramentas atuais entre contas que ativaram as métricas.</p></div><ol class="site-usage-areas">' +
         areaRows +
-        '</ol></section></div><p class="m site-usage-updated">' +
+        '</ol></section>' + activationCard + '</div><p class="m site-usage-updated">' +
         (generatedAt ? "Atualizado em " + dependencies.esc(generatedAt) : "") +
         "</p></section>"
       );

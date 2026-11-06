@@ -2,25 +2,11 @@
   "use strict";
 
   var AREAS = [
-    "inicio",
-    "agenda",
     "estudo",
     "foco",
     "temas",
     "erros",
     "desempenho",
-    "atividade_fisica",
-    "atividade_treino",
-    "atividade_rotinas",
-    "atividade_historico",
-    "atividade_desempenho",
-    "atividade_medidas",
-    "leitura",
-    "financas",
-    "comunidade_estudos",
-    "comunidade_atividade_fisica",
-    "comunidade",
-    "grupos",
   ];
 
   function create(client) {
@@ -36,7 +22,7 @@
     var presenceCooldownMs = 60 * 1000;
 
     function getConsent() {
-      return client.rpc("get_my_usage_analytics_consent").then(function (result) {
+      return client.rpc("get_my_usage_analytics_consent_v2").then(function (result) {
         if (result.error) return { enabled: false, error: result.error };
         consentEnabled = result.data === true;
         return { enabled: consentEnabled, error: null };
@@ -46,7 +32,7 @@
     }
 
     function getPendingConsentPrompt() {
-      return client.rpc("get_my_usage_analytics_consent_prompt").then(function (result) {
+      return client.rpc("get_my_usage_analytics_consent_prompt_v2").then(function (result) {
         if (result.error) return { pending: false, error: result.error };
         return { pending: result.data === true, error: null };
       }).catch(function (error) {
@@ -59,7 +45,7 @@
         return Promise.resolve({ ok: false, error: new Error("Escolha inválida.") });
       }
 
-      return client.rpc("set_my_usage_analytics_consent", {
+      return client.rpc("set_my_usage_analytics_consent_v2", {
         p_enabled: enabled,
       }).then(function (result) {
         if (result.error || result.data !== true) {
@@ -108,6 +94,26 @@
       return send(null);
     }
 
+    function recordFirstStudyRecord() {
+      function sendFirstRecord() {
+        return Promise.resolve()
+          .then(function () {
+            return client.rpc("record_my_first_study_record");
+          })
+          .catch(function () {
+            return null;
+          });
+      }
+
+      if (consentEnabled) return sendFirstRecord();
+      return getConsent().then(function (consent) {
+        if (!consent.enabled) return null;
+        return sendFirstRecord();
+      }).catch(function () {
+        return null;
+      });
+    }
+
     function initialize(area) {
       return getConsent().then(function (consent) {
         if (consent.enabled) return recordArea(area, true).then(function () { return consent; });
@@ -142,6 +148,7 @@
       initialize: initialize,
       recordArea: recordArea,
       recordPresence: recordPresence,
+      recordFirstStudyRecord: recordFirstStudyRecord,
       isAdmin: isAdmin,
       getDashboard: getDashboard,
     });

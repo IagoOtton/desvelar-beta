@@ -212,6 +212,12 @@
         PomodoroDomain.markFocusComplete(S, S.pomoRun.end)
       ) {
         var focusSaved = persist();
+        if (
+          focusSaved &&
+          typeof dependencies.recordFirstStudyRecord === "function"
+        ) {
+          dependencies.recordFirstStudyRecord();
+        }
         showPomodoroDecision();
         announceFocusEnd(S.pomoRun, focusSaved);
         return;

@@ -2489,6 +2489,59 @@ body:has(#view .study-heading--notebook) .study-heading--notebook {
   color: #fffaf4;
 }
 
+.study-first-session {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 18px 22px;
+  border-color: var(--a1);
+  background: var(--surface);
+}
+
+.study-first-session-copy h2 {
+  margin: 0 0 5px;
+  font-size: 1.05rem;
+}
+
+.study-first-session-copy p {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.study-first-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.study-guide-reopen {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 12px;
+}
+
+@media (max-width: 640px) {
+  .study-first-session {
+    padding: 16px;
+  }
+
+  .study-first-session-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .study-first-session-actions .btn {
+    width: 100%;
+  }
+
+  .study-guide-reopen {
+    justify-content: flex-start;
+  }
+}
+
 .study-overview {
   display: grid;
   gap: 18px;
@@ -4248,6 +4301,45 @@ body.zen .shell > main {
   font: 600 16px/1.35 var(--display);
 }
 
+.site-activation-card {
+  grid-column: 1 / -1;
+}
+
+.site-activation-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.site-activation-metrics article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #1e4434;
+  border-radius: 13px;
+  background: linear-gradient(150deg, #10281e, #0b2018);
+}
+
+.site-activation-metrics span,
+.site-activation-metrics small,
+.site-activation-note,
+.site-activation-pending {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.site-activation-metrics strong {
+  color: var(--a1);
+  font: 600 clamp(24px, 3vw, 34px)/1.1 var(--mono);
+}
+
+.site-activation-note,
+.site-activation-pending {
+  margin: 12px 0 0;
+}
+
 .site-control-chart-card > div:first-child > p:last-child {
   margin: 5px 0 0;
   color: var(--muted);
@@ -4475,6 +4567,10 @@ body.zen .shell > main {
 
   .site-control-chart-card {
     padding: 15px;
+  }
+
+  .site-activation-metrics {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .site-consent-chart__content {

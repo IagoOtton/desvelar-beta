@@ -74,7 +74,7 @@
               <input id="auth-usage-consent" type="checkbox" aria-describedby="auth-usage-consent-note">
               <span>Autorizo o uso de métricas para ajudar a melhorar o DESVELAR.</span>
             </label>
-            <p id="auth-usage-consent-note">Opcional. Não inclui o conteúdo do seu progresso e pode ser revogado em Perfil. <a href="./privacidade.html#metricas-de-uso">Leia como funciona</a>.</p>
+            <p id="auth-usage-consent-note">Opcional. Inclui ferramentas abertas, data do primeiro registro de Estudos após a autorização e retorno em até 7 dias; não inclui o conteúdo do seu progresso. Pode ser revogado em Perfil. <a href="./privacidade.html#metricas-de-uso">Leia como funciona</a>.</p>
           </div>
 
           <div class="auth-actions">
@@ -132,7 +132,7 @@
   `;
 
   var MIN_PASSWORD_LENGTH = 8;
-  var PRIVACY_NOTICE_VERSION = "2026-11-03";
+  var PRIVACY_NOTICE_VERSION = "2026-11-06";
   var isSignUp = false;
   var form = document.getElementById("auth-form");
   var message = document.getElementById("auth-message");
@@ -283,17 +283,19 @@
     var acceptedPrivacyNotice =
       signupMetadata.privacy_notice_accepted === true &&
       signupMetadata.privacy_notice_version === PRIVACY_NOTICE_VERSION;
+    var currentSignupConsent =
+      acceptedPrivacyNotice && typeof signupConsent === "boolean";
     var hasSignupPreferences =
-      typeof signupConsent === "boolean" || acceptedPrivacyNotice;
+      currentSignupConsent || acceptedPrivacyNotice;
 
     if (hasSignupPreferences && signupSettingsSyncUserId !== user.id) {
       if (signupSettingsSyncInFlight) return;
       signupSettingsSyncInFlight = true;
       var signupSyncTasks = [];
 
-      if (typeof signupConsent === "boolean") {
+      if (currentSignupConsent) {
         signupSyncTasks.push(
-          window.desvelarSupabase.rpc("set_my_usage_analytics_consent", {
+          window.desvelarSupabase.rpc("set_my_usage_analytics_consent_v2", {
             p_enabled: signupConsent,
           }).then(function (result) {
             if (result.error || result.data !== true) {
