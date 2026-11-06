@@ -40,10 +40,15 @@
     function consentCard(consent) {
       var failed = Boolean(consent && consent.error);
       var enabled = Boolean(consent && consent.enabled);
+      var consentHelp = failed
+        ? "Não foi possível confirmar sua preferência."
+        : enabled
+          ? "Ativas nesta conta. Ao desativar, apagamos as métricas associadas à sua conta."
+          : "Desativadas até sua autorização. Se ativar e depois desativar, apagaremos as métricas associadas à sua conta.";
       return (
         '<section class="card usage-consent-card" aria-labelledby="usage-consent-title"><p class="eyebrow">ESCOLHA OPCIONAL</p><h2 id="usage-consent-title">Métricas de uso</h2>' +
-        '<p>As métricas mostram, em totais, quais ferramentas de Estudos são abertas e com que frequência. Com esta autorização atualizada, também registramos a data do primeiro registro de sessão feito após autorizar e se você voltou a Estudos em outro dia nos 7 dias seguintes. Não coletamos matéria, assunto, anotações ou conteúdo do progresso. Você pode mudar sua escolha quando quiser.</p>' +
-        '<label class="usage-consent-toggle"><span><strong>Compartilhar métricas de uso</strong><small>Ao desativar, apagamos as métricas associadas à sua conta.</small></span>' +
+        '<p>Só registramos estas métricas se você ativar esta opção: ferramentas de Estudos abertas e sua frequência, a data do primeiro registro de sessão após a autorização e se você voltar a Estudos em outro dia nos 7 dias seguintes. A equipe vê totais agregados. Não coletamos matéria, assunto, anotações ou conteúdo do progresso. Você pode mudar sua escolha a qualquer momento nesta tela Conta → Privacidade.</p>' +
+        '<label class="usage-consent-toggle"><span><strong>Compartilhar métricas de uso</strong><small>' + consentHelp + '</small></span>' +
         '<input id="usage-analytics-consent" type="checkbox"' +
         (enabled ? " checked" : "") +
         (failed ? " disabled" : "") +
