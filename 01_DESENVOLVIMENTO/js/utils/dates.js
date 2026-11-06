@@ -38,43 +38,18 @@
       return ds(d);
     };
 
-    var MES = [
-      "janeiro",
-      "fevereiro",
-      "março",
-      "abril",
-      "maio",
-      "junho",
-      "julho",
-      "agosto",
-      "setembro",
-      "outubro",
-      "novembro",
-      "dezembro",
-    ];
-
-    var DIAS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
-
     var fmtD = function (s) {
       var d = pd(s);
       return pad(d.getDate()) + "/" + pad(d.getMonth() + 1);
     };
 
-    var daysBetween = function (a, b) {
-      return Math.round((pd(b) - pd(a)) / 864e5);
-    };
-
     return {
       pad: pad,
       ds: ds,
-      pd: pd,
       addDays: addDays,
       today: today,
       wkStart: wkStart,
-      MES: MES,
-      DIAS: DIAS,
       fmtD: fmtD,
-      daysBetween: daysBetween,
     };
   })();
 })();

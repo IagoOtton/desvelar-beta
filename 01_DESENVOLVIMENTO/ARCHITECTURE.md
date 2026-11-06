@@ -1,47 +1,29 @@
 # Arquitetura do DESVELAR
 
-## Entrada do aplicativo
+O escopo funcional atual e as regras de preservação de dados ficam em [ARQUITETURA_E_ESCOPO_ATUAL.md](../03_DOCUMENTACAO/ARQUITETURA_E_ESCOPO_ATUAL.md). Este arquivo registra como o código-fonte ativo se organiza.
 
-`desvelar-v1-corrigido.html` é a entrada de desenvolvimento e dos testes. Ela carrega os scripts clássicos do aplicativo. O build de produção minifica os módulos e gera bundles com nomes baseados no conteúdo: autenticação, núcleo do app, atividade física, comunidade e CSS. Após validar a sessão, `auth.js` pré-carrega o núcleo enquanto busca os dados da conta e o executa quando a carga dos dados termina. Os bundles de atividade física e comunidade só são baixados quando a pessoa abre essas áreas pela primeira vez. Os módulos de origem continuam como IIFEs que publicam APIs em `window.Desvelar...`; mantenha a ordem das importações nas entradas de build, pois esses módulos são criados antes de o aplicativo ser iniciado.
+## Aplicativo
 
-O fluxo esperado é:
+- `desvelar-v1-corrigido.html` é a entrada local e carrega os módulos-fonte.
+- `js/auth.js`, `js/supabase.js` e `js/entries/auth.js` mantêm login, cadastro, recuperação e consentimentos.
+- `js/entries/app.js` compõe o aplicativo autenticado.
+- `js/views/` contém as telas de Estudos, Conta e painel privado de métricas.
+- `js/controllers/` processa ações de tela, formulários, conta e execução do Pomodoro.
+- `js/domain/` guarda regras de estudo, cálculos, Pomodoro e normalização de dados.
+- `js/repositories/` e `js/services/` mantêm armazenamento local, sincronização e métricas consentidas.
+- `js/state/` centraliza o estado em memória e sua persistência.
+- `css/style.css` contém os estilos compartilhados do aplicativo e das páginas públicas.
 
-1. O bundle de autenticação carrega o modelo, o repositório de dados da nuvem e o cliente Supabase.
-2. O bundle do núcleo carrega utilitários, domínio, configuração, componentes, repositórios essenciais, sincronização, estado, views comuns e controllers.
-3. `app.js` inicia a interface depois de a sessão e os dados da conta estarem prontos. Os bundles específicos de atividade física e comunidade são carregados sob demanda e inicializados uma vez.
+## Build e cache
 
-O build usa esbuild para minificar o JavaScript e o CSS, gerar nomes de arquivo com hash e publicar o HTML de entrada, os assets compilados e o `service-worker.js` de produção. Ao adicionar um módulo de origem, inclua-o na entrada apropriada antes de qualquer módulo que o use. Para uma área pesada que não é necessária na primeira tela, avalie colocá-la em uma entrada sob demanda e manter o carregador correspondente no app. Os testes locais continuam carregando os scripts de origem pelo HTML de desenvolvimento.
+`scripts/build-beta.mjs` agrupa e minifica três entradas: autenticação, aplicativo e CSS. O build gera arquivos com hash em `dist-beta/`, prepara o HTML para GitHub Pages e versiona o cache do `service-worker.js`. Essa pasta é artefato gerado e não deve ser editada como fonte.
 
-O bundle de autenticação registra um service worker apenas em HTTPS. Ele usa cache-first somente para JavaScript e CSS de produção em `assets/` cujos nomes incluem hash de conteúdo, inclusive os bundles carregados sob demanda; o HTML, as fontes externas e as respostas do Supabase continuam fora desse cache. O build deriva o identificador do cache de todos os bundles e da folha de estilos. A ativação mantém a geração atual e a anterior para arquivos referenciados por uma página ainda aberta e remove gerações mais antigas.
+## Dados e compatibilidade
 
-As métricas de uso são opcionais e ficam desativadas até a pessoa ativá-las em Perfil. O cliente envia apenas um identificador de área permitido; os registros ficam no schema privado `private`, com retenção de 90 dias. A tela de administração recebe somente totais agregados através de funções `SECURITY DEFINER` que verificam uma lista privada de administradores. Não inclua conteúdo dos registros pessoais, publicações ou mensagens nessas métricas.
+O frontend sincroniza um snapshot por conta através de `app_user_data` e da função `save_my_app_data`. A cópia local permite manter alterações pendentes durante falhas de rede.
 
-## Responsabilidades
+Não remova campos legados de `js/domain/data-model.js`, nem altere os repositórios de dados ou migrações do Supabase sem planejar uma migração e recuperação. A interface pode deixar de oferecer uma ferramenta sem excluir os dados já existentes.
 
-| Camada | Responsabilidade |
-| --- | --- |
-| `domain/` | Normalização e regras puras de dados, análises e transições do Pomodoro. Não acessa DOM, rede ou armazenamento. |
-| `repositories/` | Leitura e gravação em serviços externos ou armazenamento local. |
-| `services/` | Orquestração de sincronização e outras tarefas que atravessam repositórios. |
-| `state/` | Estado em memória, rascunhos, persistência e recuperação após falhas. |
-| `components/` | Elementos visuais reutilizáveis e indicadores derivados dos dados. |
-| `views/` | Montagem do HTML de cada tela. Recebem dependências e não controlam persistência. |
-| `controllers/` | Ações do usuário, operações de conta e efeitos de execução do Pomodoro. |
-| `config/` | Metadados estáticos usados para montar navegação e personalização. |
-| `app.js` | Ponto de composição: cria serviços, injeta dependências, conecta ações, renderiza e inicia o aplicativo. |
+## Fluxo de mudança
 
-## Cálculos derivados
-
-`domain/analytics.js` monta índices de sessões, leituras e questões sob demanda para o snapshot de estado atual. Os índices ficam em memória e são descartados quando o `stateStore` publica um novo snapshot. Use funções por intervalo de datas para os indicadores de período; cálculos com filtros arbitrários continuam percorrendo os registros. Não altere o estado publicado diretamente, pois isso impede a invalidação dos índices.
-
-## Ao adicionar uma funcionalidade
-
-- Coloque cálculo independente de interface em `domain/`.
-- Coloque acesso ao Supabase, navegador ou armazenamento em um repositório ou serviço.
-- Mantenha cada tela em sua view e injete as funções necessárias.
-- Faça alterações no estado por meio do `stateStore`; persista apenas pelas rotinas existentes de sincronização.
-- Para uma nova aba, atualize o modelo de módulos, o registro em `config/module-registry.js`, a view correspondente e o `ViewRegistry`.
-- Para mudanças no formato salvo, revise normalização, versão do modelo e compatibilidade com dados já existentes.
-- Preserve o fluxo da Actions: os testes automatizados e o build passam antes do deploy no Pages.
-
-
+Edite os arquivos em `01_DESENVOLVIMENTO/`, revise a mudança na branch de trabalho e valide os fluxos de conta, sincronização e Estudos antes da publicação. As alterações passam por revisão no GitHub; o deploy é feito pelo fluxo configurado no repositório.

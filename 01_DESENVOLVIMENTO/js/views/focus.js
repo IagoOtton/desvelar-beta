@@ -405,8 +405,6 @@
       );
     }
 
-    /* ---------- vida: temas, hábitos, finanças, metas, rotina ---------- */
-
     return Object.freeze({ focusPage: focusPage });
   }
   window.DesvelarFocusViews = Object.freeze({ create: create });

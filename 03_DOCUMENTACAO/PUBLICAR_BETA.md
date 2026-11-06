@@ -14,7 +14,7 @@ Os arquivos SQL a seguir documentam etapas usadas na instalação inicial do pro
 
 ### 1. Tabela de feedback
 
-`public.app_feedback` já existe no projeto em produção. [`create_app_feedback.sql`](../01_DESENVOLVIMENTO/supabase/create_app_feedback.sql) é um script histórico; não o execute novamente nesse projeto. Para consultar feedbacks, o painel usa uma função administrativa e a leitura segue restrita.
+`public.app_feedback` já existe no projeto em produção. [`create_app_feedback.sql`](../01_DESENVOLVIMENTO/supabase/create_app_feedback.sql) é um script histórico; não o execute novamente. O formulário e a tela de feedback não fazem parte da interface atual, mas a tabela e os registros existentes são preservados. O exemplo abaixo é uma consulta administrativa opcional para registros antigos; não concede acesso ao app.
 
 O acesso de leitura não é concedido ao app. Para revisar os envios, use o SQL Editor do Supabase:
 
@@ -37,11 +37,9 @@ Essa tabela guarda o progresso pessoal em um único registro por conta. A RLS li
 
 ### 3. Comunidade de leitores
 
-O esquema da comunidade já está ativo. [`reader_community_schema.sql`](../01_DESENVOLVIMENTO/supabase/reader_community_schema.sql) documenta parte da instalação inicial e não deve ser reaplicado no projeto atual. Publicações e perfis escolhidos ficam disponíveis às contas autenticadas; ciclos e progresso ficam restritos às pessoas dos respectivos grupos. E-mails e dados da biblioteca pessoal não são publicados pela Comunidade.
+O esquema da comunidade continua no Supabase para preservar os dados e as políticas existentes. [`reader_community_schema.sql`](../01_DESENVOLVIMENTO/supabase/reader_community_schema.sql) documenta parte da instalação inicial e não deve ser reaplicado. A interface de comunidade foi retirada do escopo atual; esta versão não oferece publicações, perfis ou grupos de leitura.
 
-Para começar um grupo, uma pessoa cria o grupo e compartilha o código de convite. O responsável abre um ciclo mensal, ou escolhe o livro diretamente; se abrir indicações, os membros podem sugerir títulos e o responsável faz um único sorteio.
-
-As denúncias são gravadas no Supabase, mas ainda não há uma tela de moderação. Para revisá-las, use o SQL Editor do Supabase:
+Denúncias antigas permanecem no banco. Para inspecioná-las administrativamente no SQL Editor do Supabase, use:
 
 ```sql
 select
@@ -83,7 +81,7 @@ Uma cópia local nova deve usar o repositório existente. O repositório é púb
 
 ## Como pedir feedback
 
-Peça que testem uma tarefa real e descrevam: o que tentaram fazer, o que aconteceu e o que esperavam. O feedback enviado em **Sistema → Enviar feedback** fica associado à conta. Os dados pessoais de estudo, rotina, hábitos, metas e finanças também ficam no Supabase e sincronizam ao entrar com a mesma conta em outro dispositivo. O navegador conserva uma cópia local para uso sem conexão; confira em **Sistema** se as alterações foram sincronizadas. A exportação/importação manual foi removida; alterações que ainda não aparecem como sincronizadas permanecem apenas no navegador atual.
+Peça que testem uma tarefa real de Estudos e descrevam: o que tentaram fazer, o que aconteceu e o que esperavam. O formulário interno de feedback não está disponível nesta versão. Os registros de Estudos e as configurações da conta são associados à conta e sincronizados ao entrar com a mesma conta em outro dispositivo. O navegador conserva alterações locais enquanto a conexão falha; confira em **Conta → Sincronização** se já foram enviadas. Alterações ainda pendentes permanecem neste navegador até a sincronização ser retomada.
 
 Oriente todos a usar o endereço publicado e entrar na própria conta. O site não lê automaticamente o armazenamento isolado de uma cópia aberta por `file://`.
 

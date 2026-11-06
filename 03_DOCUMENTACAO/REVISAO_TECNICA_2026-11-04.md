@@ -1,5 +1,7 @@
 # Revisão técnica do DESVELAR — 4 de novembro de 2026
 
+> Registro histórico da versão analisada em 04/11/2026, antes da redução de escopo. Descrições de áreas, bundles, arquivos e recomendações desta revisão não representam necessariamente o código atual. Consulte [ARQUITETURA_E_ESCOPO_ATUAL.md](ARQUITETURA_E_ESCOPO_ATUAL.md) para o estado vigente.
+
 ## Resumo
 
 O projeto já tem uma base adequada para o beta: separa domínio, interface, controladores e repositórios; carrega Atividade Física e Comunidade sob demanda; minifica os assets, usa nomes com hash e publica por GitHub Actions. Não encontrei motivo para reescrever o app ou para retirar funcionalidades nesta rodada.
