@@ -277,20 +277,20 @@
         guideHtml +
         '<div class="study-overview"><div class="study-overview-primary">' +
         '<section class="card study-session-form-card"><p class="study-eyebrow">Nova sessão</p><h2>O que você vai estudar?</h2><p class="study-card-description">Guarde matéria, assunto e tempo em um só lugar.</p><form class="row study-session-form" data-form="session">' +
-        '<label class="f grow">Matéria' +
+        '<label class="f grow study-session-subject">Matéria' +
         dependencies.tagInput("s-tag", "ex.: Biologia, Inglês") +
         "</label>" +
-        dependencies
-          .topicField("s-topic", "ex.: Ciclo celular")
-          .replace("Assunto (opcional)", "Assunto") +
-        dependencies
-          .studyTypeField("s-type")
-          .replace("Tipo (opcional)", "Tipo de estudo") +
-        '<label class="f">Minutos<input id="s-min" type="number" name="min" min="1" max="720" value="60" required></label>' +
-        '<label class="f">Data<input id="s-date" type="date" name="date" value="' +
+        '<label class="f study-session-minutes">Minutos<input id="s-min" type="number" name="min" min="1" max="720" value="60" required></label>' +
+        '<label class="f study-session-date">Data<input id="s-date" type="date" name="date" value="' +
         t +
         '" required></label>' +
+        '<details class="study-session-details"><summary>Adicionar detalhes (opcional)</summary><div class="study-session-detail-fields">' +
+        dependencies.topicField("s-topic", "ex.: Ciclo celular") +
+        dependencies
+          .studyTypeField("s-type")
+          .replace("Tipo (opcional)", "Tipo de estudo (opcional)") +
         '<label class="f grow">Anotação (opcional)<input id="s-note" class="grow" name="note" maxlength="120" placeholder="Ponto que quero lembrar"></label>' +
+        '</div></details>' +
         '<button class="btn pri" type="submit">Registrar sessão</button></form></section>' +
         '<section class="card study-weekly-card"><h2><span class="study-week-title-desktop">Semana por matéria</span><span class="study-week-title-mobile">Esta semana</span></h2>' +
         '<div class="study-week-rows">' +

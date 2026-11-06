@@ -960,6 +960,7 @@ test("salva dados pelas telas acadêmicas extraídas", async () => {
     await page.locator('#sidenav [data-tab="estudo"]').click();
     await page.locator("#s-tag").fill("Neuroanatomia");
     await page.locator("#s-min").fill("75");
+    await page.locator(".study-session-details > summary").click();
     await page.locator("#s-note").fill("Sessão do módulo acadêmico");
     await page.locator('form[data-form="session"] button[type="submit"]').click();
     await page
