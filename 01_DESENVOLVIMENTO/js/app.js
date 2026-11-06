@@ -621,58 +621,6 @@
     document.getElementById("toasts").appendChild(el);
     resumeAutoDismiss();
   }
-  function showPendingUsageConsentPrompt() {
-    return UsageAnalytics.getPendingConsentPrompt().then(function (prompt) {
-      if (!prompt.pending || document.getElementById("usage-consent-prompt")) return;
-
-      var dialog = document.createElement("dialog");
-      dialog.id = "usage-consent-prompt";
-      dialog.className = "usage-consent-prompt";
-      dialog.setAttribute("aria-labelledby", "usage-consent-prompt-title");
-      dialog.setAttribute("aria-describedby", "usage-consent-prompt-copy");
-      dialog.innerHTML =
-        '<p class="usage-consent-prompt__eyebrow">SUA ESCOLHA</p>' +
-        '<h2 id="usage-consent-prompt-title">Atualizamos as métricas opcionais</h2>' +
-        '<p id="usage-consent-prompt-copy">Além das ferramentas abertas e da atividade aproximada, a nova opção registra a data do primeiro registro de sessão de Estudos feito depois da autorização e se você voltou a Estudos em outro dia nos 7 dias seguintes. Não coleta matéria, assunto, anotações ou conteúdo do progresso; a equipe vê apenas totais agregados e os registros são removidos após 90 dias. Se recusar, as métricas serão desativadas e os dados associados à sua conta serão apagados. <a href="./privacidade.html#metricas-de-uso" target="_blank" rel="noopener noreferrer">Saiba mais no Aviso de Privacidade</a>. Você pode mudar sua escolha a qualquer momento em Perfil.</p>' +
-        '<p class="usage-consent-prompt__status" role="status" aria-live="polite"></p>' +
-        '<div class="usage-consent-prompt__actions">' +
-        '<button class="btn" type="button" data-usage-consent-choice="false">Recusar e apagar métricas</button>' +
-        '<button class="btn pri" type="button" data-usage-consent-choice="true">Autorizar métricas</button>' +
-        "</div>";
-
-      if (typeof dialog.showModal !== "function") return;
-
-      dialog.addEventListener("cancel", function (event) {
-        event.preventDefault();
-      });
-      dialog.querySelectorAll("[data-usage-consent-choice]").forEach(function (button) {
-        button.addEventListener("click", function () {
-          var enabled = button.dataset.usageConsentChoice === "true";
-          var buttons = dialog.querySelectorAll("[data-usage-consent-choice]");
-          var status = dialog.querySelector(".usage-consent-prompt__status");
-          buttons.forEach(function (item) { item.disabled = true; });
-          status.textContent = "Salvando sua escolha…";
-
-          UsageAnalytics.setConsent(enabled).then(function (result) {
-            if (!result.ok) {
-              buttons.forEach(function (item) { item.disabled = false; });
-              status.textContent = "Não foi possível salvar sua escolha. Tente novamente.";
-              return;
-            }
-
-            if (enabled) UsageAnalytics.recordArea(tab, true);
-            dialog.close();
-            dialog.remove();
-            render();
-          });
-        });
-      });
-
-      document.body.appendChild(dialog);
-      dialog.showModal();
-      dialog.querySelector('[data-usage-consent-choice="false"]').focus();
-    });
-  }
   function commit(msg, savedResult, renderOptions) {
     var saved =
       typeof savedResult === "boolean" ? savedResult : persist();
@@ -896,9 +844,7 @@
     if (admin || tabChanged) render();
   });
 
-  UsageAnalytics.initialize(tab)
-    .then(showPendingUsageConsentPrompt)
-    .catch(function () {});
+  UsageAnalytics.initialize(tab).catch(function () {});
   window.setInterval(function () {
     if (document.visibilityState === "visible") UsageAnalytics.recordPresence();
   }, 5 * 60 * 1000);
