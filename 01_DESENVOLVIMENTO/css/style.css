@@ -1924,6 +1924,10 @@ svg.ch .chart-hit {
 .reading-timer-clock { min-width: 100px; color: var(--ink); font-size: clamp(24px, 3vw, 34px); font-variant-numeric: tabular-nums; font-weight: 700; line-height: 1; text-align: center; }
 .reading-timer-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .reading-timer-empty { margin: 0; }
+.reading-area-tabs {
+  width: fit-content;
+  max-width: 100%;
+}
 .reading-view,
 .reading-section {
   display: grid;
@@ -2156,6 +2160,13 @@ svg.ch .chart-hit {
   }
 }
 @media (max-width: 600px) {
+  .reading-area-tabs {
+    width: 100%;
+  }
+  .reading-area-tabs .area-tab {
+    padding-right: 13px;
+    padding-left: 13px;
+  }
   .reading-today-card {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
