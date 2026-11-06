@@ -45,6 +45,7 @@
   var S = null,
     tab = "estudo",
     saveOk = true;
+  var editingSessionId = "";
 
   /* ---------- dados ---------- */
   var localData = window.DesvelarLocalDataRepository.create({
@@ -316,6 +317,7 @@
     head: head,
     getActiveTab: function () { return tab; },
     getStudyGuideState: studyGuideState,
+    getEditingSessionId: function () { return editingSessionId; },
     getCloudSyncStatus: cloudSync.getStatusLabel,
     usageAnalytics: UsageAnalytics,
     getZen: function () { return zen; },
@@ -342,6 +344,7 @@
     commit: commit,
     toast: toast,
     recordFirstStudyRecord: UsageAnalytics.recordFirstStudyRecord,
+    clearEditingSession: function () { editingSessionId = ""; },
   });
   var studyRouteIds = ["estudo", "foco", "temas", "erros", "desempenho"];
   var routeIds = studyRouteIds.concat(["sistema", "painel_controle"]);
@@ -355,6 +358,10 @@
     toast: toast,
     getUiState: function () {
       return { tab: tab, zen: zen };
+    },
+    getEditingSessionId: function () { return editingSessionId; },
+    setEditingSessionId: function (id) {
+      editingSessionId = id || "";
     },
     setUiState: function (updates) {
       if (Object.prototype.hasOwnProperty.call(updates, "tab")) {

@@ -49,24 +49,58 @@
         var message = "Registro salvo.";
         var tag = String(values.tag || "").trim();
         var topic = String(values.topic || "").trim();
+        var sessionId = form.dataset.sessionId || "";
 
         if (kind === "session") {
           var minutes = Number(values.min);
-          if (!Number.isInteger(minutes) || minutes < 1 || minutes > 720) {
-            dependencies.toast("Informe um tempo entre 1 e 720 minutos.");
+          var sessionIndex = sessionId
+            ? state.sessions.findIndex(function (item) { return item.id === sessionId; })
+            : -1;
+          if (sessionId && sessionIndex === -1) {
+            dependencies.toast("Esta sessão não está mais disponível para edição.");
             return;
           }
-          var session = {
-            id: dependencies.uid(),
-            date: values.date || dependencies.today(),
-            min: minutes,
-            tag: tag,
-            note: String(values.note || "").trim(),
-          };
-          if (topic) session.topic = topic;
-          if (values.studyType) session.studyType = values.studyType;
-          state.sessions.push(session);
-          message = "Sessão registrada.";
+          var currentSession = sessionId ? state.sessions[sessionIndex] : null;
+          var preservingExistingLongDuration =
+            currentSession &&
+            Number.isInteger(Number(currentSession.min)) &&
+            Number(currentSession.min) > 720 &&
+            minutes <= Number(currentSession.min);
+          if (
+            !Number.isInteger(minutes) ||
+            minutes < 1 ||
+            (minutes > 720 && !preservingExistingLongDuration)
+          ) {
+            dependencies.toast(
+              "Novas sessões podem ter até 720 minutos; uma sessão mais longa pode manter ou reduzir sua duração.",
+            );
+            return;
+          }
+
+          if (sessionId) {
+            var existingSession = currentSession;
+            existingSession.date = values.date || dependencies.today();
+            existingSession.min = minutes;
+            existingSession.tag = tag;
+            existingSession.note = String(values.note || "").trim();
+            if (topic) existingSession.topic = topic;
+            else delete existingSession.topic;
+            if (values.studyType) existingSession.studyType = values.studyType;
+            else delete existingSession.studyType;
+            message = "Sessão atualizada.";
+          } else {
+            var session = {
+              id: dependencies.uid(),
+              date: values.date || dependencies.today(),
+              min: minutes,
+              tag: tag,
+              note: String(values.note || "").trim(),
+            };
+            if (topic) session.topic = topic;
+            if (values.studyType) session.studyType = values.studyType;
+            state.sessions.push(session);
+            message = "Sessão registrada.";
+          }
         } else if (kind === "question") {
           var total = Number(values.total);
           var correct = Number(values.correct);
@@ -149,9 +183,18 @@
         if (
           saved &&
           kind === "session" &&
+          !sessionId &&
           typeof dependencies.recordFirstStudyRecord === "function"
         ) {
           dependencies.recordFirstStudyRecord();
+        }
+        if (
+          saved &&
+          kind === "session" &&
+          sessionId &&
+          typeof dependencies.clearEditingSession === "function"
+        ) {
+          dependencies.clearEditingSession();
         }
         dependencies.commit(message, saved);
       } finally {

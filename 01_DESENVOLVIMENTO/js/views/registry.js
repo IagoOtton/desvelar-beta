@@ -13,6 +13,7 @@
       "head",
       "getActiveTab",
       "getStudyGuideState",
+      "getEditingSessionId",
       "getCloudSyncStatus",
       "usageAnalytics",
     ];
@@ -95,6 +96,7 @@
       studyTypeLabel: studyFields.typeLabel,
       head: studyHead,
       getStudyGuideState: dependencies.getStudyGuideState,
+      getEditingSessionId: dependencies.getEditingSessionId,
       sum: formatting.sum,
       tkey: tags.key,
       groupMin: analytics.groupMin,
