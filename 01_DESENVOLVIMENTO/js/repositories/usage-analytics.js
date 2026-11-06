@@ -1,3 +1,158 @@
-1ëa¡Ñ1qêmŠ‰ËŠw¶y©Ú—+brÈì²Ä^¦VœyÈZ¯]þr«×G!j½t
-‰ïx&§ž‹\¢{Þ®Ö«‚éžžÚ%t(Z¯­†ö¥¹çè­©•§¶‹r¥ä²²×¦
-«	©ç¢×(ž÷«¶ö¥¹ëh·*^K+-z`¡j±+®ŠÒ¶¸§‚k¬µ·žÅ§-—*'yÈZ­§-z¹hž†gVæ7F–öâ‚’°Ð¢'W6R7G&–7B#°Ð Ð¢f"$T2Ò°Ð¢&W7GVFò"ÀÐ¢&fö6ò"ÀÐ¢'FVÖ2"ÀÐ¢&W'&÷2"ÀÐ¢&FW6V×Væ†ò"ÀÐ¢Ó°Ð Ð¢gVæ7F–öâ7&VFR†6Æ–VçB’°Ð¢–b‚6Æ–VçBÇÂG—Vöb6Æ–VçBç'2ÓÒ&gVæ7F–öâ"’°Ð¢F‡&÷ræWrW'&÷"‚$ò6W'fœ:vòFRÜ:—G&–62Fò6—FRì:6òW7L:F—7öì:×fVÂâ"“°Ð¢ÐÐ Ð¢f"6öç6VçDVæ&ÆVBÒfÇ6S°Ð¢f"Æ7D&VÒ"#°Ð¢f"Æ7D&VBÒ°Ð¢f"Æ7E&W6Væ6TBÒ°Ð¢f"&V6ööÆF÷vä×2ÒR¢c¢°Ð¢f"&W6Væ6T6ööÆF÷vä×2Òc¢°Ð Ð¢gVæ7F–öâvWD6öç6VçB‚’°Ð¢&WGW&â6Æ–VçBç'2‚&vWEö×•÷W6vUöæÇ—F–75ö6öç6VçE÷c""’çF†Vâ†gVæ7F–öâ‡&W7VÇB’°Ð¢–b‡&W7VÇBæW'&÷"’&WGW&â²Væ&ÆVC¢fÇ6RÂW'&÷#¢&W7VÇBæW'&÷"Ó°Ð¢6öç6VçDVæ&ÆVBÒ&W7VÇBæFFÓÓÒG'VS°Ð¢&WGW&â²Væ&ÆVC¢6öç6VçDVæ&ÆVBÂW'&÷#¢çVÆÂÓ°Ð¢Ò’æ6F6‚†gVæ7F–öâ†W'&÷"’°Ð¢&WGW&â²Væ&ÆVC¢fÇ6RÂW'&÷#¢W'&÷"Ó°Ð¢Ò“°Ð¢ÐÐ Ð¢gVæ7F–öâvWEVæF–æt6öç6VçE&ö×B‚’°Ð¢&WGW&â6Æ–VçBç'2‚&vWEö×•÷W6vUöæÇ—F–75ö6öç6VçE÷&ö×E÷c""’çF†Vâ†gVæ7F–öâ‡&W7VÇB’°Ð¢–b‡&W7VÇBæW'&÷"’&WGW&â²VæF–æs¢fÇ6RÂW'&÷#¢&W7VÇBæW'&÷"Ó°Ð¢&WGW&â²VæF–æs¢&W7VÇBæFFÓÓÒG'VRÂW'&÷#¢çVÆÂÓ°Ð¢Ò’æ6F6‚†gVæ7F–öâ†W'&÷"’°Ð¢&WGW&â²VæF–æs¢fÇ6RÂW'&÷#¢W'&÷"Ó°Ð¢Ò“°Ð¢ÐÐ Ð¢gVæ7F–öâ6WD6öç6VçB†Væ&ÆVB’°Ð¢–b‡G—VöbVæ&ÆVBÓÒ&&ööÆVâ"’°Ð¢&WGW&â&öÖ—6Rç&W6öÇfR‡²ö³¢fÇ6RÂW'&÷#¢æWrW'&÷"‚$W66öÆ†–çl:Æ–Fâ"’Ò“°Ð¢ÐÐ Ð¢&WGW&â6Æ–VçBç'2‚'6WEö×•÷W6vUöæÇ—F–75ö6öç6VçE÷c""Â°Ð¢öVæ&ÆVC¢Væ&ÆVBÀÐ¢Ò’çF†Vâ†gVæ7F–öâ‡&W7VÇB’°Ð¢–b‡&W7VÇBæW'&÷"ÇÂ&W7VÇBæFFÓÒG'VR’°Ð¢&WGW&â²ö³¢fÇ6RÂW'&÷#¢&W7VÇBæW'&÷"ÇÂæWrW'&÷"‚$ì:6òfö’÷7<:×fVÂ6Çf"7VW66öÆ†â"’Ó°Ð¢ÐÐ¢6öç6VçDVæ&ÆVBÒVæ&ÆVC°Ð¢Æ7D&VÒ"#°Ð¢Æ7D&VBÒ°Ð¢Æ7E&W6Væ6TBÒ°Ð¢&WGW&â²ö³¢G'VRÂW'&÷#¢çVÆÂÓ°Ð¢Ò’æ6F6‚†gVæ7F–öâ†W'&÷"’°Ð¢&WGW&â²ö³¢fÇ6RÂW'&÷#¢W'&÷"Ó°Ð¢Ò“°Ð¢ÐÐ Ð¢gVæ7F–öâ6VæB†&V’°Ð¢&WGW&â&öÖ—6Rç&W6öÇfR‚Ð¢çF†Vâ†gVæ7F–öâ‚’°Ð¢&WGW&â6Æ–VçBç'2‚'&V6÷&Eö×•÷6—FU÷W6vR"Â²ö&V¢&VÇÂçVÆÂÒ“°Ð¢ÒÐ¢æ6F6‚†gVæ7F–öâ‚’°Ð¢&WGW&âçVÆÃ°Ð¢Ò“°Ð¢ÐÐ Ð¢gVæ7F–öâ&V6÷&D&V†&VÂf÷&6R’°Ð¢f"æ÷&ÖÆ—¦VBÒ$T2æ–æFW„öb†&V’ÓÓÒÓò""¢&V°Ð¢–b‚6öç6VçDVæ&ÆVBÇÂæ÷&ÖÆ—¦VB’&WGW&â&öÖ—6Rç&W6öÇfR†çVÆÂ“°Ð Ð¢f"æ÷rÒFFRææ÷r‚“°Ð¢–b‚f÷&6Rbbæ÷&ÖÆ—¦VBÓÓÒÆ7D&Vbbæ÷rÒÆ7D&VBÂ&V6ööÆF÷vä×2’°Ð¢&WGW&â&öÖ—6Rç&W6öÇfR†çVÆÂ“°Ð¢ÐÐ Ð¢Æ7D&VÒæ÷&ÖÆ—¦VC°Ð¢Æ7D&VBÒæ÷s°Ð¢Æ7E&W6Væ6TBÒæ÷s°Ð¢&WGW&â6VæB†æ÷&ÖÆ—¦VB“°Ð¢ÐÐ Ð¢gVæ7F–öâ&V6÷&E&W6Væ6R‚’°Ð¢–b‚6öç6VçDVæ&ÆVB’&WGW&â&öÖ—6Rç&W6öÇfR†çVÆÂ“°Ð¢f"æ÷rÒFFRææ÷r‚“°Ð¢–b†æ÷rÒÆ7E&W6Væ6TBÂ&W6Væ6T6ööÆF÷vä×2’&WGW&â&öÖ—6Rç&W6öÇfR†çVÆÂ“°Ð¢Æ7E&W6Væ6TBÒæ÷s°Ð¢&WGW&â6VæB†çVÆÂ“°Ð¢ÐÐ Ð¢gVæ7F–öâ&V6÷&Df—'7E7GVG•&V6÷&B‚’°Ð¢gVæ7F–öâ6VæDf—'7E&V6÷&B‚’°Ð¢&WGW&â&öÖ—6Rç&W6öÇfR‚Ð¢çF†Vâ†gVæ7F–öâ‚’°Ð¢&WGW&â6Æ–VçBç'2‚'&V6÷&Eö×•öf—'7E÷7GVG•÷&V6÷&B"“°Ð¢ÒÐ¢æ6F6‚†gVæ7F–öâ‚’°Ð¢&WGW&âçVÆÃ°Ð¢Ò“°Ð¢ÐÐ Ð¢–b†6öç6VçDVæ&ÆVB’&WGW&â6VæDf—'7E&V6÷&B‚“°Ð¢&WGW&âvWD6öç6VçB‚’çF†Vâ†gVæ7F–öâ†6öç6VçB’°Ð¢–b‚6öç6VçBæVæ&ÆVB’&WGW&âçVÆÃ°Ð¢&WGW&â6VæDf—'7E&V6÷&B‚“°Ð¢Ò’æ6F6‚†gVæ7F–öâ‚’°Ð¢&WGW&âçVÆÃ°Ð¢Ò“°Ð¢ÐÐ Ð¢gVæ7F–öâ–æ—F–Æ—¦R†&V’°Ð¢&WGW&âvWD6öç6VçB‚’çF†Vâ†gVæ7F–öâ†6öç6VçB’°Ð¢–b†6öç6VçBæVæ&ÆVB’&WGW&â&V6÷&D&V†&VÂG'VR’çF†Vâ†gVæ7F–öâ‚’²&WGW&â6öç6VçC²Ò“°Ð¢&WGW&â6öç6VçC°Ð¢Ò“°Ð¢ÐÐ Ð¢gVæ7F–öâ—4FÖ–â‚’°Ð¢&WGW&â6Æ–VçBç'2‚&—5÷6—FU÷W6vUöFÖ–â"’çF†Vâ†gVæ7F–öâ‡&W7VÇB’°Ð¢&WGW&â&W7VÇBæW'&÷"bb&W7VÇBæFFÓÓÒG'VS°Ð¢Ò’æ6F6‚†gVæ7F–öâ‚’°Ð¢&WGW&âfÇ6S°Ð¢Ò“°Ð¢ÐÐ Ð¢gVæ7F–öâvWDF6†&ö&B‚’°Ð¢&WGW&â—4FÖ–â‚’çF†Vâ†gVæ7F–öâ†FÖ–â’°Ð¢–b‚FÖ–â’&WGW&âçVÆÃ°Ð¢&WGW&â6Æ–VçBç'2‚&vWE÷6—FU÷W6vUöÖWG&–72"’çF†Vâ†gVæ7F–öâ‡&W7VÇB’°Ð¢–b‡&W7VÇBæW'&÷"ÇÂ&W7VÇBæFFÇÂG—Vöb&W7VÇBæFFÓÒ&ö&¦V7B"’&WGW&âçVÆÃ°Ð¢&WGW&â&W7VÇBæFF°Ð¢Ò’æ6F6‚†gVæ7F–öâ‚’°Ð¢&WGW&âçVÆÃ°Ð¢Ò“°Ð¢Ò“°Ð¢ÐÐ Ð¢&WGW&âö&¦V7Bæg&VW¦R‡°Ð¢vWD6öç6VçC¢vWD6öç6VçBÀÐ¢vWEVæF–æt6öç6VçE&ö×C¢vWEVæF–æt6öç6VçE&ö×BÀÐ¢6WD6öç6VçC¢6WD6öç6VçBÀÐ¢–æ—F–Æ—¦S¢–æ—F–Æ—¦RÀÐ¢&V6÷&D&V¢&V6÷&D&VÀÐ¢&V6÷&E&W6Væ6S¢&V6÷&E&W6Væ6RÀÐ¢&V6÷&Df—'7E7GVG•&V6÷&C¢&V6÷&Df—'7E7GVG•&V6÷&BÀÐ¢—4FÖ–ã¢—4FÖ–âÀÐ¢vWDF6†&ö&C¢vWDF6†&ö&BÀÐ¢Ò“°Ð¢ÐÐ Ð¢v–æF÷räFW7fVÆ%W6vTæÇ—F–72Òö&¦V7Bæg&VW¦R‡²7&VFS¢7&VFRÒ“°Ð§Ò’‚“°Ð 
+(function () {
+  "use strict";
+
+  var AREAS = [
+    "estudo",
+    "foco",
+    "temas",
+    "erros",
+    "desempenho",
+  ];
+
+  function create(client) {
+    if (!client || typeof client.rpc !== "function") {
+      throw new Error("O serviÃ§o de mÃ©tricas do site nÃ£o estÃ¡ disponÃ­vel.");
+    }
+
+    var consentEnabled = false;
+    var lastArea = "";
+    var lastAreaAt = 0;
+    var lastPresenceAt = 0;
+    var areaCooldownMs = 5 * 60 * 1000;
+    var presenceCooldownMs = 60 * 1000;
+
+    function getConsent() {
+      return client.rpc("get_my_usage_analytics_consent_v2").then(function (result) {
+        if (result.error) return { enabled: false, error: result.error };
+        consentEnabled = result.data === true;
+        return { enabled: consentEnabled, error: null };
+      }).catch(function (error) {
+        return { enabled: false, error: error };
+      });
+    }
+
+    function getPendingConsentPrompt() {
+      return client.rpc("get_my_usage_analytics_consent_prompt_v2").then(function (result) {
+        if (result.error) return { pending: false, error: result.error };
+        return { pending: result.data === true, error: null };
+      }).catch(function (error) {
+        return { pending: false, error: error };
+      });
+    }
+
+    function setConsent(enabled) {
+      if (typeof enabled !== "boolean") {
+        return Promise.resolve({ ok: false, error: new Error("Escolha invÃ¡lida.") });
+      }
+
+      return client.rpc("set_my_usage_analytics_consent_v2", {
+        p_enabled: enabled,
+      }).then(function (result) {
+        if (result.error || result.data !== true) {
+          return { ok: false, error: result.error || new Error("NÃ£o foi possÃ­vel salvar sua escolha.") };
+        }
+        consentEnabled = enabled;
+        lastArea = "";
+        lastAreaAt = 0;
+        lastPresenceAt = 0;
+        return { ok: true, error: null };
+      }).catch(function (error) {
+        return { ok: false, error: error };
+      });
+    }
+
+    function send(area) {
+      return Promise.resolve()
+        .then(function () {
+          return client.rpc("record_my_site_usage", { p_area: area || null });
+        })
+        .catch(function () {
+          return null;
+        });
+    }
+
+    function recordArea(area, force) {
+      var normalized = AREAS.indexOf(area) === -1 ? "" : area;
+      if (!consentEnabled || !normalized) return Promise.resolve(null);
+
+      var now = Date.now();
+      if (!force && normalized === lastArea && now - lastAreaAt < areaCooldownMs) {
+        return Promise.resolve(null);
+      }
+
+      lastArea = normalized;
+      lastAreaAt = now;
+      lastPresenceAt = now;
+      return send(normalized);
+    }
+
+    function recordPresence() {
+      if (!consentEnabled) return Promise.resolve(null);
+      var now = Date.now();
+      if (now - lastPresenceAt < presenceCooldownMs) return Promise.resolve(null);
+      lastPresenceAt = now;
+      return send(null);
+    }
+
+    function recordFirstStudyRecord() {
+      function sendFirstRecord() {
+        return Promise.resolve()
+          .then(function () {
+            return client.rpc("record_my_first_study_record");
+          })
+          .catch(function () {
+            return null;
+          });
+      }
+
+      if (consentEnabled) return sendFirstRecord();
+      return getConsent().then(function (consent) {
+        if (!consent.enabled) return null;
+        return sendFirstRecord();
+      }).catch(function () {
+        return null;
+      });
+    }
+
+    function initialize(area) {
+      return getConsent().then(function (consent) {
+        if (consent.enabled) return recordArea(area, true).then(function () { return consent; });
+        return consent;
+      });
+    }
+
+    function isAdmin() {
+      return client.rpc("is_site_usage_admin").then(function (result) {
+        return !result.error && result.data === true;
+      }).catch(function () {
+        return false;
+      });
+    }
+
+    function getDashboard() {
+      return isAdmin().then(function (admin) {
+        if (!admin) return null;
+        return client.rpc("get_site_usage_metrics").then(function (result) {
+          if (result.error || !result.data || typeof result.data !== "object") return null;
+          return result.data;
+        }).catch(function () {
+          return null;
+        });
+      });
+    }
+
+    return Object.freeze({
+      getConsent: getConsent,
+      getPendingConsentPrompt: getPendingConsentPrompt,
+      setConsent: setConsent,
+      initialize: initialize,
+      recordArea: recordArea,
+      recordPresence: recordPresence,
+      recordFirstStudyRecord: recordFirstStudyRecord,
+      isAdmin: isAdmin,
+      getDashboard: getDashboard,
+    });
+  }
+
+  window.DesvelarUsageAnalytics = Object.freeze({ create: create });
+})();

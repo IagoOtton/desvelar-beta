@@ -1,3 +1,289 @@
-1ëa¡Ñ1qêmŠ‰ËŠw¶¢º+º{b™èì²Ä^¦VœyÈZ¯]þr«×G!j½t
-‰ïx&§ž‹\¢{Þ®Ö«‚éžžÚ%t(Z¯­†ö¥¹çè­©•§¶‹r¥ä²²×¦
-«	©ç¢×(ž÷«¶ö¥¹ëh·*^K+-z`¡j±+®ŠÒ¶¸§‚k¬µ·žÅ§-—*'yÈZ­§-z¹hž†gVæ7F–öâ‚’°¢'W6R7G&–7B#° ¢gVæ7F–öâ7&VFR†FWVæFVæ6–W2’°¢f"&WV—&VBÒ²&vWE7FFR"Â&vWEF""Â'W'6—7B"Â'6†÷uöÖöF÷&ôFV6—6–öâ"Â'Fö7B"Â'B%Ó°¢–b€¢FWVæFVæ6–W2ÇÀ¢&WV—&VBç6öÖR†gVæ7F–öâ†¶W’’°¢&WGW&âG—VöbFWVæFVæ6–W5¶¶W•ÒÓÒ&gVæ7F–öâ#°¢Ò’ÇÀ¢FWVæFVæ6–W2æFöÖ–à¢’°¢F‡&÷ræWrW'&÷"‚$2FWVæL:¦æ6–2Fò&VÌ;6v–òöÖöF÷&òì:6òf÷&Ò–æf÷&ÖF2â"“°¢Ð ¢f"öÖöF÷&ôFöÖ–âÒFWVæFVæ6–W2æFöÖ–ã°¢f"W'6—7BÒFWVæFVæ6–W2çW'6—7C°¢f"6†÷uöÖöF÷&ôFV6—6–öâÒFWVæFVæ6–W2ç6†÷uöÖöF÷&ôFV6—6–öã°¢f"Fö7BÒFWVæFVæ6–W2çFö7C°¢f"2Ò"¢ÖF‚å’¢ƒ°¢f"2ÒçVÆÃ°¢f"VF–ô6öçFW‡BÒçVÆÃ°¢f"ææ÷Væ6VDfö7W4VæBÒ"#° ¢gVæ7F–öâ†6TæÖR‡'Vâ’°¢&WGW&âöÖöF÷&ôFöÖ–âç†6TæÖR‡'Vâ“°¢Ð¢gVæ7F–öâöÖõ&VÒ‡'Vâ’°¢&WGW&âöÖöF÷&ôFöÖ–âç&VÖ–æ–ær‡'VâÂFFRææ÷r‚’“°¢Ð¢gVæ7F–öâöÖô÷fW'F–ÖR‡'Vâ’°¢&WGW&âöÖöF÷&ôFöÖ–âæ÷fW'F–ÖU6V6öæG2‡'VâÂFFRææ÷r‚’“°¢Ð¢gVæ7F–öâöÖõW6VB‡'Vâ’°¢&WGW&âöÖöF÷&ôFöÖ–âæ—5W6VB‡'Vâ“°¢Ð¢gVæ7F–öâf×D6Æö6²‡6V2’°¢6V2ÒÖF‚æÖ‚ƒÂÖF‚æfÆö÷"„çVÖ&W"‡6V2’ÇÂ’“°¢&WGW&âFWVæFVæ6–W2çB„ÖF‚æfÆö÷"‡6V2òc’’²#¢"²FWVæFVæ6–W2çB‡6V2Rc“°¢Ð ¢gVæ7F–öâöÖô6ö×ÆWFR†D×2ÂF&vWE7FFR’°¢&WGW&âöÖöF÷&ôFöÖ–âæ6ö×ÆWFR‡F&vWE7FFRÇÂFWVæFVæ6–W2ævWE7FFR‚’ÂD×2“°¢Ð¢gVæ7F–öâöÖõ7F'B‡FrÂ–çFVçBÂF&vWE7FFRÂF÷–2Â7GVG•G—R’°¢öÖöF÷&ôFöÖ–âç7F'B€¢F&vWE7FFRÇÂFWVæFVæ6–W2ævWE7FFR‚’À¢FrÀ¢–çFVçBÀ¢FFRææ÷r‚’À¢F÷–2À¢7GVG•G—RÀ¢“°¢VæÆö6´VF–ò‚“°¢G'’°¢–b‡v–æF÷räæ÷F–f–6F–öâbbæ÷F–f–6F–öâçW&Ö—76–öâÓÓÒ&FVfVÇB"¢æ÷F–f–6F–öâç&WVW7EW&Ö—76–öâ‚“°¢Ò6F6‚‡‚’·Ð¢Ð¢gVæ7F–öâöÖõW6R‡F&vWE7FFR’°¢öÖöF÷&ôFöÖ–âçW6R‡F&vWE7FFRÇÂFWVæFVæ6–W2ævWE7FFR‚’ÂFFRææ÷r‚’“°¢Ð¢gVæ7F–öâvWDVF–ô6öçFW‡B‚’°¢G'’°¢f"VF–òÒv–æF÷räVF–ô6öçFW‡BÇÂv–æF÷rçvV&¶—DVF–ô6öçFW‡C°¢–b‚VF–ò’&WGW&âçVÆÃ°¢–b‚VF–ô6öçFW‡B’VF–ô6öçFW‡BÒæWrVF–ò‚“°¢–b†VF–ô6öçFW‡Bç7FFRÓÓÒ'7W7VæFVB"’°¢f"&W7VÖVBÒVF–ô6öçFW‡Bç&W7VÖR‚“°¢–b‡&W7VÖVBbbG—Vöb&W7VÖVBæ6F6‚ÓÓÒ&gVæ7F–öâ"’&W7VÖVBæ6F6‚†gVæ7F–öâ‚’·Ò“°¢Ð¢&WGW&âVF–ô6öçFW‡C°¢Ò6F6‚†R’·Ð¢&WGW&âçVÆÃ°¢Ð¢gVæ7F–öâVæÆö6´VF–ò‚’°¢f"6öçFW‡BÒvWDVF–ô6öçFW‡B‚“°¢–b‚6öçFW‡B’&WGW&ã°¢G'’°¢f"÷66–ÆÆF÷"Ò6öçFW‡Bæ7&VFT÷66–ÆÆF÷"‚“°¢f"v–âÒ6öçFW‡Bæ7&VFTv–â‚“°¢÷66–ÆÆF÷"æg&WVVæ7’çfÇVRÒCC°¢v–âæv–âç6WEfÇVTEF–ÖRƒãÂ6öçFW‡Bæ7W'&VçEF–ÖR“°¢÷66–ÆÆF÷"æ6öææV7B†v–â“°¢v–âæ6öææV7B†6öçFW‡BæFW7F–æF–öâ“°¢÷66–ÆÆF÷"ç7F'B†6öçFW‡Bæ7W'&VçEF–ÖR“°¢÷66–ÆÆF÷"ç7F÷†6öçFW‡Bæ7W'&VçEF–ÖR²ã2“°¢Ò6F6‚†R’·Ð¢Ð¢gVæ7F–öâ&VW‡7G&öær’°¢f"6öçFW‡BÒvWDVF–ô6öçFW‡B‚“°¢–b‚6öçFW‡B’&WGW&ã°¢G'’°¢f"GFW&âÒ7G&öæp¢ò³sCÂƒƒÂCbÂsCÂƒƒÂCbÂsCÂƒƒÂCeÐ¢¢³ccÂccÂƒƒÓ°¢f"76–ærÒ7G&öæròã3B¢ã#ƒ°¢f"GW&F–öâÒ7G&öæròã#R¢ã##°¢f"föÇVÖRÒ7G&öæròã3‚¢ã#S°¢f"7F'DBÒ6öçFW‡Bæ7W'&VçEF–ÖR²ã3°¢GFW&âæf÷$V6‚†gVæ7F–öâ†g&WVVæ7’Â–æFW‚’°¢f"BÒ7F'DB²–æFW‚¢76–æs°¢f"÷66–ÆÆF÷"Ò6öçFW‡Bæ7&VFT÷66–ÆÆF÷"‚“°¢f"v–âÒ6öçFW‡Bæ7&VFTv–â‚“°¢÷66–ÆÆF÷"æg&WVVæ7’çfÇVRÒg&WVVæ7“°¢÷66–ÆÆF÷"æ6öææV7B†v–â“°¢v–âæ6öææV7B†6öçFW‡BæFW7F–æF–öâ“°¢v–âæv–âç6WEfÇVTEF–ÖRƒãÂB“°¢v–âæv–âæW‡öæVçF–Å&×FõfÇVTEF–ÖR‡föÇVÖRÂB²ã#R“°¢v–âæv–âæW‡öæVçF–Å&×FõfÇVTEF–ÖRƒãÂB²GW&F–öâ“°¢÷66–ÆÆF÷"ç7F'B†B“°¢÷66–ÆÆF÷"ç7F÷†B²GW&F–öâ²ã“°¢Ò“°¢Ò6F6‚†R’·Ð¢Ð¢gVæ7F–öâæ÷F–g’‡F—FÆRÂ&öG’’°¢G'’°¢–b‡v–æF÷räæ÷F–f–6F–öâbbæ÷F–f–6F–öâçW&Ö—76–öâÓÓÒ&w&çFVB"¢æWræ÷F–f–6F–öâ‡F—FÆRÂ²&öG“¢&öG’Ò“°¢Ò6F6‚†R’·Ð¢Ð¢gVæ7F–öâææ÷Væ6Tfö7W4VæB‡'VâÂ6fVB’°¢–b‚'VâÇÂ'Vâæ÷fW'F–ÖU6–æ6R’&WGW&ã°¢f"¶W’Ò7G&–ær‡'Vâæ÷fW'F–ÖU6–æ6R“°¢–b†ææ÷Væ6VDfö7W4VæBÓÓÒ¶W’’&WGW&ã°¢ææ÷Væ6VDfö7W4VæBÒ¶W“°¢&VW‡G'VR“°¢G'’°¢–b†æf–vF÷"çf–'&FR’æf–vF÷"çf–'&FR…³3SÂSÂ3SÂSÂsÒ“°¢Ò6F6‚†R’·Ð¢f"ÖW76vRÒ6fV@¢ò$òFV×òFRfö6ò6&÷Râò&Æö6òfö’6Çfó²–æ–6–RW6VæFòV—6W"â ¢¢$òFV×òFRfö6ò6&÷RÂÖ2ì:6òfö’÷7<:×fVÂ6–æ7&öæ—¦"ò&Æö6òâ6öçFvVÒW‡G&6öçF–çVâ#°¢æ÷F–g’‚%FV×òFRfö6òVæ6W'&Fò"ÂÖW76vR“°¢–b†FWVæFVæ6–W2ævWEF"‚’ÓÓÒ&fö6ò"’'W'7B‚“°¢Fö7B†ÖW76vR“°¢Ð¢gVæ7F–öâ'W'7B‚’°¢G'’°¢–b€¢v–æF÷ræÖF6„ÖVF–b`¢v–æF÷ræÖF6„ÖVF–‚"‡&VfW'2×&VGV6VBÖÖ÷F–öã¢&VGV6R’"’æÖF6†W0¢¢&WGW&ã°¢f"&÷‚ÒFö7VÖVçBçVW'•6VÆV7F÷"‚"æF–Â"“°¢–b‚&÷‚’&WGW&ã°¢f"6öÇ2Ò²'f"‚ÒÖ’"Â'f"‚ÒÖ"’"Â'f"‚ÒÖvööB’"Â'f"‚Ò×v&â’%Ó°¢f÷"‡f"’Ò²’Â#c²’²²’°¢†gVæ7F–öâ†’’°¢f"BÒFö7VÖVçBæ7&VFTVÆVÖVçB‚'7â"“°¢Bæ6Æ74æÖRÒ'B#°¢Bç7G–ÆRæ&6¶w&÷VæBÒ6öÇ5¶’REÓ°¢&÷‚æVæD6†–ÆB†B“°¢f"ærÒÖF‚ç&æFöÒ‚’¢ÖF‚å’¢"À¢F—7BÒ²ÖF‚ç&æFöÒ‚’¢À¢G‚ÒÖF‚æ6÷2†ær’¢F—7BÀ¢G’ÒÖF‚ç6–â†ær’¢F—7C°¢f"âÒBææ–ÖFR€¢°¢²G&ç6f÷&Ó¢'G&ç6ÆFR‚ÓSRÂÓSR’66ÆRƒ’"Â÷6—G“¢ÒÀ¢°¢G&ç6f÷&Ó ¢'G&ç6ÆFR†6Æ2‚ÓSR²"°¢G‚°¢'‚’Æ6Æ2‚ÓSR²"°¢G’°¢'‚’’66ÆR‚ã"’"À¢÷6—G“¢À¢ÒÀ¢ÒÀ¢°¢GW&F–öã¢“²ÖF‚ç&æFöÒ‚’¢cÀ¢V6–æs¢&7V&–2Ö&W¦–W"‚ã"Âã‚Âã2Ã’"À¢ÒÀ¢“°¢âæöæf–æ—6‚ÒgVæ7F–öâ‚’°¢Bç&VÖ÷fR‚“°¢Ó°¢Ò’†’“°¢Ð¢Ò6F6‚†R’·Ð¢Ð¢gVæ7F–öâ6WD&2†g&2’°¢f"VÂÀ¢ærÒ‚‚Ó“²g&2¢3c’¢ÖF‚å’’òƒ°¢²'&–ær"Â'vÆ÷r%Òæf÷$V6‚†gVæ7F–öâ†–B’°¢–b‚†VÂÒFö7VÖVçBævWDVÆVÖVçD'”–B†–B’’¢VÂç6WDGG&–'WFR‚'7G&ö¶RÖF6†'&’"Â2¢g&2²""²2“°¢Ò“°¢–b‚†VÂÒFö7VÖVçBævWDVÆVÖVçD'”–B‚'¶æö""’’’°¢VÂç6WDGG&–'WFR‚&7‚"Âƒc²‚¢ÖF‚æ6÷2†ær’’çFôf—†VBƒ’“°¢VÂç6WDGG&–'WFR‚&7’"Âƒc²‚¢ÖF‚ç6–â†ær’’çFôf—†VBƒ’“°¢Ð¢f"rÒFö7VÖVçBævWDVÆVÖVçD'”–B‚'F–6·2"“°¢–b†r’°¢f"Ç2Òræ6†–ÆG&Vã°¢f÷"‡f"’Ò²’ÂÇ2æÆVæwFƒ²’²²¢Ç5¶•Òç6WDGG&–'WFR€¢&6Æ72"À¢'F–6¶Â"²‚†’²’òcÃÒg&2²RÓbò"öâ"¢""’À¢“°¢Ð¢Ð¢gVæ7F–öâF–6²‚’°¢2ÒFWVæFVæ6–W2ævWE7FFR‚“°¢f"æ÷rÒFFRææ÷r‚“°¢–b€¢2çöÖõ'Vâb`¢2çöÖõ'Vâç†6RÓÓÒ&fö7W2"b`¢2çöÖõ'VâæVæBb`¢2çöÖõ'VâæVæBÃÒæ÷rb`¢öÖöF÷&ôFöÖ–âæÖ&´fö7W46ö×ÆWFR…2Â2çöÖõ'VâæVæB¢’°¢f"fö7W56fVBÒW'6—7B‚“°¢–b€¢fö7W56fVBb`¢G—VöbFWVæFVæ6–W2ç&V6÷&Df—'7E7GVG•&V6÷&BÓÓÒ&gVæ7F–öâ ¢’°¢FWVæFVæ6–W2ç&V6÷&Df—'7E7GVG•&V6÷&B‚“°¢Ð¢6†÷uöÖöF÷&ôFV6—6–öâ‚“°¢ææ÷Væ6Tfö7W4VæB…2çöÖõ'VâÂfö7W56fVB“°¢&WGW&ã°¢Ð¢–b…2çöÖõ'Vâbb2çöÖõ'Vâç†6RÓÓÒ&fö7W2"bb2çöÖõ'Vâæ÷fW'F–ÖU6–æ6R’°¢ææ÷Væ6Tfö7W4VæB…2çöÖõ'VâÂG'VR“°¢Ð¢–b€¢2çöÖõ'Vâb`¢2çöÖõ'Vâç†6RÓÒ&fö7W2"b`¢2çöÖõ'VâæVæBb`¢2çöÖõ'VâæVæBÃÒFFRææ÷r‚¢’°¢–b…öÖöF÷&ôFöÖ–âæÖ&´'&V´6ö×ÆWFR…2Â2çöÖõ'VâæVæB’’°¢f"6fVBÒW'6—7B‚“°¢f"×6rÒ6fV@¢ò$W6FW&Ö–æ÷Râ–æ–6–Rò,;7†–Öò&Æö6ò÷Rf–æÆ—¦RòW7GVFòâ ¢¢$W6FW&Ö–æ÷RÂÖ2ì:6òfö’÷7<:×fVÂ6Çf"âfW&–f—VR6–æ7&öæ—¦:|:6òæFVÆ6—7FVÖâ#°¢6†÷uöÖöF÷&ôFV6—6–öâ‚“°¢&VW†fÇ6R“°¢æ÷F–g’‚%W66öæ6Ç\:ÖF"Â×6r“°¢G'’°¢–b†æf–vF÷"çf–'&FR’æf–vF÷"çf–'&FR…³#SÂ#Â#SÒ“°¢Ò6F6‚†R’·Ð¢Fö7B†×6r“°¢&WGW&ã°¢Ð¢Ð¢f""Ò2çöÖõ'VâÀ¢VÃ°¢–b‡"’°¢f"÷fW'F–ÖRÒ"ç†6RÓÓÒ&fö7W2"bb"æ÷fW'F–ÖU6–æ6S°¢f"W6VBÒöÖöF÷&ôFöÖ–âæ—5W6VB‡"“°¢f"&VÒÒöÖõ&VÒ‡"“°¢f"G‡BÒ÷fW'F–ÖP¢ò"²"²f×D6Æö6²‡öÖô÷fW'F–ÖR‡"’¢¢f×D6Æö6²‡&VÒ“°¢Fö7VÖVçBçF—FÆRÒ†÷fW'F–ÖRò.)ª"¢""’°¢‡W6VBò%W6Fò+r"¢""’²G‡B²"+r"²†6TæÖR‡"’²"(	BDU5dTÄ"#°¢–b‚†VÂÒFö7VÖVçBævWDVÆVÖVçD'”–B‚'6Æö6²"’’’VÂçFW‡D6öçFVçBÒG‡C°¢–b‚†VÂÒFö7VÖVçBævWDVÆVÖVçD'”–B‚&Ö6Æö6²"’’’VÂçFW‡D6öçFVçBÒG‡C°¢–b‚†VÂÒFö7VÖVçBævWDVÆVÖVçD'”–B‚'öÖòÖ÷fW'F–ÖRÖ6Æö6²"’’’VÂçFW‡D6öçFVçBÒG‡C°¢–b‡"æVæB’6WD&2„ÖF‚æÖ‚ƒÂÖF‚æÖ–âƒÂ&VÒò"æGW"’’“°¢VÇ6R–b†÷fW'F–ÖR’6WD&2ƒ“°¢ÒVÇ6RFö7VÖVçBçF—FÆRÒ$DU5dTÄ"#°¢Ð¢gVæ7F–öâ7F'D6Æö6²‚’°¢v–æF÷rç6WD–çFW'fÂ‡F–6²Â“°¢Ð ¢&WGW&âö&¦V7Bæg&VW¦R‡°¢6—&7VÖfW&Væ6S¢2À¢†6TæÖS¢†6TæÖRÀ¢&VÖ–æ–æs¢öÖõ&VÒÀ¢÷fW'F–ÖU6V6öæG3¢öÖô÷fW'F–ÖRÀ¢—5W6VC¢öÖõW6VBÀ¢f÷&ÖD6Æö6³¢f×D6Æö6²À¢6ö×ÆWFS¢öÖô6ö×ÆWFRÀ¢7F'C¢öÖõ7F'BÀ¢W6S¢öÖõW6RÀ¢F–6³¢F–6²À¢7F'D6Æö6³¢7F'D6Æö6²À¢Ò“°¢Ð ¢v–æF÷räFW7fVÆ%öÖöF÷&õ'VçF–ÖRÒö&¦V7Bæg&VW¦R‡²7&VFS¢7&VFRÒ“°§Ò’‚“°  Ð 
+(function () {
+  "use strict";
+
+  function create(dependencies) {
+    var required = ["getState", "getTab", "persist", "showPomodoroDecision", "toast", "pad"];
+    if (
+      !dependencies ||
+      required.some(function (key) {
+        return typeof dependencies[key] !== "function";
+      }) ||
+      !dependencies.domain
+    ) {
+      throw new Error("As dependÃªncias do relÃ³gio Pomodoro nÃ£o foram informadas.");
+    }
+
+    var PomodoroDomain = dependencies.domain;
+    var persist = dependencies.persist;
+    var showPomodoroDecision = dependencies.showPomodoroDecision;
+    var toast = dependencies.toast;
+    var PC = 2 * Math.PI * 118;
+    var S = null;
+    var audioContext = null;
+    var announcedFocusEnd = "";
+
+    function phaseName(run) {
+      return PomodoroDomain.phaseName(run);
+    }
+    function pomoRem(run) {
+      return PomodoroDomain.remaining(run, Date.now());
+    }
+    function pomoOvertime(run) {
+      return PomodoroDomain.overtimeSeconds(run, Date.now());
+    }
+    function pomoPaused(run) {
+      return PomodoroDomain.isPaused(run);
+    }
+    function fmtClock(sec) {
+      sec = Math.max(0, Math.floor(Number(sec) || 0));
+      return dependencies.pad(Math.floor(sec / 60)) + ":" + dependencies.pad(sec % 60);
+    }
+
+    function pomoComplete(atMs, targetState) {
+      return PomodoroDomain.complete(targetState || dependencies.getState(), atMs);
+    }
+    function pomoStart(tag, intent, targetState, topic, studyType) {
+      PomodoroDomain.start(
+        targetState || dependencies.getState(),
+        tag,
+        intent,
+        Date.now(),
+        topic,
+        studyType,
+      );
+      unlockAudio();
+      try {
+        if (window.Notification && Notification.permission === "default")
+          Notification.requestPermission();
+      } catch (x) {}
+    }
+    function pomoPause(targetState) {
+      PomodoroDomain.pause(targetState || dependencies.getState(), Date.now());
+    }
+    function getAudioContext() {
+      try {
+        var Audio = window.AudioContext || window.webkitAudioContext;
+        if (!Audio) return null;
+        if (!audioContext) audioContext = new Audio();
+        if (audioContext.state === "suspended") {
+          var resumed = audioContext.resume();
+          if (resumed && typeof resumed.catch === "function") resumed.catch(function () {});
+        }
+        return audioContext;
+      } catch (e) {}
+      return null;
+    }
+    function unlockAudio() {
+      var context = getAudioContext();
+      if (!context) return;
+      try {
+        var oscillator = context.createOscillator();
+        var gain = context.createGain();
+        oscillator.frequency.value = 440;
+        gain.gain.setValueAtTime(0.0001, context.currentTime);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(context.currentTime);
+        oscillator.stop(context.currentTime + 0.03);
+      } catch (e) {}
+    }
+    function beep(strong) {
+      var context = getAudioContext();
+      if (!context) return;
+      try {
+        var pattern = strong
+          ? [740, 880, 1046, 740, 880, 1046, 740, 880, 1046]
+          : [660, 660, 880];
+        var spacing = strong ? 0.34 : 0.28;
+        var duration = strong ? 0.25 : 0.22;
+        var volume = strong ? 0.38 : 0.25;
+        var startAt = context.currentTime + 0.03;
+        pattern.forEach(function (frequency, index) {
+          var at = startAt + index * spacing;
+          var oscillator = context.createOscillator();
+          var gain = context.createGain();
+          oscillator.frequency.value = frequency;
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+          gain.gain.setValueAtTime(0.0001, at);
+          gain.gain.exponentialRampToValueAtTime(volume, at + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+          oscillator.start(at);
+          oscillator.stop(at + duration + 0.01);
+        });
+      } catch (e) {}
+    }
+    function notify(title, body) {
+      try {
+        if (window.Notification && Notification.permission === "granted")
+          new Notification(title, { body: body });
+      } catch (e) {}
+    }
+    function announceFocusEnd(run, saved) {
+      if (!run || !run.overtimeSince) return;
+      var key = String(run.overtimeSince);
+      if (announcedFocusEnd === key) return;
+      announcedFocusEnd = key;
+      beep(true);
+      try {
+        if (navigator.vibrate) navigator.vibrate([350, 150, 350, 150, 700]);
+      } catch (e) {}
+      var message = saved
+        ? "O tempo de foco acabou. O bloco foi salvo; inicie a pausa quando quiser."
+        : "O tempo de foco acabou, mas nÃ£o foi possÃ­vel sincronizar o bloco. A contagem extra continua.";
+      notify("Tempo de foco encerrado", message);
+      if (dependencies.getTab() === "foco") burst();
+      toast(message);
+    }
+    function burst() {
+      try {
+        if (
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        )
+          return;
+        var box = document.querySelector(".dial");
+        if (!box) return;
+        var cols = ["var(--a1)", "var(--a2)", "var(--good)", "var(--warn)"];
+        for (var i = 0; i < 26; i++) {
+          (function (i) {
+            var d = document.createElement("span");
+            d.className = "pt";
+            d.style.background = cols[i % 4];
+            box.appendChild(d);
+            var ang = Math.random() * Math.PI * 2,
+              dist = 100 + Math.random() * 110,
+              dx = Math.cos(ang) * dist,
+              dy = Math.sin(ang) * dist;
+            var an = d.animate(
+              [
+                { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+                {
+                  transform:
+                    "translate(calc(-50% + " +
+                    dx +
+                    "px),calc(-50% + " +
+                    dy +
+                    "px)) scale(.2)",
+                  opacity: 0,
+                },
+              ],
+              {
+                duration: 900 + Math.random() * 600,
+                easing: "cubic-bezier(.2,.8,.3,1)",
+              },
+            );
+            an.onfinish = function () {
+              d.remove();
+            };
+          })(i);
+        }
+      } catch (e) {}
+    }
+    function setArc(frac) {
+      var el,
+        ang = ((-90 + frac * 360) * Math.PI) / 180;
+      ["pring", "pglow"].forEach(function (id) {
+        if ((el = document.getElementById(id)))
+          el.setAttribute("stroke-dasharray", PC * frac + " " + PC);
+      });
+      if ((el = document.getElementById("pknob"))) {
+        el.setAttribute("cx", (160 + 118 * Math.cos(ang)).toFixed(1));
+        el.setAttribute("cy", (160 + 118 * Math.sin(ang)).toFixed(1));
+      }
+      var g = document.getElementById("pticks");
+      if (g) {
+        var ls = g.children;
+        for (var i = 0; i < ls.length; i++)
+          ls[i].setAttribute(
+            "class",
+            "tickl" + ((i + 1) / 60 <= frac + 1e-6 ? " on" : ""),
+          );
+      }
+    }
+    function tick() {
+      S = dependencies.getState();
+      var now = Date.now();
+      if (
+        S.pomoRun &&
+        S.pomoRun.phase === "focus" &&
+        S.pomoRun.end &&
+        S.pomoRun.end <= now &&
+        PomodoroDomain.markFocusComplete(S, S.pomoRun.end)
+      ) {
+        var focusSaved = persist();
+        if (
+          focusSaved &&
+          typeof dependencies.recordFirstStudyRecord === "function"
+        ) {
+          dependencies.recordFirstStudyRecord();
+        }
+        showPomodoroDecision();
+        announceFocusEnd(S.pomoRun, focusSaved);
+        return;
+      }
+      if (S.pomoRun && S.pomoRun.phase === "focus" && S.pomoRun.overtimeSince) {
+        announceFocusEnd(S.pomoRun, true);
+      }
+      if (
+        S.pomoRun &&
+        S.pomoRun.phase !== "focus" &&
+        S.pomoRun.end &&
+        S.pomoRun.end <= Date.now()
+      ) {
+        if (PomodoroDomain.markBreakComplete(S, S.pomoRun.end)) {
+          var saved = persist();
+          var msg = saved
+            ? "A pausa terminou. Inicie o prÃ³ximo bloco ou finalize o estudo."
+            : "A pausa terminou, mas nÃ£o foi possÃ­vel salvar. Verifique a sincronizaÃ§Ã£o na tela Sistema.";
+          showPomodoroDecision();
+          beep(false);
+          notify("Pausa concluÃ­da", msg);
+          try {
+            if (navigator.vibrate) navigator.vibrate([250, 120, 250]);
+          } catch (e) {}
+          toast(msg);
+          return;
+        }
+      }
+      var r = S.pomoRun,
+        el;
+      if (r) {
+        var overtime = r.phase === "focus" && !!r.overtimeSince;
+        var paused = PomodoroDomain.isPaused(r);
+        var rem = pomoRem(r);
+        var txt = overtime
+          ? "+" + fmtClock(pomoOvertime(r))
+          : fmtClock(rem);
+        document.title = (overtime ? "âš  " : "") +
+          (paused ? "Pausado Â· " : "") + txt + " Â· " + phaseName(r) + " â€” DESVELAR";
+        if ((el = document.getElementById("pclock"))) el.textContent = txt;
+        if ((el = document.getElementById("mclock"))) el.textContent = txt;
+        if ((el = document.getElementById("pomo-overtime-clock"))) el.textContent = txt;
+        if (r.end) setArc(Math.max(0, Math.min(1, rem / r.dur)));
+        else if (overtime) setArc(1);
+      } else document.title = "DESVELAR";
+    }
+    function startClock() {
+      window.setInterval(tick, 1000);
+    }
+
+    return Object.freeze({
+      circumference: PC,
+      phaseName: phaseName,
+      remaining: pomoRem,
+      overtimeSeconds: pomoOvertime,
+      isPaused: pomoPaused,
+      formatClock: fmtClock,
+      complete: pomoComplete,
+      start: pomoStart,
+      pause: pomoPause,
+      tick: tick,
+      startClock: startClock,
+    });
+  }
+
+  window.DesvelarPomodoroRuntime = Object.freeze({ create: create });
+})();
+
+
