@@ -800,7 +800,7 @@ test("cadastra com redirecionamento estável e permite reenviar a confirmação"
     assert.equal(signUpCall.email, USER.email);
     assert.deepEqual(signUpCall.data, {
       privacy_notice_accepted: true,
-      privacy_notice_version: "2026-11-03",
+      privacy_notice_version: "2026-11-06",
       usage_analytics_consent: false,
     });
     assert.equal(
