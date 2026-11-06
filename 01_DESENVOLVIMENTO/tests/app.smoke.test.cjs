@@ -1138,7 +1138,7 @@ test("preserva alterações locais e retoma a sincronização após uma falha", 
   try {
     await waitForApp(page);
     await page.locator('#sidenav [data-tab="sistema"]').click();
-    await page.getByText("Sem sincronização com a nuvem", { exact: true }).waitFor({ state: "visible" });
+    await page.locator("#cloud-sync-status").getByText("Sem sincronização com a nuvem", { exact: true }).waitFor({ state: "visible" });
 
     const pendingBeforeRetry = await page.evaluate((storageKey) => ({
       data: JSON.parse(localStorage.getItem(storageKey)),
