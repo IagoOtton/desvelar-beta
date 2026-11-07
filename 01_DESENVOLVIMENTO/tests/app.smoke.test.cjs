@@ -1138,7 +1138,7 @@ test("preserva alterações locais e retoma a sincronização após uma falha", 
   try {
     await waitForApp(page);
     await page.locator('#sidenav [data-tab="sistema"]').click();
-    await page.getByText("Sem sincronização com a nuvem", { exact: true }).waitFor({ state: "visible" });
+    await page.locator("#cloud-sync-status").getByText("Sem sincronização com a nuvem", { exact: true }).waitFor({ state: "visible" });
 
     const pendingBeforeRetry = await page.evaluate((storageKey) => ({
       data: JSON.parse(localStorage.getItem(storageKey)),
@@ -1150,7 +1150,7 @@ test("preserva alterações locais e retoma a sincronização após uma falha", 
       window.__testFailRpc = false;
       window.dispatchEvent(new Event("online"));
     });
-    await page.getByText("Sincronizado com sua conta", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+    await page.locator("#cloud-sync-status").getByText("Sincronizado com sua conta", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
 
     const afterRetry = await page.evaluate((storageKey) => ({
       data: JSON.parse(localStorage.getItem(storageKey)),

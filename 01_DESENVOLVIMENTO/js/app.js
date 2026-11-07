@@ -60,9 +60,28 @@
     return "Sincronizando…";
   }
 
+  function sidebarCloudSyncLabel(state) {
+    if (state === "synced") return "Sincronizado com sua conta";
+    if (state === "error") return "Sem sincronização com a nuvem";
+    return "Sincronizando com sua conta";
+  }
+
   function updateCloudSyncStatus(label, state) {
     var status = document.getElementById("cloud-sync-status");
     if (status) status.textContent = label;
+
+    var sidebarStatus = document.getElementById("cloud-sync-sidebar-status");
+    var sidebarLabel = sidebarCloudSyncLabel(state);
+    if (sidebarStatus) {
+      sidebarStatus.dataset.state = state || "syncing";
+      var sidebarText = sidebarStatus.querySelector("span");
+      if (sidebarText) sidebarText.textContent = sidebarLabel;
+    }
+
+    var announcement = document.getElementById("cloud-sync-live-status");
+    if (announcement && announcement.textContent !== sidebarLabel) {
+      announcement.textContent = sidebarLabel;
+    }
 
     var mobileStatus = document.getElementById("cloud-sync-mobile-status");
     if (!mobileStatus) return;
@@ -83,6 +102,17 @@
       esc(cloudSync.getStatusLabel()) +
       '"><i aria-hidden="true"></i><span>' +
       esc(compactCloudSyncLabel(state)) +
+      "</span></div>"
+    );
+  }
+
+  function cloudSyncSidebarStatusHtml() {
+    var state = cloudSync.getStatus();
+    return (
+      '<div class="cloud-sync-sidebar" id="cloud-sync-sidebar-status" data-state="' +
+      esc(state) +
+      '"><i aria-hidden="true"></i><span>' +
+      esc(sidebarCloudSyncLabel(state)) +
       "</span></div>"
     );
   }
@@ -460,7 +490,8 @@
       (saveOk ? "" : " bad") +
       '"><i></i>' +
       (saveOk ? "Salvo neste navegador" : "Sem salvar") +
-      "</div>";
+      "</div>" +
+      cloudSyncSidebarStatusHtml();
     document.getElementById("botnav").innerHTML = navHtml(false);
     if (tab !== "foco") zen = false;
     document.body.classList.toggle("zen", zen);
